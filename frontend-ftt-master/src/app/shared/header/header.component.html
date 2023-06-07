@@ -1,0 +1,67 @@
+<!-- ============================================================== -->
+<!-- Topbar header - style you can find in pages.scss -->
+<!-- ============================================================== -->
+<header class="topbar">
+    <nav class="navbar top-navbar navbar-expand-md navbar-light" style="background-color: rgb(255, 255, 255);">
+        <!-- ============================================================== -->
+        <!-- Logo -->
+        <!-- ============================================================== -->
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                <!-- Logo icon -->
+                <b>
+                    <!-- Dark Logo icon -->
+                    <img src="../assets/icon_ftt.png" alt="homepage" class="dark-logo" />
+                    <!-- Light Logo icon -->
+                    <img src="../assets/images/logo-light-icon.png" alt="homepage" class="light-logo" />
+                </b>
+                <!--End Logo icon -->
+                <!-- Logo text -->
+                <span>
+                    <!-- dark Logo text -->
+                    <img *ngIf="mostrarLogo" [src]="urlImagen" alt="Logo" class="imagen dark-logo ml-2" />
+                    <!-- Light Logo text -->
+                    <!-- <img src="../assets/images/logo-light-text.png" class="light-logo" alt="homepage" /> -->
+                </span>
+            </a>
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Logo -->
+        <!-- ============================================================== -->
+        <div class="navbar-collapse">
+            <!-- ============================================================== -->
+            <!-- toggle and nav items -->
+            <!-- ============================================================== -->
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"> <a class="nav-link nav-toggler hidden-md-up waves-effect waves-dark "
+                        href="javascript:void(0)" (click)="w3_open()"><i class="ti-menu"></i></a> </li>
+                <li class="nav-item"> <a class="nav-link sidebartoggler hidden-sm-down waves-effect waves-dark"
+                        href="javascript:void(0)"><i class="ti-menu" (click)="w3_open()"></i></a> </li>
+                <li class="nav-item hidden-sm-up" (click)="w3_open()"></li>
+            </ul>
+            <!-- ============================================================== -->
+            <!-- User profile and config -->
+            <!-- ============================================================== -->
+            <ul class="navbar-nav my-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle waves-effect waves-dark" href="" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false"><img src="./assets/images/users/user.jpg" alt="user"
+                            class="profile-pic" /></a>
+                    <div class="dropdown-menu dropdown-menu-right animated fadeIn">
+
+                        <ul class="dropdown-user">
+                            <li><a (click)="salir()"><i class="fa fa-power-off"></i> Salir</a></li>
+                        </ul>
+                        <ul class="dropdown-user">
+                            <li> <a routerLink="configuracion"><i class="fa fa-cog"></i> Configuración</a></li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+</header>
+<!-- ============================================================== -->
+<!-- End Topbar header -->
+<!-- ============================================================== -->

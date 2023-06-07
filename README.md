@@ -1,2 +1,2 @@
-# reportesweb
-Sistema de turnos
+# reporteswebencuestas
+Sistema de encuestas

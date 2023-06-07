@@ -1,0 +1,77 @@
+.card {
+    text-align: center;
+}
+
+form {
+    align-items: center;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+form.example input[type=text] {
+    padding: 10px;
+    font-size: 17px;
+    border: 1px solid grey;
+    float: left;
+    width: 80%;
+    background: #f1f1f1;
+}
+
+form.example button {
+    float: left;
+    width: 20%;
+    padding: 10px;
+    background: #2196F3;
+    color: white;
+    font-size: 17px;
+    border: 1px solid grey;
+    border-left: none;
+    cursor: pointer;
+}
+
+form.example button:hover {
+    background: #0b7dda;
+}
+
+form.example::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.example-container {
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+}
+
+.example-header {
+    min-height: 64px;
+    padding: 8px 24px 0;
+}
+
+.mat-form-field {
+    font-size: 14px;
+    width: 100%;
+}
+
+table {
+    font-size: 14px;
+}
+
+.contenedor-horas, .contenedor-fechas {
+    display: flex;
+    flex-direction: row;
+  }
+
+.contenedor-fechas{
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+  
+
+::ng-deep .card.mat-option.mat-selected .mat-pseudo-checkbox {
+    background-color: #398bf7 !important;
+  }

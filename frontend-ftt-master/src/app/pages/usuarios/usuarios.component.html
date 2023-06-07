@@ -1,0 +1,319 @@
+<div class="card">
+    <h2 class="card-header">ENCUESTAS</h2>
+    <div class="card-body">
+        <form>
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" (click)="limpiar()">
+                    <a class="nav-link active" id="totalfecha-tab" data-toggle="tab" href="#totalfecha" role="tab"
+                        aria-controls="totalfecha" aria-selected="true">PREGUNTAS Y RESPUESTAS</a>
+                </li>
+                <li class="nav-item" (click)="limpiar()">
+                    <a class="nav-link" id="turnosmeta-tab" data-toggle="tab" href="#turnosmeta" role="tab"
+                        aria-controls="turnosmeta" aria-selected="false">ENCUESTA INDIVIDUAL</a>
+                </li>
+                <li class="nav-item" (click)="limpiar()">
+                    <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home"
+                        aria-selected="false">ENTRADAS AL SISTEMA</a>
+                </li>
+            </ul>
+
+            <!-- *********************************** TURNOS POR FECHA *************************************** -->
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
+                    <br><br>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="contenedor-fechas mt-2 mb-2">
+                                    <div>
+                                        <label for="fromDateTurnosFecha">Fecha desde: &nbsp;</label>
+                                        <input type="date" id="fromDateTurnosFecha" value="{{fromDate}}" [max]="toDate"
+                                            name="fromDateTurnosFecha" #fromDateTurnosFecha><br><br>
+                                    </div>
+                                    <div>
+                                        <label for="toDateTurnosFecha">Fecha hasta: &nbsp;</label>
+                                        <input type="date" id="toDateTurnosFecha" value="{{toDate}}" [max]="toDate"
+                                            name="toDateTurnosFecha" #toDateTurnosFecha>
+                                    </div>
+                                </div>
+                                <div class="contenedor-horas">
+                                    <select class="form-control" name="selectmake" #horaInicioTF>
+                                        <option value="-1" selected>Hora Inicio</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [Value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                    <select class="form-control ml-2" name="selectmake" #horaFinTF>
+                                        <option value="-1" selected>Hora Fin</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [Value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <mat-select multiple class="form-control" name="selectmake" [(value)]="selectedItems"
+                                    placeholder="Cajeros">
+                                    <mat-option *ngIf="mostrarCajeros" [value]="-2" (click)="selectAll('allSelected')">
+                                        Todos los cajeros
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
+                                        [disabled]="allSelected">
+                                        {{option.NOM_US}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <button type="button" class="btn btn-search" (click)="buscarEntradas()">
+                                    <span class="glyphicon glyphicon-filter"></span> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <h3>ENTRADAS AL SISTEMA</h3>
+                    <hr>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="contentTurnosFecha" #contentTurnosFecha
+                            #tableTurnosFecha>
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Usuario</th>
+                                    <th class="text-center">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="!malRequestTF">
+                                <tr id="tr-id-1" class="tr-class-1"
+                                    *ngFor="let servicioTurnosFecha of servicioTurnosFecha | paginate:configTF">
+                                    <td> {{servicioTurnosFecha.Usuario}}</td>
+                                    <td> {{servicioTurnosFecha.Fecha}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <pagination-controls *ngIf="!malRequestTFPag" id="usuariosTF"
+                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
+                            (pageChange)="pageChangedTF($event)">
+                        </pagination-controls>
+                    </div>
+                    <br>
+                    <button type="button" class="btn btn-info mx-2" (click)="ExportTOExcelEntradasSistema()">EXCEL</button>
+                    <button type="button" class="btn btn-info" (click)="generarPdfEntradasSistema('hola', 1)">PDF</button>
+                </div>
+
+                <!-- *********************************** PREGUNTAS Y RESPUESTAS *************************************** -->
+                <div class="tab-pane fade show active" id="totalfecha" role="tabpanel" aria-labelledby="totalfecha-tab">
+                    <br><br>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="contenedor-fechas mt-2 mb-2">
+                                    <div>
+                                        <label for="fromDateTurnosTotalFecha">Fecha desde: &nbsp;</label>
+                                        <input type="date" id="fromDateTurnosTotalFecha" value="{{fromDate}}"
+                                            [max]="toDate" name="fromDateTurnosTotalFecha"
+                                            #fromDateTurnosTotalFecha><br><br>
+                                    </div>
+                                    <div>
+                                        <label for="toDateTurnosTotalFecha">Fecha hasta: &nbsp;</label>
+                                        <input type="date" id="toDateTurnosTotalFecha" value="{{toDate}}" [max]="toDate"
+                                            name="toDateTurnosTotalFecha" #toDateTurnosTotalFecha>
+                                    </div>
+                                </div>
+                                <div class="contenedor-horas">
+                                    <select class="form-control" name="selectmake" #horaInicioTTF>
+                                        <option value="-1" selected>Hora Inicio</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [Value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                    <select class="form-control ml-2" name="selectmake" #horaFinTTF>
+                                        <option value="-1" selected>Hora Fin</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [Value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
+                                    <mat-option [value]="-1" (click)="selectAll('todasSucursalesTTF')">
+                                        Todas las sucursales
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
+                                        (click)="selectAll('sucursalesSeleccionadasE')" [disabled]="todasSucursalesTTF">
+                                        {{option.NOM_SUC}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(value)]="selectedEncuestas" placeholder="Encuestas">
+                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2"
+                                        (click)="selectAll('todasEncuestas')">
+                                        Todos las encuestas
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
+                                        (click)="selectAll('encuestasSeleccionadas')" [disabled]="todasEncuestas">
+                                        {{option.NOM_EN}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(value)]="selectedPreguntas" placeholder="Preguntas">
+                                    <mat-option *ngIf="mostrarPreguntas" [value]="-2"
+                                        (click)="selectAll('allSelected')">
+                                        Todos las preguntas
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of preguntas" [value]="option.COD_PR"
+                                        [disabled]="allSelected">
+                                        {{option.SEC_PR}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <button type="button" class="btn btn-search" (click)="buscarPreguntasRespuestas()">
+                                    <span class="glyphicon glyphicon-filter"></span> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <h3>RESPUESTAS</h3>
+                    <hr>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="contentTurnosTotalFecha" #contentTurnosTotalFecha
+                            #tableTurnosTotalFecha>
+                            <thead>
+                                <tr>
+                                    <th class="text-center" *ngIf="todasSucursalesTTF || seleccionMultiple">Sucursal
+                                    </th>
+                                    <th class="text-center" *ngIf="todasEncuestas || seleccionMultipleE">Encuesta
+                                    </th>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Titulo</th>
+                                    <th class="text-center">Pregunta</th>
+                                    <th class="text-center">Respuesta</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="!malRequestTTF">
+                                <tr
+                                    *ngFor="let servicioTurnosTotalFecha of servicioTurnosTotalFecha | paginate:configTTF">
+                                    <td *ngIf="todasSucursalesTTF || seleccionMultiple">
+                                        {{servicioTurnosTotalFecha.sucursal}}</td>
+                                    <td *ngIf="todasEncuestas || seleccionMultipleE">
+                                        {{servicioTurnosTotalFecha.encuesta}}</td>
+                                    <td> {{servicioTurnosTotalFecha.fecha}} </td>
+                                    <td> {{servicioTurnosTotalFecha.titulo}}</td>
+                                    <td> {{servicioTurnosTotalFecha.pregunta}}</td>
+                                    <td> {{servicioTurnosTotalFecha.respuesta}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <pagination-controls *ngIf="!malRequestTTFPag" id="usuariosTTF"
+                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
+                            (pageChange)="pageChangedTTF($event)">
+                        </pagination-controls>
+                    </div>
+                    <br>
+                    <button type="button" class="btn btn-info mx-2"
+                        (click)="ExportTOExcelPreguntasRespuestas()">EXCEL</button>
+                    <button type="button" class="btn btn-info"
+                        (click)="generarPdfPreguntasRespuestas('hola', 1)">PDF</button>
+                </div>
+
+                <!-- *********************************** ENCUESTA INDIVIDUAL *************************************** -->
+                <div class="tab-pane fade" id="turnosmeta" role="tabpanel" aria-labelledby="turnosmeta-tab">
+                    <br><br>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="contenedor-fechas mt-2 mb-2">
+                                    <div>
+                                        <label for="fromDateTurnosMeta">Fecha desde: &nbsp;</label>
+                                        <input type="date" id="fromDateTurnosMeta" value="{{fromDate}}" [max]="toDate"
+                                            name="fromDateTurnosMeta" #fromDateTurnosMeta><br><br>
+                                    </div>
+                                    <div>
+                                        <label for="toDateTurnosMeta">Fecha hasta: &nbsp;</label>
+                                        <input type="date" id="toDateTurnosMeta" value="{{toDate}}" [max]="toDate"
+                                            name="toDateTurnosMeta" #toDateTurnosMeta>
+                                    </div>
+                                </div>
+                                <div class="contenedor-horas">
+                                    <select class="form-control" name="selectmake" #horaInicioTM>
+                                        <option value="-1" selected>Hora Inicio</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [Value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                    <select class="form-control ml-2" name="selectmake" #horaFinTM>
+                                        <option value="-1" selected>Hora Fin</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [Value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <mat-select class="form-control" name="selectmake" [(value)]="cajeroSeleccionado"
+                                    placeholder="Cajeros">
+                                    <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
+                                        (click)="selectAll('cajerosSeleccionados')">
+                                        {{option.NOM_US}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <mat-select class="form-control" name="selectmake" [(value)]="encuestaSeleccionada"
+                                    placeholder="Encuestas">
+                                    <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
+                                        (click)="selectAll('encuestasSeleccionadasI')" [disabled]="todasEncuestasI">
+                                        {{option.NOM_EN}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <mat-select multiple class="form-control" name="selectmake" [(value)]="selectedFechas"
+                                    placeholder="Fechas">
+                                    <mat-option *ngIf="mostrarFechas" [value]="-2" (click)="selectAll('allSelected')">
+                                        Todos las fechas
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of fechas" [value]="option.COD_EV"
+                                        [disabled]="allSelected">
+                                        {{option.Fecha}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <button type="button" class="btn btn-search" (click)="buscarEncuestaIndividual()">
+                                    <span class="glyphicon glyphicon-filter"></span> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <h3>ENCUESTA INDIVIDUAL</h3>
+                    <hr>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="contentTurnosMeta" #contentTurnosMeta #tableTurnosMeta>
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Usuario</th>
+                                    <th class="text-center">Titulo</th>
+                                    <th class="text-center">Pregunta</th>
+                                    <th class="text-center">Respuesta</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="!malRequestTM">
+                                <tr *ngFor="let servicioTurnosMeta of servicioTurnosMeta | paginate:configTM">
+                                    <td> {{servicioTurnosMeta.fecha}}</td>
+                                    <td> {{servicioTurnosMeta.usuario_NOM_US}}</td>
+                                    <td> {{servicioTurnosMeta.pregunta_SEC_PR}}</td>
+                                    <td> {{servicioTurnosMeta.pregunta_PREG_PR}}</td>
+                                    <td> {{servicioTurnosMeta.respuesta}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <pagination-controls *ngIf="!malRequestTMPag" id="usuariosTM"
+                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
+                            (pageChange)="pageChangedTM($event)">
+                        </pagination-controls>
+                    </div>
+                    <br>
+                    <button type="button" class="btn btn-info mx-2" (click)="ExportTOExcelEncuesta()">EXCEL</button>
+                    <button type="button" class="btn btn-info" (click)="generarPdfEncuesta('hola', 1)">PDF</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
