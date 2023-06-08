@@ -155,7 +155,7 @@ export class UsuariosComponent implements OnInit {
   seleccionMultiple: boolean = false;
   seleccionMultipleE: boolean = false;
   seleccionMultipleC: boolean = false;
-  encuestaSeleccionada: string;
+  encuestaSeleccionada: string[] = [];
   cajeroSeleccionado: string;
 
   //MOSTRAR CAJEROS
@@ -467,7 +467,7 @@ export class UsuariosComponent implements OnInit {
     this.selectedFechas = [];
     this.mostrarEncuestas = false;
     this.encuestas = [];
-    this.encuestaSeleccionada = null;
+    this.encuestaSeleccionada = [];
     this.cajeroSeleccionado = null;
   }
 
@@ -555,6 +555,8 @@ export class UsuariosComponent implements OnInit {
    ** ********************************************************************************************************** **/
 
   buscarPreguntasRespuestas() {
+
+    console.log('ver data que recibe ', this.sucursalesSeleccionadas,' ', this.selectedEncuestas, ' ', this.selectedPreguntas)
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
       .toString()
@@ -626,6 +628,7 @@ export class UsuariosComponent implements OnInit {
    ** ********************************************************************************************************** **/
 
   buscarEncuestaIndividual() {
+    console.log('encuentas seleccionadas ', this.encuestaSeleccionada)
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateTurnosMeta.nativeElement.value
       .toString()

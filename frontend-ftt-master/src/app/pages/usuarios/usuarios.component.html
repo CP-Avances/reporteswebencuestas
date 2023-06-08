@@ -9,7 +9,7 @@
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link" id="turnosmeta-tab" data-toggle="tab" href="#turnosmeta" role="tab"
-                        aria-controls="turnosmeta" aria-selected="false">ENCUESTA INDIVIDUAL</a>
+                        aria-controls="turnosmeta" aria-selected="false">ESTACIONES</a>
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home"
@@ -93,8 +93,10 @@
                         </pagination-controls>
                     </div>
                     <br>
-                    <button type="button" class="btn btn-info mx-2" (click)="ExportTOExcelEntradasSistema()">EXCEL</button>
-                    <button type="button" class="btn btn-info" (click)="generarPdfEntradasSistema('hola', 1)">PDF</button>
+                    <button type="button" class="btn btn-info mx-2"
+                        (click)="ExportTOExcelEntradasSistema()">EXCEL</button>
+                    <button type="button" class="btn btn-info"
+                        (click)="generarPdfEntradasSistema('hola', 1)">PDF</button>
                 </div>
 
                 <!-- *********************************** PREGUNTAS Y RESPUESTAS *************************************** -->
@@ -255,9 +257,10 @@
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
-                                <mat-select multiple class="form-control" name="selectmake" [(value)]="encuestaSeleccionada"
-                                    placeholder="Encuestas">
-                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2" (click)="selectAll('allSelected')">
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(value)]="encuestaSeleccionada" placeholder="Encuestas">
+                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2"
+                                        (click)="selectAll('allSelected')">
                                         Todos las encuestas
                                     </mat-option>
                                     <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"

@@ -90,7 +90,12 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:caje
     const hInicio = req.params.horaInicio;
     const hFin = req.params.horaFin;
     const cajero = req.params.cajero;
-    const encuesta = req.params.encuesta;
+    const listaEncuestas = req.params.encuesta;
+    const encuestasArray = listaEncuestas.split(",");
+    let todasEncuestas = false;
+    if (encuestasArray.includes("-2")) {
+        todasEncuestas = true;
+    }
     let diaCompleto = false;
     let hFinAux = 0;
     if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
@@ -126,7 +131,8 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:caje
         INNER JOIN ENCUESTA encuesta ON pregunta.COD_EN = encuesta.COD_EN
         INNER JOIN USUARIO usuario ON evaluacion.COD_US = usuario.COD_US
     WHERE
-       evaluacion.COD_PR IN (SELECT cod_pr FROM PREGUNTA WHERE cod_en = ${encuesta}) AND evaluacion.COD_US = ${cajero}
+    evaluacion.COD_US = ${cajero} 
+        ${!todasEncuestas ? `AND evaluacion.COD_PR IN (SELECT cod_pr FROM PREGUNTA WHERE COD_EN IN (${listaEncuestas})) ` : ''}
        AND STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
        ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
     ORDER BY evaluacion.COD_PR ASC;
@@ -178,6 +184,7 @@ router.get("/getallpreguntas/:encuestas", verifivarToken_1.TokenValidation, (req
     });
 });
 router.get("/preguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:preguntas", verifivarToken_1.TokenValidation, (req, res) => {
+    console.log(' una data ', req.params.sucursales);
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
