@@ -10,9 +10,9 @@ const usuarios_1 = __importDefault(require("./router/usuarios"));
 ////////////
 const express = require("express");
 //////
-const server = server_1.default.init(process.env.PORT || 3004);
+const server = server_1.default.init(process.env.PORT || 3006);
 //////
-const port = process.env.PORT || 3004;
+const port = process.env.PORT || 3006;
 //llamar rutas
 server.app.use(router_1.default);
 server.app.use(usuarios_1.default);

@@ -9,10 +9,10 @@ import usuarios from './router/usuarios';
 import express = require('express');
 
 //////
-const server = Server.init(process.env.PORT || 3004);
+const server = Server.init(process.env.PORT || 3006);
 //////
 
-const port = process.env.PORT || 3004;
+const port = process.env.PORT || 3006;
 
 //llamar rutas
 server.app.use(router);
