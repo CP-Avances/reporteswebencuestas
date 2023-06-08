@@ -95,27 +95,6 @@ export class ConfiguracionComponent {
     }
   }
 
-  guardarMeta() {
-    this.serviceService.setMeta(this.valor).subscribe(
-      (res) => {
-        // SE INFORMA QUE SE PUDO GUARDO LA IMAGEN
-        this.toastr.success(
-          "Exito",
-          "El valor se ha guardado correctamente",
-          {
-            timeOut: 6000,
-          }
-        );
-      },
-      (error) => {
-        // SE INFORMA QUE NO SE GUARDO LA IMAGEN
-        this.toastr.error("Error al guardar el valor.", "Upss !!!.", {
-          timeOut: 6000,
-        });
-      }
-    );
-  }
-
   guardarMarca() {
     let marcaAux: string = " ";
     if (this.desactivarMarca) {

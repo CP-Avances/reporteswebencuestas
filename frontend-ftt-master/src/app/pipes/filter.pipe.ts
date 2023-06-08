@@ -7,7 +7,6 @@ export class FilterPipe implements PipeTransform {
 
   transform(value: any, arg: any): any {
 
-    /* if(args === '' || args.length < 3) return value; */
     const resultPosts = [];
     for(const servicio1 of value){
 

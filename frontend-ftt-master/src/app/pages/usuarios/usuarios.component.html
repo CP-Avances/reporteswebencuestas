@@ -255,22 +255,14 @@
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
-                                <mat-select class="form-control" name="selectmake" [(value)]="encuestaSeleccionada"
+                                <mat-select multiple class="form-control" name="selectmake" [(value)]="encuestaSeleccionada"
                                     placeholder="Encuestas">
+                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2" (click)="selectAll('allSelected')">
+                                        Todos las encuestas
+                                    </mat-option>
                                     <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
-                                        (click)="selectAll('encuestasSeleccionadasI')" [disabled]="todasEncuestasI">
-                                        {{option.NOM_EN}}
-                                    </mat-option>
-                                </mat-select>
-                                <br><br>
-                                <mat-select multiple class="form-control" name="selectmake" [(value)]="selectedFechas"
-                                    placeholder="Fechas">
-                                    <mat-option *ngIf="mostrarFechas" [value]="-2" (click)="selectAll('allSelected')">
-                                        Todos las fechas
-                                    </mat-option>
-                                    <mat-option *ngFor="let option of fechas" [value]="option.COD_EV"
                                         [disabled]="allSelected">
-                                        {{option.Fecha}}
+                                        {{option.NOM_EN}}
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
@@ -281,7 +273,7 @@
                         </div>
                     </div>
                     <br>
-                    <h3>ENCUESTA INDIVIDUAL</h3>
+                    <h3>ENCUESTA USUARIOS</h3>
                     <hr>
                     <div class="table-responsive">
                         <table class="table table-striped" id="contentTurnosMeta" #contentTurnosMeta #tableTurnosMeta>

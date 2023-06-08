@@ -183,8 +183,12 @@ router.post('/login/:usua_login/:usua_password', (req: Request, res: Response) =
     const pass = req.params.usua_password;
     const query =
         `
-        SELECT 1 FROM login WHERE USERNAME = '${username}' AND PASSWORD=MD5('${pass}') 
-        `
+        SELECT 1 FROM login l
+        JOIN usuario u ON l.COD_US = u.COD_US 
+        WHERE USERNAME = '${username}' AND PASSWORD=MD5('${pass}') 
+        AND u.TIPO_US = 'Administrador';
+        `;
+
     MySQL.ejecutarQuery(query, (err: any, usuario: Object[]) => {
         if (err) {
             res.status(400).json({

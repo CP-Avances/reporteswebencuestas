@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
 import { usuario } from '../models/usuario';
-import { BehaviorSubject } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 
 @Injectable({
@@ -21,8 +19,9 @@ export class AuthenticationService {
 
   private URL = "http://192.168.0.145:3006";
 
-  constructor(private http: HttpClient,
-    private router: Router) {
+
+  constructor(
+    private http: HttpClient) {
     this.leerToken();
     this.obtenerUsuario();
   }

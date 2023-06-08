@@ -368,7 +368,7 @@ export class UsuariosComponent implements OnInit {
           : null;
         break;
       case "encuestasSeleccionadasI":
-        this.getFechas(this.cajeroSeleccionado, this.encuestaSeleccionada);
+
         break;
       case "cajerosSeleccionados":
         this.getEncuestas("-1");
@@ -394,7 +394,7 @@ export class UsuariosComponent implements OnInit {
 
   // CONSULTA DE LISTA DE CAJEROS
   getCajeros(sucursal: any) {
-    this.serviceService.getAllCajerosS(sucursal).subscribe(
+    this.serviceService.getAllCajerosS().subscribe(
       (cajeros: any) => {
         this.cajerosUsuarios = cajeros.cajeros;
         this.mostrarCajeros = true;
@@ -438,39 +438,6 @@ export class UsuariosComponent implements OnInit {
     );
   }
 
-  getFechas(cajero: any, encuesta: any) {
-    var fechaDesde = this.fromDateTurnosMeta.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosMeta.nativeElement.value
-      .toString()
-      .trim();
-
-    let horaInicio = this.horaInicioTM.nativeElement.value;
-    let horaFin = this.horaFinTM.nativeElement.value;
-
-    this.serviceService
-      .getAllFechas(
-        cajero,
-        encuesta,
-        fechaDesde,
-        fechaHasta,
-        horaInicio,
-        horaFin
-      )
-      .subscribe(
-        (cajeros: any) => {
-          this.fechas = cajeros.cajeros;
-          this.mostrarFechas = true;
-        },
-        (error) => {
-          if (error.status == 400) {
-            this.fechas = [];
-            this.mostrarFechas = false;
-          }
-        }
-      );
-  }
 
   // CONSULATA PARA LLENAR LA LISTA DE SURCURSALES.
   getSucursales() {
@@ -533,7 +500,7 @@ export class UsuariosComponent implements OnInit {
 
     if (this.selectedItems.length !== 0) {
       this.serviceService
-        .getfiltroturnosfechas(
+        .getEntradasSalidas(
           fechaDesde,
           fechaHasta,
           horaInicio,
@@ -601,7 +568,7 @@ export class UsuariosComponent implements OnInit {
 
     if (this.sucursalesSeleccionadas.length !== 0) {
       this.serviceService
-        .getturnostotalfechas(
+        .getPreguntasRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
@@ -671,14 +638,13 @@ export class UsuariosComponent implements OnInit {
     let horaFin = this.horaFinTM.nativeElement.value;
 
     this.serviceService
-      .getturnosMeta(
+      .getEncuestaUsuarios(
         fechaDesde,
         fechaHasta,
         horaInicio,
         horaFin,
         this.cajeroSeleccionado,
         this.encuestaSeleccionada,
-        this.selectedFechas
       )
       .subscribe(
         (servicio: any) => {
@@ -693,6 +659,7 @@ export class UsuariosComponent implements OnInit {
           }
         },
         (error) => {
+          console.log('ver error ', error)
           if (error.status == 400) {
             // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
             this.servicioTurnosMeta = null;

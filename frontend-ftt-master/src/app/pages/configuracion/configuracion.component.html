@@ -32,25 +32,6 @@
                     <img *ngIf="imageUrl" [src]="imageUrl" alt="Imagen seleccionada" class="imagen ml-2">
                 </div>
 
-                <div class="tab-pane fade " id="turnos" role="tabpanel" aria-labelledby="turnos-tab">
-                    <br><br>
-                    <p>Ingrese el número esperado de turnos que cada cajero(a) atenderá diariamente.</p>
-                    <br>
-                    <div class="input-group">
-                        <p>
-                            <mat-form-field appearance="outline">
-                                <mat-label>Meta</mat-label>
-                                <input matInput type="number" matInput name="valor" [(ngModel)]="valor" min="0">
-                                <mat-hint>Número de turnos</mat-hint>
-                            </mat-form-field>  
-                        </p>
-                        <div class="input-group-append mt-3">
-                            <button class="btn btn-outline-secondary ml-4" type="button"
-                               (click)="guardarMeta()">Guardar</button>
-                        </div>                    
-                    </div>
-                </div>
-
                 <div class="tab-pane fade " id="marca" role="tabpanel" aria-labelledby="marca-tab">
                     <br><br>
                     <p>Ingrese el texto que desea utilizar como marca de agua en los reportes. El texto debe tener un máximo de 30 caracteres.</p>

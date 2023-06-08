@@ -204,7 +204,7 @@ router.get('/turnosfecha/:fecha', (req, res) => {
         }
     });
 });
-router.get('/turnosfechas/:fechaDesde/:fechaHasta/:empresa', (req, res) => {
+router.get('/entradasistema/:fechaDesde/:fechaHasta/:empresa', (req, res) => {
     let fechas = req.params.fecha;
     let anio1 = req.params.anio;
     let mes1 = req.params.mes;
