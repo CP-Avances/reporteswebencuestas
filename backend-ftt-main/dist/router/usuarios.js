@@ -84,17 +84,22 @@ router.get("/getallencuestas/:sucursales", verifivarToken_1.TokenValidation, (re
         }
     });
 });
-router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajero/:encuesta", verifivarToken_1.TokenValidation, (req, res) => {
+router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:usuarios/:encuesta", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
     const hFin = req.params.horaFin;
-    const cajero = req.params.cajero;
     const listaEncuestas = req.params.encuesta;
     const encuestasArray = listaEncuestas.split(",");
+    const listaUsuarios = req.params.usuarios;
+    const usuariosArray = listaUsuarios.split(",");
     let todasEncuestas = false;
+    let todosUsuarios = false;
     if (encuestasArray.includes("-2")) {
         todasEncuestas = true;
+    }
+    if (usuariosArray.includes("-2")) {
+        todosUsuarios = true;
     }
     let diaCompleto = false;
     let hFinAux = 0;
@@ -130,10 +135,9 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:caje
         PREGUNTA pregunta INNER JOIN EVALUACION evaluacion ON pregunta.COD_PR = evaluacion.COD_PR
         INNER JOIN ENCUESTA encuesta ON pregunta.COD_EN = encuesta.COD_EN
         INNER JOIN USUARIO usuario ON evaluacion.COD_US = usuario.COD_US
-    WHERE
-    evaluacion.COD_US = ${cajero} 
+    WHERE STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
+        ${!todosUsuarios ? `AND evaluacion.COD_US IN (${listaUsuarios})) ` : ''}
         ${!todasEncuestas ? `AND evaluacion.COD_PR IN (SELECT cod_pr FROM PREGUNTA WHERE COD_EN IN (${listaEncuestas})) ` : ''}
-       AND STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
        ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
     ORDER BY evaluacion.COD_PR ASC;
     `;
@@ -247,6 +251,98 @@ router.get("/preguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:s
     ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
     ORDER BY fecha DESC;
     `;
+    console.log(query);
+    mysql_1.default.ejecutarQuery(query, (err, turnos) => {
+        if (err) {
+            res.status(400).json({
+                ok: false,
+                error: err,
+            });
+        }
+        else {
+            res.json({
+                ok: true,
+                turnos,
+            });
+        }
+    });
+});
+/** ************************************************************************************************************ **
+ ** **                                     RESUMEN DE PREGUNTAS                                               ** **
+ ** ************************************************************************************************************ **/
+router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:preguntas", verifivarToken_1.TokenValidation, (req, res) => {
+    console.log(' una data ', req.params.sucursales);
+    const fDesde = req.params.fechaDesde;
+    const fHasta = req.params.fechaHasta;
+    const hInicio = req.params.horaInicio;
+    const hFin = req.params.horaFin;
+    const listaSucursales = req.params.sucursales;
+    const sucursalesArray = listaSucursales.split(",");
+    const listaEncuestas = req.params.encuestas;
+    const encuestasArray = listaEncuestas.split(",");
+    const listaPreguntas = req.params.preguntas;
+    const preguntasArray = listaPreguntas.split(",");
+    let todasSucursales = false;
+    let todasEncuestas = false;
+    let todasPreguntas = false;
+    let diaCompleto = false;
+    let hFinAux = 0;
+    if (sucursalesArray.includes("-1")) {
+        todasSucursales = true;
+    }
+    if (encuestasArray.includes("-2")) {
+        todasEncuestas = true;
+    }
+    if (preguntasArray.includes("-2")) {
+        todasPreguntas = true;
+    }
+    if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
+        diaCompleto = true;
+    }
+    else {
+        hFinAux = parseInt(hFin) - 1;
+    }
+    const query = `
+    SELECT 
+      titulo,
+      pregunta,
+      encuesta,
+      sucursal,
+      respuesta,
+      COUNT(*) AS conteo_respuestas
+  FROM (
+      SELECT
+          pregunta.SEC_PR AS titulo,
+          pregunta.PREG_PR AS pregunta,
+          encuesta.NOM_EN AS encuesta,
+          sucursal.NOM_SUC AS sucursal,
+          CASE evaluacion.VAL_EV
+              WHEN 1 THEN pregunta.ETIQUNO_PR
+              WHEN 2 THEN pregunta.ETIQDOS_PR
+              WHEN 3 THEN pregunta.ETIQTRES_PR
+              WHEN 4 THEN pregunta.ETIQCUATRO_PR
+              WHEN 5 THEN pregunta.ETIQCINCO_PR
+              WHEN 6 THEN pregunta.ETIQSEIS_PR
+              WHEN 7 THEN pregunta.ETIQSIETE_PR
+              WHEN 8 THEN pregunta.ETIQOCHO_PR
+              WHEN 9 THEN pregunta.ETIQNUEVE_PR
+              WHEN 10 THEN pregunta.ETIQDIEZ_PR
+          END AS respuesta
+      FROM
+          evaluacion
+          JOIN pregunta ON evaluacion.COD_PR = pregunta.COD_PR
+          JOIN encuesta ON pregunta.COD_EN = encuesta.COD_EN
+          JOIN sucursalxencuesta ON encuesta.COD_EN = sucursalxencuesta.COD_EN
+          JOIN sucursal ON sucursalxencuesta.COD_SUC = sucursal.CIU_SUC
+      WHERE STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
+      ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
+      ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
+      ${!todasPreguntas ? `AND pregunta.COD_PR IN (${listaPreguntas})` : ''}
+      ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
+      ) subconsulta
+      GROUP BY titulo, pregunta, respuesta;
+    `;
+    console.log(query);
     mysql_1.default.ejecutarQuery(query, (err, turnos) => {
         if (err) {
             res.status(400).json({
