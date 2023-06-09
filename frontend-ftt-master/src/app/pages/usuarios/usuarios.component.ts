@@ -555,8 +555,6 @@ export class UsuariosComponent implements OnInit {
    ** ********************************************************************************************************** **/
 
   buscarPreguntasRespuestas() {
-
-    console.log('ver data que recibe ', this.sucursalesSeleccionadas,' ', this.selectedEncuestas, ' ', this.selectedPreguntas)
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
       .toString()
