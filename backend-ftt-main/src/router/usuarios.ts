@@ -35,7 +35,7 @@ router.get("/getallsucursales", TokenValidation, (req: Request, res: Response) =
 
 router.get("/getallcajeros", TokenValidation, (req: Request, res: Response) => {
 
-  const query = `SELECT * FROM usuario`;
+  const query = `SELECT * FROM usuario WHERE TIPO_US = 'Trabajador'`;
 
   MySQL.ejecutarQuery(query, (err: any, cajeros: Object[]) => {
     if (err) {

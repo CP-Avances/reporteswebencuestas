@@ -34,7 +34,7 @@ router.get("/getallsucursales", verifivarToken_1.TokenValidation, (req, res) => 
  ** **                           TRATAMIENTO USUARIOS - CAJEROS                                               ** **
  ** ************************************************************************************************************ **/
 router.get("/getallcajeros", verifivarToken_1.TokenValidation, (req, res) => {
-    const query = `SELECT * FROM usuario`;
+    const query = `SELECT * FROM usuario WHERE TIPO_US = 'Trabajador'`;
     mysql_1.default.ejecutarQuery(query, (err, cajeros) => {
         if (err) {
             res.status(400).json({
