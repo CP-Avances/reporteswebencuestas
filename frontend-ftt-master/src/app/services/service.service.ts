@@ -36,13 +36,20 @@ export class ServiceService {
     return this.http.get<servicio[]>(this.URL + "/preguntasrespuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + cajeros + "/" + preguntas);
   }
 
+  /** ****************************************************************************************************************** **
+   ** **                                    TRATAMIENTOS OPCION RESUMEN DE PREGUNTAS                                  ** **
+   ** ****************************************************************************************************************** **/
+
+  getPreguntasResumen(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, cajeros: any, preguntas): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/respuestasresumen/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + cajeros + "/" + preguntas);
+  }
 
   /** ****************************************************************************************************************** **
    ** **                                        TRATAMIENTO DATOS ENCUESTA USUARIOS                                   ** **
    ** ****************************************************************************************************************** **/
 
-  getEncuestaUsuarios(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, cajero: any, encuesta: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/encuestausuarios/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + cajero + "/" + encuesta);
+  getEncuestaUsuarios(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, usuarios: any, encuesta: any, preguntas: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/encuestausuarios/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + usuarios + "/" + encuesta + "/" + preguntas);
   }
 
 

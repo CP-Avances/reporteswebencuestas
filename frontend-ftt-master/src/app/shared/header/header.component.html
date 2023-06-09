@@ -3,41 +3,18 @@
 <!-- ============================================================== -->
 <header class="topbar">
     <nav class="navbar top-navbar navbar-expand-md navbar-light" style="background-color: rgb(255, 255, 255);">
-        <!-- ============================================================== -->
-        <!-- Logo -->
-        <!-- ============================================================== -->
-        <div class="navbar-header">
-            <a class="navbar-brand" href="#">
-                <!-- Logo icon -->
-                <b>
-                    <!-- Dark Logo icon -->
-                    <img src="../assets/icon_ftt.png" alt="homepage" class="dark-logo" />
-                    <!-- Light Logo icon -->
-                    <img src="../assets/images/logo-light-icon.png" alt="homepage" class="light-logo" />
-                </b>
-                <!--End Logo icon -->
-                <!-- Logo text -->
-                <span>
-                    <!-- dark Logo text -->
-                    <img *ngIf="mostrarLogo" [src]="urlImagen" alt="Logo" class="imagen dark-logo ml-2" />
-                    <!-- Light Logo text -->
-                    <!-- <img src="../assets/images/logo-light-text.png" class="light-logo" alt="homepage" /> -->
-                </span>
-            </a>
-        </div>
-        <!-- ============================================================== -->
-        <!-- End Logo -->
-        <!-- ============================================================== -->
+
         <div class="navbar-collapse">
-            <!-- ============================================================== -->
-            <!-- toggle and nav items -->
-            <!-- ============================================================== -->
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item"> <a class="nav-link nav-toggler hidden-md-up waves-effect waves-dark "
-                        href="javascript:void(0)" (click)="w3_open()"><i class="ti-menu"></i></a> </li>
-                <li class="nav-item"> <a class="nav-link sidebartoggler hidden-sm-down waves-effect waves-dark"
-                        href="javascript:void(0)"><i class="ti-menu" (click)="w3_open()"></i></a> </li>
-                <li class="nav-item hidden-sm-up" (click)="w3_open()"></li>
+                <span>
+                    <img *ngIf="mostrarLogo" [src]="urlImagen" alt="Logo" class="imagen dark-logo ml-2" />
+                </span>
+            </ul>
+            <ul class="navbar-nav mr-auto">
+                <span>
+                    <br>
+                    <h2>MÓDULO DE REPORTES EVALUACIÓN ENCUESTA</h2>
+                </span>
             </ul>
             <!-- ============================================================== -->
             <!-- User profile and config -->
