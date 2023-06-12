@@ -23,6 +23,7 @@ import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as XLSX from "xlsx";
 import moment from "moment";
+import { map } from "rxjs/operators";
 
 (<any>pdfMake).vfs = pdfFonts.pdfMake.vfs;
 
@@ -178,6 +179,10 @@ export class UsuariosComponent implements OnInit {
   valor: number;
   marca: string = "FullTime Tickets";
   horas: number[] = [];
+
+  //Totales
+  respuestasTotal: number;
+  respuestasTotalC: number;
 
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
 
@@ -350,7 +355,9 @@ export class UsuariosComponent implements OnInit {
         break;
       case "todasEncuestasI":
         this.todasEncuestasI = !this.todasEncuestasI;
-        this.todasEncuestasI ? this.getPreguntas(this.encuestaSeleccionada) : null;
+        this.todasEncuestasI
+          ? this.getPreguntas(this.encuestaSeleccionada)
+          : null;
         break;
       case "todasSucursalesTM":
         this.todasSucursalesTM = !this.todasSucursalesTM;
@@ -490,6 +497,7 @@ export class UsuariosComponent implements OnInit {
     this.todasSucursalesTTF = false;
     this.todosLosCajeros = false;
     this.todasEncuestas = false;
+    this.todasEncuestasI = false;
     this.todasSucursalesTM = false;
     this.todasSucursalesES = false;
     this.todasSucursalesAU = false;
@@ -602,15 +610,18 @@ export class UsuariosComponent implements OnInit {
     let horaInicio = this.horaInicioTTF.nativeElement.value;
     let horaFin = this.horaFinTTF.nativeElement.value;
 
-    if (this.sucursalesSeleccionadas.length !== 0) {
+    if (
+      this.usuariosSeleccionados.length !== 0 &&
+      this.encuestaSeleccionada.length !== 0
+    ) {
       this.serviceService
         .getPreguntasRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
-          this.sucursalesSeleccionadas,
-          this.selectedEncuestas,
+          this.usuariosSeleccionados,
+          this.encuestaSeleccionada,
           this.selectedPreguntas
         )
         .subscribe(
@@ -624,6 +635,15 @@ export class UsuariosComponent implements OnInit {
             if (this.configTTF.currentPage > 1) {
               this.configTTF.currentPage = 1;
             }
+
+            let totalR = this.servicioTurnosTotalFecha.map(
+              (res) => res.conteo_respuestas
+            );
+            let total = 0;
+            for (let i = 0; i < totalR.length; i++) {
+              total += totalR[i];
+            }
+            this.respuestasTotalC = total;
           },
           (error) => {
             if (error.status == 400) {
@@ -662,14 +682,9 @@ export class UsuariosComponent implements OnInit {
    ** ********************************************************************************************************** **/
 
   buscarRespuestas() {
-
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateResumen.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateResumen.nativeElement.value
-      .toString()
-      .trim();
+    var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
+    var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
 
     let horaInicio = this.horaInicioR.nativeElement.value;
     let horaFin = this.horaFinR.nativeElement.value;
@@ -696,6 +711,15 @@ export class UsuariosComponent implements OnInit {
             if (this.configR.currentPage > 1) {
               this.configR.currentPage = 1;
             }
+
+            let totalR = this.servicioResumen.map(
+              (res) => res.conteo_respuestas
+            );
+            let total = 0;
+            for (let i = 0; i < totalR.length; i++) {
+              total += totalR[i];
+            }
+            this.respuestasTotal = total;
           },
           (error) => {
             if (error.status == 400) {
@@ -709,8 +733,7 @@ export class UsuariosComponent implements OnInit {
               if (this.servicioResumen == null) {
                 this.configR.totalItems = 0;
               } else {
-                this.configR.totalItems =
-                  this.servicioResumen.length;
+                this.configR.totalItems = this.servicioResumen.length;
               }
 
               // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
@@ -767,7 +790,7 @@ export class UsuariosComponent implements OnInit {
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             this.servicioTurnosMeta = servicio.turnos;
-            console.log('aqui ******* ', this.servicioTurnosMeta)
+            console.log("aqui ******* ", this.servicioTurnosMeta);
             this.malRequestTM = false;
             this.malRequestTMPag = false;
 
@@ -819,7 +842,8 @@ export class UsuariosComponent implements OnInit {
     for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
       jsonServicio.push({
         Usuario: this.servicioTurnosFecha[i].Usuario,
-        Fecha: new Date(this.servicioTurnosFecha[i].Fecha),
+        Fecha: new Date(this.servicioTurnosFecha[i].fecha_),
+        Hora: this.servicioTurnosFecha[i].hora_,
       });
     }
 
@@ -844,28 +868,18 @@ export class UsuariosComponent implements OnInit {
   ExportTOExcelPreguntasRespuestas() {
     //Mapeo de información de consulta a formato JSON para exportar a Excel
     let jsonServicio = [];
-    if (this.todasSucursalesTTF || this.seleccionMultiple) {
-      for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
-        jsonServicio.push({
-          Sucursal: this.servicioTurnosTotalFecha[i].sucursal,
-          Encuesta: this.servicioTurnosTotalFecha[i].encuesta,
-          Fecha: new Date(this.servicioTurnosTotalFecha[i].fecha),
-          Titulo: this.servicioTurnosTotalFecha[i].titulo,
-          Pregunta: this.servicioTurnosTotalFecha[i].pregunta,
-          Respuesta: this.servicioTurnosTotalFecha[i].respuesta,
-        });
-      }
-    } else {
-      for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
-        jsonServicio.push({
-          Encuesta: this.servicioTurnosTotalFecha[i].encuesta,
-          Fecha: new Date(this.servicioTurnosTotalFecha[i].fecha),
-          Titulo: this.servicioTurnosTotalFecha[i].titulo,
-          Pregunta: this.servicioTurnosTotalFecha[i].pregunta,
-          Respuesta: this.servicioTurnosTotalFecha[i].respuesta,
-        });
-      }
+    for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
+      jsonServicio.push({
+        Cajero: this.servicioTurnosTotalFecha[i].usuario,
+        Encuesta: this.servicioTurnosTotalFecha[i].encuesta,
+        Titulo: this.servicioTurnosTotalFecha[i].titulo,
+        Pregunta: this.servicioTurnosTotalFecha[i].pregunta,
+        Respuesta: this.servicioTurnosTotalFecha[i].respuesta,
+        "Cantidad de respuestas":
+          this.servicioTurnosTotalFecha[i].conteo_respuestas,
+      });
     }
+
     //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
@@ -878,10 +892,10 @@ export class UsuariosComponent implements OnInit {
     }
     ws["!cols"] = wscols;
 
-    XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
+    XLSX.utils.book_append_sheet(wb, ws, "RESUMEN");
     XLSX.writeFile(
       wb,
-      "Preguntas y respuestas " + new Date().toLocaleString() + EXCEL_EXTENSION
+      "CAJEROS RESUMEN " + new Date().toLocaleString() + EXCEL_EXTENSION
     );
   }
 
@@ -896,7 +910,7 @@ export class UsuariosComponent implements OnInit {
           Titulo: this.servicioResumen[i].titulo,
           Pregunta: this.servicioResumen[i].pregunta,
           Respuesta: this.servicioResumen[i].respuesta,
-          Total: this.servicioResumen[i].conteo_respuestas,
+          "Cantidad de respuestas": this.servicioResumen[i].conteo_respuestas,
         });
       }
     } else {
@@ -906,7 +920,7 @@ export class UsuariosComponent implements OnInit {
           Titulo: this.servicioResumen[i].titulo,
           Pregunta: this.servicioResumen[i].pregunta,
           Respuesta: this.servicioResumen[i].respuesta,
-          Total: this.servicioResumen[i].conteo_respuestas,
+          "Cantidad de respuestas": this.servicioResumen[i].conteo_respuestas,
         });
       }
     }
@@ -934,7 +948,8 @@ export class UsuariosComponent implements OnInit {
     let jsonServicio = [];
     for (let i = 0; i < this.servicioTurnosMeta.length; i++) {
       jsonServicio.push({
-        Fecha: new Date(this.servicioTurnosMeta[i].fecha),
+        Fecha: new Date(this.servicioTurnosMeta[i].fecha_),
+        Hora: this.servicioTurnosMeta[i].hora_,
         Usuario: this.servicioTurnosMeta[i].usuario_NOM_US,
         Encuesta: this.servicioTurnosMeta[i].encuesta_NOM_EN,
         Titulo: this.servicioTurnosMeta[i].pregunta_SEC_PR,
@@ -1252,7 +1267,7 @@ export class UsuariosComponent implements OnInit {
             {
               width: "*",
               alignment: "center",
-              text: "Reporte - Preguntas y respuestas ",
+              text: "Reporte - Cajeros resumen ",
               bold: true,
               fontSize: 15,
               margin: [-90, 20, 0, 0],
@@ -1263,7 +1278,11 @@ export class UsuariosComponent implements OnInit {
           style: "subtitulos",
           text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
         },
-        this.CampoDetalleTotal(this.servicioTurnosTotalFecha), //Definicion de funcion delegada para setear informacion de tabla del PDF
+        this.CampoDetalleTotal(this.servicioTurnosTotalFecha),
+        {
+          style: "subtitulos",
+          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotalC,
+        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
         tableTotal: {
@@ -1305,25 +1324,25 @@ export class UsuariosComponent implements OnInit {
         style: "tableMargin",
         table: {
           headerRows: 1,
-          widths: ["auto", "auto", "auto", "*", 200, "auto"],
+          widths: ["auto", "auto", "*", 200, "auto", "auto"],
 
           body: [
             [
-              { text: "Sucursal", style: "tableHeader" },
+              { text: "Cajero", style: "tableHeader" },
               { text: "Encuesta", style: "tableHeader" },
-              { text: "Fecha", style: "tableHeader" },
               { text: "Titulo", style: "tableHeader" },
               { text: "Pregunta", style: "tableHeader" },
               { text: "Respuesta", style: "tableHeader" },
+              { text: "Cantidad de respuestas", style: "tableHeader" },
             ],
             ...servicio.map((res) => {
               return [
-                { style: "itemsTable", text: res.sucursal },
+                { style: "itemsTable", text: res.usuario },
                 { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.fecha },
                 { style: "itemsTable", text: res.titulo },
                 { style: "itemsTable", text: res.pregunta },
                 { style: "itemsTable", text: res.respuesta },
+                { style: "itemsTable", text: res.conteo_respuestas },
               ];
             }),
           ],
@@ -1371,20 +1390,13 @@ export class UsuariosComponent implements OnInit {
 
   generarPdfPreguntasResumen(action = "open", pdf: number) {
     //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateResumen.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateResumen.nativeElement.value
-      .toString()
-      .trim();
+    var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
+    var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
 
     //Definicion de funcion delegada para setear estructura del PDF
     let documentDefinition;
     if (pdf === 1) {
-      documentDefinition = this.getDocumentResumen(
-        fechaDesde,
-        fechaHasta
-      );
+      documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta);
     }
     //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
     switch (action) {
@@ -1476,7 +1488,11 @@ export class UsuariosComponent implements OnInit {
           style: "subtitulos",
           text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
         },
-        this.CampoDetalleResumen(this.servicioResumen), //Definicion de funcion delegada para setear informacion de tabla del PDF
+        this.CampoDetalleResumen(this.servicioResumen),
+        {
+          style: "subtitulos",
+          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
+        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
         tableTotal: {
@@ -1527,7 +1543,7 @@ export class UsuariosComponent implements OnInit {
               { text: "Titulo", style: "tableHeader" },
               { text: "Pregunta", style: "tableHeader" },
               { text: "Respuesta", style: "tableHeader" },
-              { text: "Total", style: "tableHeader" },
+              { text: "Cantidad de respuestas", style: "tableHeader" },
             ],
             ...servicio.map((res) => {
               return [
@@ -1560,7 +1576,7 @@ export class UsuariosComponent implements OnInit {
               { text: "Titulo", style: "tableHeader" },
               { text: "Pregunta", style: "tableHeader" },
               { text: "Respuesta", style: "tableHeader" },
-              { text: "Total", style: "tableHeader" },
+              { text: "Cantidad de respuestas", style: "tableHeader" },
             ],
             ...servicio.map((res) => {
               return [
@@ -1727,7 +1743,7 @@ export class UsuariosComponent implements OnInit {
       style: "tableMargin",
       table: {
         headerRows: 1,
-        widths: ["auto", "auto", "auto", "*", "*", "*"],
+        widths: ["auto", "auto", "auto", "*", 200, "auto"],
 
         body: [
           [

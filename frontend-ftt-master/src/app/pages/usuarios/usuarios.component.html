@@ -4,16 +4,16 @@
         <form>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item" (click)="limpiar()">
-                    <a class="nav-link active" id="totalfecha-tab" data-toggle="tab" href="#totalfecha" role="tab"
-                        aria-controls="totalfecha" aria-selected="true">PREGUNTAS Y RESPUESTAS</a>
-                </li>
-                <li class="nav-item" (click)="limpiar()">
-                    <a class="nav-link" id="totalfecha-tab" data-toggle="tab" href="#resumen" role="tab"
-                        aria-controls="totalfecha" aria-selected="false">RESPUESTAS TOTALES</a>
+                    <a class="nav-link active" id="totalfecha-tab" data-toggle="tab" href="#resumen" role="tab"
+                        aria-controls="totalfecha" aria-selected="true">RESPUESTAS TOTALES</a>
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link" id="turnosmeta-tab" data-toggle="tab" href="#turnosmeta" role="tab"
                         aria-controls="turnosmeta" aria-selected="false">CAJEROS</a>
+                </li>
+                <li class="nav-item" (click)="limpiar()">
+                    <a class="nav-link " id="totalfecha-tab" data-toggle="tab" href="#totalfecha" role="tab"
+                        aria-controls="totalfecha" aria-selected="false">CAJEROS RESUMEN</a>
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home"
@@ -104,7 +104,7 @@
                 </div>
 
                 <!-- *********************************** PREGUNTAS Y RESPUESTAS *************************************** -->
-                <div class="tab-pane fade show active" id="totalfecha" role="tabpanel" aria-labelledby="totalfecha-tab">
+                <div class="tab-pane fade" id="totalfecha" role="tabpanel" aria-labelledby="totalfecha-tab">
                     <br><br>
                     <div class="container">
                         <div class="row">
@@ -137,24 +137,24 @@
                             </div>
                             <div class="col-6">
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
-                                    <mat-option [value]="-1" (click)="selectAll('todasSucursalesTTF')">
-                                        Todas las sucursales
+                                    [(value)]="usuariosSeleccionados" placeholder="Cajeros">
+                                    <mat-option [value]="-2" (click)="selectAll('todosLosCajeros')">
+                                        Todos los cajeros
                                     </mat-option>
-                                    <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
-                                        (click)="selectAll('sucursalesSeleccionadasE')" [disabled]="todasSucursalesTTF">
-                                        {{option.NOM_SUC}}
+                                    <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
+                                        [disabled]="todosLosCajeros" (click)="selectAll('cajerosSeleccionados')">
+                                        {{option.NOM_US}}
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="selectedEncuestas" placeholder="Encuestas">
+                                    [(value)]="encuestaSeleccionada" placeholder="Encuestas">
                                     <mat-option *ngIf="mostrarEncuestas" [value]="-2"
-                                        (click)="selectAll('todasEncuestas')">
+                                        (click)="selectAll('todasEncuestasI')">
                                         Todas las encuestas
                                     </mat-option>
                                     <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
-                                        (click)="selectAll('encuestasSeleccionadas')" [disabled]="todasEncuestas">
+                                        (click)="selectAll('encuestasSeleccionadasI')" [disabled]="todasEncuestasI">
                                         {{option.NOM_EN}}
                                     </mat-option>
                                 </mat-select>
@@ -185,27 +185,23 @@
                             #tableTurnosTotalFecha>
                             <thead>
                                 <tr>
-                                    <th class="text-center" *ngIf="todasSucursalesTTF || seleccionMultiple">Sucursal
-                                    </th>
-                                    <th class="text-center" *ngIf="todasEncuestas || seleccionMultipleE">Encuesta
-                                    </th>
-                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Cajero</th>
+                                    <th class="text-center">Encuesta</th>
                                     <th class="text-center">Titulo</th>
-                                    <th class="text-center">Pregunta</th>
+                                    <th class="text-center fixed-column">Pregunta</th>
                                     <th class="text-center">Respuesta</th>
+                                    <th class="text-center">Cantidad de respuestas</th>
                                 </tr>
                             </thead>
                             <tbody *ngIf="!malRequestTTF">
                                 <tr
                                     *ngFor="let servicioTurnosTotalFecha of servicioTurnosTotalFecha | paginate:configTTF">
-                                    <td *ngIf="todasSucursalesTTF || seleccionMultiple">
-                                        {{servicioTurnosTotalFecha.sucursal}}</td>
-                                    <td *ngIf="todasEncuestas || seleccionMultipleE">
-                                        {{servicioTurnosTotalFecha.encuesta}}</td>
-                                    <td> {{servicioTurnosTotalFecha.fecha}} </td>
-                                    <td> {{servicioTurnosTotalFecha.titulo}}</td>
-                                    <td> {{servicioTurnosTotalFecha.pregunta}}</td>
-                                    <td> {{servicioTurnosTotalFecha.respuesta}}</td>
+                                    <td>{{servicioTurnosTotalFecha.usuario}}</td>
+                                    <td>{{servicioTurnosTotalFecha.encuesta}}</td>
+                                    <td>{{servicioTurnosTotalFecha.titulo}}</td>
+                                    <td>{{servicioTurnosTotalFecha.pregunta}}</td>
+                                    <td>{{servicioTurnosTotalFecha.respuesta}}</td>
+                                    <td>{{servicioTurnosTotalFecha.conteo_respuestas}}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -213,6 +209,7 @@
                             [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
                             (pageChange)="pageChangedTTF($event)">
                         </pagination-controls>
+                        <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotalC}}</h4>
                     </div>
                     <br>
                     <button type="button" class="btn btn-info mx-2"
@@ -222,7 +219,7 @@
                 </div>
 
                 <!-- *********************************** RESUMEN *************************************** -->
-                <div class="tab-pane fade" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
+                <div class="tab-pane fade show active" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
                     <br><br>
                     <div class="container">
                         <div class="row">
@@ -301,22 +298,20 @@
                         <table class="table table-striped" id="contentResumen" #contentResumen #tableResumen>
                             <thead>
                                 <tr>
-                                    <th class="text-center" *ngIf="todasSucursalesTTF || seleccionMultiple">Sucursal
+                                    <th class="text-center">Sucursal
                                     </th>
-                                    <th class="text-center" *ngIf="todasEncuestas || seleccionMultipleE">Encuesta
+                                    <th class="text-center">Encuesta
                                     </th>
                                     <th class="text-center">Titulo</th>
                                     <th class="text-center">Pregunta</th>
                                     <th class="text-center">Respuesta</th>
-                                    <th class="text-center">Total</th>
+                                    <th class="text-center">Cantidad de respuestas</th>
                                 </tr>
                             </thead>
                             <tbody *ngIf="!malRequestR">
                                 <tr *ngFor="let servicioResumen of servicioResumen | paginate:configR">
-                                    <td *ngIf="todasSucursalesTTF || seleccionMultiple">
-                                        {{servicioResumen.sucursal}}</td>
-                                    <td *ngIf="todasEncuestas || seleccionMultipleE">
-                                        {{servicioResumen.encuesta}}</td>
+                                    <td> {{servicioResumen.sucursal}}</td>
+                                    <td> {{servicioResumen.encuesta}}</td>
                                     <td> {{servicioResumen.titulo}}</td>
                                     <td> {{servicioResumen.pregunta}}</td>
                                     <td> {{servicioResumen.respuesta}}</td>
@@ -328,6 +323,7 @@
                             [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
                             (pageChange)="pageChangedR($event)">
                         </pagination-controls>
+                        <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotal}}</h4>
                     </div>
                     <br>
                     <button type="button" class="btn btn-info mx-2"
