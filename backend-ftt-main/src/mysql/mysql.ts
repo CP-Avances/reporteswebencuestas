@@ -21,6 +21,7 @@ export default class MySQL {
             database: 'fulltime_ee'
         });
 
+        
         this.conectarDB();
     }
 
