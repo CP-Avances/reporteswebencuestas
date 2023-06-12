@@ -3,8 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const verifivarToken_1 = require("../libs/verifivarToken");
 const express_1 = require("express");
+const verifivarToken_1 = require("../libs/verifivarToken");
 const mysql_1 = __importDefault(require("../mysql/mysql"));
 const router = (0, express_1.Router)();
 /** ************************************************************************************************************ **
@@ -12,8 +12,8 @@ const router = (0, express_1.Router)();
  ** ************************************************************************************************************ **/
 router.get("/getallsucursales", verifivarToken_1.TokenValidation, (req, res) => {
     const query = `
-        SELECT * FROM sucursal ORDER BY NOM_SUC ASC;
-        `;
+    SELECT * FROM sucursal ORDER BY NOM_SUC ASC;
+    `;
     mysql_1.default.ejecutarQuery(query, (err, empresas) => {
         if (err) {
             res.status(400).json({
@@ -34,7 +34,9 @@ router.get("/getallsucursales", verifivarToken_1.TokenValidation, (req, res) => 
  ** **                           TRATAMIENTO USUARIOS - CAJEROS                                               ** **
  ** ************************************************************************************************************ **/
 router.get("/getallcajeros", verifivarToken_1.TokenValidation, (req, res) => {
-    const query = `SELECT * FROM usuario WHERE TIPO_US = 'Trabajador'`;
+    const query = `
+    SELECT * FROM usuario WHERE TIPO_US = 'Trabajador'
+    `;
     mysql_1.default.ejecutarQuery(query, (err, cajeros) => {
         if (err) {
             res.status(400).json({
@@ -62,12 +64,12 @@ router.get("/getallencuestas/:sucursales", verifivarToken_1.TokenValidation, (re
         todasSucursales = true;
     }
     const query = `
-            SELECT encuesta.COD_EN, encuesta.NOM_EN
-            FROM sucursal
-            JOIN sucursalxencuesta ON sucursal.COD_SUC = sucursalxencuesta.COD_SUC
-            JOIN encuesta ON sucursalxencuesta.COD_EN = encuesta.COD_EN
-            ${!todasSucursales ? `WHERE sucursal.COD_SUC IN (${listaSucursales})` : ''};
-            `;
+    SELECT encuesta.COD_EN, encuesta.NOM_EN
+    FROM sucursal
+    JOIN sucursalxencuesta ON sucursal.COD_SUC = sucursalxencuesta.COD_SUC
+    JOIN encuesta ON sucursalxencuesta.COD_EN = encuesta.COD_EN
+      ${!todasSucursales ? `WHERE sucursal.COD_SUC IN (${listaSucursales})` : ''};
+    `;
     mysql_1.default.ejecutarQuery(query, (err, cajeros) => {
         if (err) {
             res.status(400).json({
@@ -85,7 +87,6 @@ router.get("/getallencuestas/:sucursales", verifivarToken_1.TokenValidation, (re
     });
 });
 router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:usuarios/:encuesta/:preguntas", verifivarToken_1.TokenValidation, (req, res) => {
-    console.log('recibe encuestas ', req.params.encuesta);
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
@@ -108,7 +109,6 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:usua
     if (preguntasArray.includes("-2")) {
         todasPreguntas = true;
     }
-    console.log('verificar variables ', todasEncuestas, ' ', 'cajeros ', todosUsuarios);
     let diaCompleto = false;
     let hFinAux = 0;
     if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
@@ -118,8 +118,8 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:usua
         hFinAux = parseInt(hFin) - 1;
     }
     const query = `
-        SELECT DISTINCT
-        DISTINCT(evaluacion.COD_PR),
+      SELECT DISTINCT
+      DISTINCT(evaluacion.COD_PR),
         evaluacion.COD_EV,
         evaluacion.VAL_EV AS evaluacion_VAL_EV,
         pregunta.SEC_PR AS pregunta_SEC_PR,
@@ -129,17 +129,17 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:usua
         CAST(STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d %H:%i:%s') AS CHAR) AS fecha,
         CAST(STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') AS CHAR) AS fecha_,
         CAST(DATE_FORMAT(evaluacion.FECH_EV, "%H:%i:%S") AS CHAR) AS hora_,
-        CASE evaluacion.VAL_EV
-          WHEN 1 THEN pregunta.ETIQUNO_PR
-          WHEN 2 THEN pregunta.ETIQDOS_PR
-          WHEN 3 THEN pregunta.ETIQTRES_PR
-          WHEN 4 THEN pregunta.ETIQCUATRO_PR
-          WHEN 5 THEN pregunta.ETIQCINCO_PR
-          WHEN 6 THEN pregunta.ETIQSEIS_PR
-          WHEN 7 THEN pregunta.ETIQSIETE_PR
-          WHEN 8 THEN pregunta.ETIQOCHO_PR
-          WHEN 9 THEN pregunta.ETIQNUEVE_PR
-          WHEN 10 THEN pregunta.ETIQDIEZ_PR
+      CASE evaluacion.VAL_EV
+        WHEN 1 THEN pregunta.ETIQUNO_PR
+        WHEN 2 THEN pregunta.ETIQDOS_PR
+        WHEN 3 THEN pregunta.ETIQTRES_PR
+        WHEN 4 THEN pregunta.ETIQCUATRO_PR
+        WHEN 5 THEN pregunta.ETIQCINCO_PR
+        WHEN 6 THEN pregunta.ETIQSEIS_PR
+        WHEN 7 THEN pregunta.ETIQSIETE_PR
+        WHEN 8 THEN pregunta.ETIQOCHO_PR
+        WHEN 9 THEN pregunta.ETIQNUEVE_PR
+        WHEN 10 THEN pregunta.ETIQDIEZ_PR
         END AS respuesta
     FROM
         PREGUNTA pregunta INNER JOIN EVALUACION evaluacion ON pregunta.COD_PR = evaluacion.COD_PR
@@ -148,14 +148,13 @@ router.get("/encuestausuarios/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:usua
     WHERE STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todosUsuarios ? `AND evaluacion.COD_US IN (${listaUsuarios}) ` : ''}
         ${!todasEncuestas ? `AND evaluacion.COD_PR IN (SELECT COD_PR FROM pregunta WHERE cod_en IN (${listaEncuestas})
-        ${!todasPreguntas ? `AND COD_PR IN (${listaPreguntas})` : ''})` : ''}
+        ${!todasPreguntas ? `AND COD_PR IN (${listaPreguntas})` : ''}) ` : ''}
+        ${todasEncuestas ? `${!todasPreguntas ? `AND evaluacion.COD_PR IN (${listaPreguntas})` : ''} ` : ''}
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
     ORDER BY evaluacion.COD_PR ASC;
     `;
-    console.log('query usuarios', query);
     mysql_1.default.ejecutarQuery(query, (err, turnos) => {
         if (err) {
-            console.log('error ', err);
             res.status(400).json({
                 ok: false,
                 error: err,
@@ -180,9 +179,9 @@ router.get("/getallpreguntas/:encuestas", verifivarToken_1.TokenValidation, (req
         todasEncuestas = true;
     }
     const query = `
-            SELECT * FROM pregunta
-            ${!todasEncuestas ? `WHERE COD_EN IN (${listaEncuestas})` : ''};
-            `;
+    SELECT * FROM pregunta
+      ${!todasEncuestas ? `WHERE COD_EN IN (${listaEncuestas})` : ''};
+    `;
     mysql_1.default.ejecutarQuery(query, (err, cajeros) => {
         if (err) {
             res.status(400).json({
@@ -231,31 +230,25 @@ router.get("/preguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:u
         hFinAux = parseInt(hFin) - 1;
     }
     const query = `
-
-    SELECT 
-      titulo,
-      pregunta,
-      encuesta,
-      respuesta,
-      usuario,
-      COUNT(*) AS conteo_respuestas
-  FROM (
-      SELECT
+      SELECT titulo, pregunta, encuesta, respuesta, usuario,
+        COUNT(*) AS conteo_respuestas
+      FROM (
+        SELECT
           pregunta.SEC_PR AS titulo,
           pregunta.PREG_PR AS pregunta,
           encuesta.NOM_EN AS encuesta,
           usuario.NOM_US AS usuario,
           CASE evaluacion.VAL_EV
-              WHEN 1 THEN pregunta.ETIQUNO_PR
-              WHEN 2 THEN pregunta.ETIQDOS_PR
-              WHEN 3 THEN pregunta.ETIQTRES_PR
-              WHEN 4 THEN pregunta.ETIQCUATRO_PR
-              WHEN 5 THEN pregunta.ETIQCINCO_PR
-              WHEN 6 THEN pregunta.ETIQSEIS_PR
-              WHEN 7 THEN pregunta.ETIQSIETE_PR
-              WHEN 8 THEN pregunta.ETIQOCHO_PR
-              WHEN 9 THEN pregunta.ETIQNUEVE_PR
-              WHEN 10 THEN pregunta.ETIQDIEZ_PR
+            WHEN 1 THEN pregunta.ETIQUNO_PR
+            WHEN 2 THEN pregunta.ETIQDOS_PR
+            WHEN 3 THEN pregunta.ETIQTRES_PR
+            WHEN 4 THEN pregunta.ETIQCUATRO_PR
+            WHEN 5 THEN pregunta.ETIQCINCO_PR
+            WHEN 6 THEN pregunta.ETIQSEIS_PR
+            WHEN 7 THEN pregunta.ETIQSIETE_PR
+            WHEN 8 THEN pregunta.ETIQOCHO_PR
+            WHEN 9 THEN pregunta.ETIQNUEVE_PR
+            WHEN 10 THEN pregunta.ETIQDIEZ_PR
           END AS respuesta
       FROM
           evaluacion
@@ -263,14 +256,13 @@ router.get("/preguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:u
           JOIN encuesta ON pregunta.COD_EN = encuesta.COD_EN
           JOIN usuario ON evaluacion.COD_US = usuario.COD_US
       WHERE STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
-      ${!todosUsuarios ? `AND evaluacion.COD_US IN (${listaUsuarios}) ` : ''}
-      ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-      ${!todasPreguntas ? `AND pregunta.COD_PR IN (${listaPreguntas})` : ''}
-      ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
-      ) subconsulta
+        ${!todosUsuarios ? `AND evaluacion.COD_US IN (${listaUsuarios}) ` : ''}
+        ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
+        ${!todasPreguntas ? `AND pregunta.COD_PR IN (${listaPreguntas})` : ''}
+        ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
+        ) subconsulta
       GROUP BY encuesta, usuario, titulo, pregunta, respuesta;
     `;
-    console.log(query);
     mysql_1.default.ejecutarQuery(query, (err, turnos) => {
         if (err) {
             res.status(400).json({
@@ -290,7 +282,6 @@ router.get("/preguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:u
  ** **                                     RESUMEN DE PREGUNTAS                                               ** **
  ** ************************************************************************************************************ **/
 router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:preguntas", verifivarToken_1.TokenValidation, (req, res) => {
-    console.log(' una data-*******', req.params.sucursales);
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
@@ -322,30 +313,25 @@ router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
         hFinAux = parseInt(hFin) - 1;
     }
     const query = `
-    SELECT 
-      titulo,
-      pregunta,
-      encuesta,
-      sucursal,
-      respuesta,
-      COUNT(*) AS conteo_respuestas
-  FROM (
-      SELECT
+      SELECT titulo, pregunta, encuesta, sucursal, respuesta,
+        COUNT(*) AS conteo_respuestas
+      FROM (
+        SELECT
           pregunta.SEC_PR AS titulo,
           pregunta.PREG_PR AS pregunta,
           encuesta.NOM_EN AS encuesta,
           sucursal.NOM_SUC AS sucursal,
           CASE evaluacion.VAL_EV
-              WHEN 1 THEN pregunta.ETIQUNO_PR
-              WHEN 2 THEN pregunta.ETIQDOS_PR
-              WHEN 3 THEN pregunta.ETIQTRES_PR
-              WHEN 4 THEN pregunta.ETIQCUATRO_PR
-              WHEN 5 THEN pregunta.ETIQCINCO_PR
-              WHEN 6 THEN pregunta.ETIQSEIS_PR
-              WHEN 7 THEN pregunta.ETIQSIETE_PR
-              WHEN 8 THEN pregunta.ETIQOCHO_PR
-              WHEN 9 THEN pregunta.ETIQNUEVE_PR
-              WHEN 10 THEN pregunta.ETIQDIEZ_PR
+            WHEN 1 THEN pregunta.ETIQUNO_PR
+            WHEN 2 THEN pregunta.ETIQDOS_PR
+            WHEN 3 THEN pregunta.ETIQTRES_PR
+            WHEN 4 THEN pregunta.ETIQCUATRO_PR
+            WHEN 5 THEN pregunta.ETIQCINCO_PR
+            WHEN 6 THEN pregunta.ETIQSEIS_PR
+            WHEN 7 THEN pregunta.ETIQSIETE_PR
+            WHEN 8 THEN pregunta.ETIQOCHO_PR
+            WHEN 9 THEN pregunta.ETIQNUEVE_PR
+            WHEN 10 THEN pregunta.ETIQDIEZ_PR
           END AS respuesta
       FROM
           evaluacion
@@ -354,14 +340,13 @@ router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
           JOIN sucursalxencuesta ON encuesta.COD_EN = sucursalxencuesta.COD_EN
           JOIN sucursal ON sucursalxencuesta.COD_SUC = sucursal.CIU_SUC
       WHERE STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
-      ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
-      ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-      ${!todasPreguntas ? `AND pregunta.COD_PR IN (${listaPreguntas})` : ''}
-      ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
-      ) subconsulta
+        ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
+        ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
+        ${!todasPreguntas ? `AND pregunta.COD_PR IN (${listaPreguntas})` : ''}
+        ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
+        ) subconsulta
       GROUP BY titulo, pregunta, respuesta, sucursal, encuesta;
     `;
-    console.log(query);
     mysql_1.default.ejecutarQuery(query, (err, turnos) => {
         if (err) {
             res.status(400).json({
@@ -381,7 +366,6 @@ router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
  ** **                               ENTRADAS Y SALIDAD DEL SISTEMA                                           ** **
  ** ************************************************************************************************************ **/
 router.get("/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajeros", verifivarToken_1.TokenValidation, (req, res) => {
-    console.log('valor ingresa ', req.params.cajeros);
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
@@ -401,20 +385,19 @@ router.get("/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajero
         hFinAux = parseInt(hFin) - 1;
     }
     const query = `
-    SELECT
-    actividad.COD_AC AS actividad_COD_AC,
-    actividad.COD_US AS actividad_COD_US,
-    CAST(STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d %H:%i:%s') AS CHAR) AS Fecha,
-    CAST(STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d') AS CHAR) AS fecha_,
-    CAST(DATE_FORMAT(actividad.FECH_ULT, "%H:%i:%S") AS CHAR) as hora_,
-    usuario.NOM_US AS Usuario
-    FROM
-    usuario usuario INNER JOIN actividad actividad ON usuario.COD_US = actividad.COD_US
-    WHERE STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
-    ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros})` : ''} 
-    ${!diaCompleto ? `AND HOUR(actividad.FECH_ULT) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
-    ;`;
-    console.log('query entradas ', query);
+      SELECT
+        actividad.COD_AC AS actividad_COD_AC,
+        actividad.COD_US AS actividad_COD_US,
+        CAST(STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d %H:%i:%s') AS CHAR) AS Fecha,
+        CAST(STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d') AS CHAR) AS fecha_,
+        CAST(DATE_FORMAT(actividad.FECH_ULT, "%H:%i:%S") AS CHAR) as hora_,
+        usuario.NOM_US AS Usuario
+      FROM
+        usuario usuario INNER JOIN actividad actividad ON usuario.COD_US = actividad.COD_US
+      WHERE STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
+        ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros})` : ''} 
+        ${!diaCompleto ? `AND HOUR(actividad.FECH_ULT) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''};
+      `;
     mysql_1.default.ejecutarQuery(query, (err, turnos) => {
         if (err) {
             res.status(400).json({

@@ -8,6 +8,9 @@
             <ul class="navbar-nav mr-auto">
                 <span>
                     <img *ngIf="mostrarLogo" [src]="urlImagen" alt="Logo" class="imagen dark-logo ml-2" />
+                    <a routerLink="/usuarios">
+                        <img src="./assets/images/home.png" alt="user" class="profile-pic" />
+                    </a>
                 </span>
             </ul>
             <ul class="navbar-nav mr-auto">
@@ -22,15 +25,25 @@
             <ul class="navbar-nav my-lg-0">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle waves-effect waves-dark" href="" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false"><img src="./assets/images/users/user.jpg" alt="user"
-                            class="profile-pic" /></a>
+                        aria-haspopup="true" aria-expanded="false">
+                        <img src="./assets/images/users/user.jpg" alt="user" class="profile-pic" />
+                    </a>
                     <div class="dropdown-menu dropdown-menu-right animated fadeIn">
-
                         <ul class="dropdown-user">
-                            <li><a (click)="salir()"><i class="fa fa-power-off"></i> Salir</a></li>
+                            <li>
+                                <a (click)="salir()">
+                                    <i class="fa fa-power-off"></i>
+                                    Salir
+                                </a>
+                            </li>
                         </ul>
                         <ul class="dropdown-user">
-                            <li> <a routerLink="configuracion"><i class="fa fa-cog"></i> Configuración</a></li>
+                            <li>
+                                <a routerLink="configuracion">
+                                    <i class="fa fa-cog"></i>
+                                    Configuración
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
