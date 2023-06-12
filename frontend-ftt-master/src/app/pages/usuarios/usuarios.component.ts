@@ -1319,73 +1319,39 @@ export class UsuariosComponent implements OnInit {
 
   //Funcion para llenar la tabla con la consulta realizada al backend
   CampoDetalleTotal(servicio: any[]) {
-    if (this.todasSucursalesTTF) {
-      return {
-        style: "tableMargin",
-        table: {
-          headerRows: 1,
-          widths: ["auto", "auto", "*", 200, "auto", "auto"],
+    return {
+      style: "tableMargin",
+      table: {
+        headerRows: 1,
+        widths: ["auto", "auto", "*", 200, "auto", "auto"],
 
-          body: [
-            [
-              { text: "Cajero", style: "tableHeader" },
-              { text: "Encuesta", style: "tableHeader" },
-              { text: "Titulo", style: "tableHeader" },
-              { text: "Pregunta", style: "tableHeader" },
-              { text: "Respuesta", style: "tableHeader" },
-              { text: "Cantidad de respuestas", style: "tableHeader" },
-            ],
-            ...servicio.map((res) => {
-              return [
-                { style: "itemsTable", text: res.usuario },
-                { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.titulo },
-                { style: "itemsTable", text: res.pregunta },
-                { style: "itemsTable", text: res.respuesta },
-                { style: "itemsTable", text: res.conteo_respuestas },
-              ];
-            }),
+        body: [
+          [
+            { text: "Cajero", style: "tableHeader" },
+            { text: "Encuesta", style: "tableHeader" },
+            { text: "Titulo", style: "tableHeader" },
+            { text: "Pregunta", style: "tableHeader" },
+            { text: "Respuesta", style: "tableHeader" },
+            { text: "Cantidad de respuestas", style: "tableHeader" },
           ],
+          ...servicio.map((res) => {
+            return [
+              { style: "itemsTable", text: res.usuario },
+              { style: "itemsTable", text: res.encuesta },
+              { style: "itemsTable", text: res.titulo },
+              { style: "itemsTable", text: res.pregunta },
+              { style: "itemsTable", text: res.respuesta },
+              { style: "itemsTable", text: res.conteo_respuestas },
+            ];
+          }),
+        ],
+      },
+      layout: {
+        fillColor: function (rowIndex) {
+          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
         },
-        layout: {
-          fillColor: function (rowIndex) {
-            return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-          },
-        },
-      };
-    } else {
-      return {
-        style: "tableMargin",
-        table: {
-          headerRows: 1,
-          widths: ["auto", "auto", "*", 200, "auto"],
-
-          body: [
-            [
-              { text: "Encuesta", style: "tableHeader" },
-              { text: "Fecha", style: "tableHeader" },
-              { text: "Titulo", style: "tableHeader" },
-              { text: "Pregunta", style: "tableHeader" },
-              { text: "Respuesta", style: "tableHeader" },
-            ],
-            ...servicio.map((res) => {
-              return [
-                { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.fecha },
-                { style: "itemsTable", text: res.titulo },
-                { style: "itemsTable", text: res.pregunta },
-                { style: "itemsTable", text: res.respuesta },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex) {
-            return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-          },
-        },
-      };
-    }
+      },
+    };
   }
 
   generarPdfPreguntasResumen(action = "open", pdf: number) {
