@@ -1,5 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, Renderer2, EventEmitter, Output } from '@angular/core';
-import { ServiceService } from '../../services/service.service';
+import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { ImagenesService } from "../../shared/imagenes.service";
 import { AuthenticationService } from '../../services/authentication.service';
 import { ToastrService } from "ngx-toastr";
@@ -25,11 +24,8 @@ export class HeaderComponent implements OnInit {
 
 
   constructor(
-    private serviceService: ServiceService,
     private auth: AuthenticationService,
     private router: Router,
-    private ele: ElementRef, 
-    private renderer: Renderer2,
     private toastr: ToastrService,
     private imagenesService: ImagenesService,
   ) { }
@@ -45,7 +41,7 @@ export class HeaderComponent implements OnInit {
         timeOut: 6000,
       });
       Utils.getImageDataUrlFromLocalPath1("assets/images/logo.png").then(
-        (result) => (this.urlImagen = result,this.mostrarLogo = true)
+        (result) => (this.urlImagen = result, this.mostrarLogo = true)
       );
     });
   }
@@ -53,22 +49,6 @@ export class HeaderComponent implements OnInit {
   salir() {
     this.auth.logout();
     this.router.navigateByUrl('/');
-  }
-
-  mostrarMenu() {
-    this.menuMostrarOcultar.emit(true);
-  }
-
-  ocultarMenu() {
-    this.menuMostrarOcultar.emit(false);
-  }
-
-  w3_open() {
-    document.getElementById("menu-lateral").style.display = "block";
-  }
-
-  w3_close() {
-    document.getElementById("mySidebar").style.display = "none";
   }
 
 }

@@ -6,16 +6,16 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NgChartsModule } from 'ng2-charts';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { DpDatePickerModule } from 'ng2-date-picker';//usando esta libreria
+import { DpDatePickerModule } from 'ng2-date-picker'; //USANDO ESTA LIBRERIA
 
-///////////Paginacion//////////
+// PAGINACION
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { FilterPipe } from './pipes/filter.pipe';
 import { PagesModule } from './pages/pages.module';
 import { AuthModule } from './auth/auth.module';
 import { DatePipe } from '@angular/common';
-//////////Mostrar numeros en graficos
+// MOSTRAR NUMEROS EN GRAFICOS
 import { Chart } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 Chart.register(ChartDataLabels);
@@ -24,7 +24,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 // SEGURIDAD
 import { AuthGuard } from "./guards/auth.guard";
-import {TokenInterceptorService} from './services/token-interceptor.service'
+import { TokenInterceptorService } from './services/token-interceptor.service'
 
 @NgModule({
   declarations: [

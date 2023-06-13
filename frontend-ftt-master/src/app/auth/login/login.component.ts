@@ -42,7 +42,7 @@ export class LoginComponent implements OnInit {
       }, (err) => {
         Swal.fire({
           title: 'Error!',
-          text: 'Usuario o password incorrecto',
+          text: 'Usuario o password incorrecto.',
           icon: 'error'
         })
       })

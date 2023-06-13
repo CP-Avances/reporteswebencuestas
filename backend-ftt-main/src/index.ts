@@ -14,7 +14,7 @@ const server = Server.init(process.env.PORT || 3006);
 
 const port = process.env.PORT || 3006;
 
-//llamar rutas
+// LLAMAR RUTAS
 server.app.use(router);
 server.app.use(usuarios);
 

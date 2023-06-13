@@ -3,25 +3,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const verifivarToken_1 = require("../libs/verifivarToken");
 const express_1 = require("express");
-const mysql_1 = __importDefault(require("../mysql/mysql"));
+const verifivarToken_1 = require("../libs/verifivarToken");
 const multer_1 = __importDefault(require("multer"));
+const mysql_1 = __importDefault(require("../mysql/mysql"));
 const cors_1 = __importDefault(require("cors"));
+const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 let jwt = require('jsonwebtoken');
 const router = (0, express_1.Router)();
+// MANEJO DE RUTAS DE ALMACENAMIENTO DE ARCHIVOS
 const ObtenerRuta = function () {
     var ruta = '';
-    for (var i = 0; i < __dirname.split('\\').length - 2; i++) {
+    let separador = path_1.default.sep;
+    for (var i = 0; i < __dirname.split(separador).length - 2; i++) {
         if (ruta === '') {
-            ruta = __dirname.split('\\')[i];
+            ruta = __dirname.split(separador)[i];
         }
         else {
-            ruta = ruta + "\\" + __dirname.split('\\')[i];
+            ruta = ruta + separador + __dirname.split(separador)[i];
         }
     }
-    return ruta + '\\imagenesReportes';
+    return ruta + separador + 'imagenesReportes';
 };
 const storage = multer_1.default.diskStorage({
     destination: function (req, file, cb) {
@@ -35,6 +38,7 @@ const upload = (0, multer_1.default)({ storage: storage });
 // GUARDAR NOMBRE IMAGEN EN LA BASE DE DATOS
 router.post('/uploadImage', verifivarToken_1.TokenValidation, upload.single('image'), (req, res) => {
     var _a;
+    let separador = path_1.default.sep;
     const filename = (_a = req.file) === null || _a === void 0 ? void 0 : _a.originalname;
     // BUSQUEDA DE LOGO
     const logo = `
@@ -55,7 +59,7 @@ router.post('/uploadImage', verifivarToken_1.TokenValidation, upload.single('ima
                     ActualizarImagen(res, filename);
                 }
                 else {
-                    var direccion = ObtenerRuta() + '\\' + nombreImagen[0].gene_valor;
+                    var direccion = ObtenerRuta() + separador + nombreImagen[0].gene_valor;
                     // ELIMINAR REGISTRO DEL SERVIDOR
                     fs_1.default.unlinkSync(direccion);
                     ActualizarImagen(res, filename);
@@ -67,9 +71,11 @@ router.post('/uploadImage', verifivarToken_1.TokenValidation, upload.single('ima
         }
     });
 });
+// METODO PARA BUSCAR IMAGEN REGISTRADA
 const ImagenBase64LogosEmpresas = function (path_file) {
+    let separador = path_1.default.sep;
     try {
-        var ruta = ObtenerRuta() + '\\' + path_file;
+        var ruta = ObtenerRuta() + separador + path_file;
         let data = fs_1.default.readFileSync(ruta);
         return data.toString('base64');
     }
@@ -77,7 +83,7 @@ const ImagenBase64LogosEmpresas = function (path_file) {
         return 0;
     }
 };
-//rutas prueba
+// RUTAS PRUEBA
 router.get('/heroes', (req, res) => {
     res.json({
         ok: true,
@@ -92,7 +98,7 @@ router.get('/heroes/:id', (req, res) => {
         id: id
     });
 });
-//querys
+// QUERYS
 router.get('/usuarios', verifivarToken_1.TokenValidation, (0, cors_1.default)(), (req, res) => {
     const query = `
         SELECT * FROM usuarios
@@ -114,7 +120,6 @@ router.get('/usuarios', verifivarToken_1.TokenValidation, (0, cors_1.default)(),
 });
 router.get('/usuario/:id', verifivarToken_1.TokenValidation, (req, res) => {
     const id = req.params.id;
-    const usua_codigo = id;
     const escapeId = mysql_1.default.instance.cnn.escape(id);
     const query = `
         SELECT * FROM usuarios WHERE usua_codigo = ${escapeId}
@@ -134,7 +139,7 @@ router.get('/usuario/:id', verifivarToken_1.TokenValidation, (req, res) => {
         }
     });
 });
-//////getuser
+// GETUSER
 router.get('/username/:usua_login', verifivarToken_1.TokenValidation, (req, res) => {
     const username = req.params.usua_login;
     const escapeUsername = mysql_1.default.instance.cnn.escape(username);
@@ -177,7 +182,6 @@ router.post('/login/:usua_login/:usua_password', (req, res) => {
             res.json({
                 ok: true,
                 token
-                //usuario: usuario[0], token
             });
         }
     });
@@ -189,7 +193,9 @@ router.get('/renew', (req, res) => {
     });
 });
 function ActualizarImagen(res, archivo) {
-    const query = `UPDATE general SET gene_valor = '${archivo}' WHERE gene_codigo = 8;`;
+    const query = `
+        UPDATE general SET gene_valor = '${archivo}' WHERE gene_codigo = 8;
+        `;
     mysql_1.default.ejecutarQuery(query, (err, usuario) => {
         if (err) {
             res.status(400).json({
@@ -200,15 +206,14 @@ function ActualizarImagen(res, archivo) {
         else {
             res.json({
                 ok: true,
-                //usuario: usuario[0], token
             });
         }
     });
 }
 router.get('/nombreImagen', verifivarToken_1.TokenValidation, (req, res) => {
     const query = `
-      SELECT gene_valor FROM general WHERE gene_codigo = 8;
-      `;
+        SELECT gene_valor FROM general WHERE gene_codigo = 8;
+        `;
     ;
     let nombreImagen;
     mysql_1.default.ejecutarQuery(query, (err, imagen) => {
@@ -228,10 +233,12 @@ router.get('/nombreImagen', verifivarToken_1.TokenValidation, (req, res) => {
         }
     });
 });
-//Guardar meta de turnos en la base de datos
+// GUARDAR META DE TURNOS EN LA BASE DE DATOS
 router.get('/setMeta/:valor', verifivarToken_1.TokenValidation, (req, res) => {
     const valor = req.params.valor;
-    const query = `UPDATE general SET gene_valor = '${valor}' WHERE gene_codigo = 9;`;
+    const query = `
+        UPDATE general SET gene_valor = '${valor}' WHERE gene_codigo = 9;
+        `;
     mysql_1.default.ejecutarQuery(query, (err, usuario) => {
         if (err) {
             res.status(400).json({
@@ -248,8 +255,8 @@ router.get('/setMeta/:valor', verifivarToken_1.TokenValidation, (req, res) => {
 });
 router.get('/getMeta', verifivarToken_1.TokenValidation, (req, res) => {
     const query = `
-      SELECT gene_valor FROM general WHERE gene_codigo = 9;
-      `;
+        SELECT gene_valor FROM general WHERE gene_codigo = 9;
+        `;
     mysql_1.default.ejecutarQuery(query, (err, valor) => {
         if (err) {
             res.status(400).json({
@@ -265,13 +272,15 @@ router.get('/getMeta', verifivarToken_1.TokenValidation, (req, res) => {
         }
     });
 });
-//Guardar marca de agua
+// GUARDAR MARCA DE AGUA
 router.get('/setMarca/:marca', verifivarToken_1.TokenValidation, (req, res) => {
     let marca = req.params.marca;
     if (marca == "desactivar") {
         marca = " ";
     }
-    const query = `UPDATE general SET gene_valor = '${marca}' WHERE gene_codigo = 10;`;
+    const query = `
+        UPDATE general SET gene_valor = '${marca}' WHERE gene_codigo = 10;
+        `;
     mysql_1.default.ejecutarQuery(query, (err, usuario) => {
         if (err) {
             res.status(400).json({
@@ -288,8 +297,8 @@ router.get('/setMarca/:marca', verifivarToken_1.TokenValidation, (req, res) => {
 });
 router.get('/getMarca', verifivarToken_1.TokenValidation, (req, res) => {
     const query = `
-      SELECT gene_valor FROM general WHERE gene_codigo = 10;
-      `;
+        SELECT gene_valor FROM general WHERE gene_codigo = 10;
+        `;
     mysql_1.default.ejecutarQuery(query, (err, marca) => {
         if (err) {
             res.status(400).json({
