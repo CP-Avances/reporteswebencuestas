@@ -4,8 +4,12 @@
         <form>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item" (click)="limpiar()">
-                    <a class="nav-link active" id="totalfecha-tab" data-toggle="tab" href="#resumen" role="tab"
-                        aria-controls="totalfecha" aria-selected="true">RESPUESTAS RESUMEN</a>
+                    <a class="nav-link active" id="encuesta-tab" data-toggle="tab" href="#encuestas" role="tab"
+                        aria-controls="encuestas" aria-selected="true">ENCUESTAS</a>
+                </li>
+                <li class="nav-item" (click)="limpiar()">
+                    <a class="nav-link" id="resumen-tab" data-toggle="tab" href="#resumen" role="tab"
+                        aria-controls="resumen" aria-selected="false">RESPUESTAS RESUMEN</a>
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link " id="totalfecha-tab" data-toggle="tab" href="#totalfecha" role="tab"
@@ -215,7 +219,7 @@
                 </div>
 
                 <!-- *********************************** RESUMEN PREGUNTAS *************************************** -->
-                <div class="tab-pane fade show active" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
+                <div class="tab-pane fade" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
                     <br><br>
                     <div class="container">
                         <div class="row">
@@ -318,6 +322,108 @@
                         <pagination-controls *ngIf="!malRequestRPag" id="usuariosR"
                             [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
                             (pageChange)="pageChangedR($event)">
+                        </pagination-controls>
+                        <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotal}}</h4>
+                    </div>
+                    <br>
+                    <button type="button" class="btn btn-info mx-2"
+                        (click)="ExportTOExcelPreguntasResumen()">EXCEL</button>
+                    <button type="button" class="btn btn-info"
+                        (click)="generarPdfPreguntasResumen('hola', 1)">PDF</button>
+                </div>
+
+                <!-- *********************************** LISTA DE ENCUESTAS *************************************** -->
+                <div class="tab-pane fade show active" id="encuestas" role="tabpanel" aria-labelledby="encuesta-tab">
+                    <br><br>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="contenedor-fechas mt-2 mb-2">
+                                    <div>
+                                        <label for="fromDateEncuesta">Fecha desde: &nbsp;</label>
+                                        <input type="date" id="fromDateEncuesta" value="{{fromDate}}" [max]="toDate"
+                                            name="fromDateEncuesta" #fromDateEncuesta><br><br>
+                                    </div>
+                                    <div>
+                                        <label for="toDateEncuesta">Fecha hasta: &nbsp;</label>
+                                        <input type="date" id="toDateEncuesta" value="{{toDate}}" [max]="toDate"
+                                            name="toDateEncuesta" #toDateEncuesta>
+                                    </div>
+                                </div>
+                                <div class="contenedor-horas">
+                                    <select class="form-control" name="selectmake" #horaInicioE>
+                                        <option value="-1" selected>Hora Inicio</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                    <select class="form-control ml-2" name="selectmake" #horaFinE>
+                                        <option value="-1" selected>Hora Fin</option>
+                                        <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
+                                    <mat-option [value]="-1" (click)="selectAll('todasSucursalesTTF')">
+                                        Todas las sucursales
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
+                                        (click)="selectAll('sucursalesSeleccionadasE')" [disabled]="todasSucursalesTTF">
+                                        {{option.NOM_SUC}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(value)]="selectedEncuestas" placeholder="Encuestas">
+                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2"
+                                        (click)="selectAll('todasEncuestas')">
+                                        Todas las encuestas
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
+                                        (click)="selectAll('encuestasSeleccionadas')" [disabled]="todasEncuestas">
+                                        {{option.NOM_EN}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <button type="button" class="btn btn-search" (click)="buscarListaEncuestas()">
+                                    <span class="glyphicon glyphicon-filter"></span> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <h3>RESPUESTAS</h3>
+                    <hr>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="contentEncuesta" #contentEncuesta #tableEncuesta>
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Sucursal
+                                    </th>
+                                    <th class="text-center">Encuesta
+                                    </th>
+                                    <th class="text-center">Titulo</th>
+                                    <th class="text-center">Pregunta</th>
+                                    <th class="text-center">Respuesta</th>
+                                    <th class="text-center">Cantidad de respuestas</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="!malRequestE">
+                                <tr *ngFor="let servicioEncuesta of servicioEncuesta | paginate:configE">
+                                    <td> {{servicioEncuesta.sucursal}}</td>
+                                    <td> {{servicioEncuesta.encuesta}}</td>
+                                    <td> {{servicioEncuesta.titulo}}</td>
+                                    <td> {{servicioEncuesta.pregunta}}</td>
+                                    <td> {{servicioEncuesta.respuesta}}</td>
+                                    <td> {{servicioEncuesta.conteo_respuestas}} </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <pagination-controls *ngIf="!malRequestEPag" id="usuariosR"
+                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
+                            (pageChange)="pageChangedE($event)">
                         </pagination-controls>
                         <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotal}}</h4>
                     </div>

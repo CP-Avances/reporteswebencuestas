@@ -226,15 +226,20 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
+    console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
+    console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
+    console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
+    console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
     const listaPreguntas = req.params.preguntas;
     const preguntasArray = listaPreguntas.split(",");
+    console.log('ver preguntas ', listaPreguntas)
 
     let todasSucursales = false;
     let todasEncuestas = false;

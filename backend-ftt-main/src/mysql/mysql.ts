@@ -13,9 +13,9 @@ export default class MySQL {
         this.cnn = mysql.createConnection({
             host: '192.168.0.145',
             port: 3307,
-            user: 'fte',
+            user: 'admin123',
             password: 'admin123',
-            database: 'fulltime_evalua'
+            database: 'fulltime_encuesta'
         });
 
         this.conectarDB();

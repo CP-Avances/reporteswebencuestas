@@ -37,8 +37,10 @@ export class UsuariosComponent implements OnInit {
   @ViewChild("toDateTurnosTotalFecha") toDateTurnosTotalFecha: ElementRef;
   @ViewChild("fromDateResumen") fromDateResumen: ElementRef;
   @ViewChild("toDateResumen") toDateResumen: ElementRef;
-  @ViewChild("fromDateTurnosMeta") fromDateTurnosMeta: ElementRef;
-  @ViewChild("toDateTurnosMeta") toDateTurnosMeta: ElementRef;
+  @ViewChild("fromDateEncuesta") fromDateEncuesta: ElementRef;
+  @ViewChild("toDateEncuesta") toDateEncuesta: ElementRef;
+
+
   @ViewChild("fromDatePromAtencion") fromDatePromAtencion: ElementRef;
   @ViewChild("toDatePromAtencion") toDatePromAtencion: ElementRef;
   @ViewChild("fromDateTiempoAtencion") fromDateTiempoAtencion: ElementRef;
@@ -54,8 +56,11 @@ export class UsuariosComponent implements OnInit {
   @ViewChild("horaFinTTF") horaFinTTF: ElementRef;
   @ViewChild("horaInicioR") horaInicioR: ElementRef;
   @ViewChild("horaFinR") horaFinR: ElementRef;
-  @ViewChild("horaInicioTM") horaInicioTM: ElementRef;
-  @ViewChild("horaFinTM") horaFinTM: ElementRef;
+  @ViewChild("horaInicioE") horaInicioE: ElementRef;
+  @ViewChild("horaFinE") horaFinE: ElementRef;
+
+
+
   @ViewChild("horaInicioTPA") horaInicioTPA: ElementRef;
   @ViewChild("horaFinTPA") horaFinTPA: ElementRef;
   @ViewChild("horaInicioTA") horaInicioTA: ElementRef;
@@ -73,6 +78,7 @@ export class UsuariosComponent implements OnInit {
   servicioTurnosFecha: any = [];
   servicioTurnosTotalFecha: any = [];
   servicioResumen: any = [];
+  servicioEncuesta: any = [];
 
   // BANDERAS PARA MOSTRAR LA TABLA CORRESPONDIENTE A LAS CONSULTAS
   todasSucursalesTPA: boolean = false;
@@ -90,9 +96,11 @@ export class UsuariosComponent implements OnInit {
   malRequestTF: boolean = false;
   malRequestTTF: boolean = false;
   malRequestR: boolean = false;
+  malRequestE: boolean = false;
   malRequestTFPag: boolean = false;
   malRequestTTFPag: boolean = false;
   malRequestRPag: boolean = false;
+  malRequestEPag: boolean = false;
 
   // USUARIO QUE INGRESO AL SISTEMA
   userDisplayName: any;
@@ -101,6 +109,7 @@ export class UsuariosComponent implements OnInit {
   configTF: any;
   configTTF: any;
   configR: any;
+  configE: any;
 
   // FECHA CAPTURADA DEL SERVIDOR
   date: any;
@@ -182,6 +191,13 @@ export class UsuariosComponent implements OnInit {
       currentPage: 1,
       totalItems: this.servicioResumen.length,
     };
+    // RESUMEN ENCUESTAS REALIZADAS
+    this.configE = {
+      id: "usuariosE",
+      itemsPerPage: this.MAX_PAGS,
+      currentPage: 1,
+      totalItems: this.servicioEncuesta.length,
+    };
     for (let i = 0; i <= 24; i++) {
       this.horas.push(i);
     }
@@ -199,6 +215,10 @@ export class UsuariosComponent implements OnInit {
   // RESUMEN PREGUNTAS
   pageChangedR(event: any) {
     this.configR.currentPage = event;
+  }
+  // RESUMEN ENCUESTAS
+  pageChangedE(event: any) {
+    this.configE.currentPage = event;
   }
 
   ngOnInit(): void {
@@ -218,6 +238,7 @@ export class UsuariosComponent implements OnInit {
     this.malRequestTFPag = true;
     this.malRequestTTFPag = true;
     this.malRequestRPag = true;
+    this.malRequestEPag = true;
 
     // CARGAR LOGO PARA LOS REPORTES
     this.imagenesService
@@ -270,12 +291,12 @@ export class UsuariosComponent implements OnInit {
         this.todasEncuestas = !this.todasEncuestas;
         this.todasEncuestas ? this.getPreguntas(this.selectedEncuestas) : null;
         break;
-        case "encuestasSeleccionadas":
-          this.seleccionMultipleE = this.selectedEncuestas.length > 1;
-          this.selectedEncuestas.length > 0
-            ? this.getPreguntas(this.selectedEncuestas)
-            : null;
-          break;
+      case "encuestasSeleccionadas":
+        this.seleccionMultipleE = this.selectedEncuestas.length > 1;
+        this.selectedEncuestas.length > 0
+          ? this.getPreguntas(this.selectedEncuestas)
+          : null;
+        break;
       case "cajerosSeleccionados":
         this.getEncuestas("-1");
         break;
@@ -319,7 +340,12 @@ export class UsuariosComponent implements OnInit {
   getEncuestas(sucursal: any) {
     this.serviceService.getAllEncuestas(sucursal).subscribe(
       (cajeros: any) => {
-        this.encuestas = cajeros.cajeros;
+        let respuesta = cajeros.cajeros;
+        this.encuestas = respuesta.filter(
+          (valor: any, indice: any, self: any) =>
+            self.findIndex((v: any) => v.COD_EN === valor.COD_EN) === indice
+        );
+        //console.log(' encuestas ', this.encuestas)
         this.mostrarEncuestas = true;
       },
       (error) => {
@@ -618,6 +644,93 @@ export class UsuariosComponent implements OnInit {
         );
     }
   }
+
+  /** ********************************************************************************************************** **
+   ** **                                        LISTA DE ENCUESTAS                                            ** **
+   ** ********************************************************************************************************** **/
+
+   buscarListaEncuestas() {
+    // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
+    var fechaDesde = this.fromDateEncuesta.nativeElement.value.toString().trim();
+    var fechaHasta = this.toDateEncuesta.nativeElement.value.toString().trim();
+
+    let horaInicio = this.horaInicioE.nativeElement.value;
+    let horaFin = this.horaFinE.nativeElement.value;
+
+    if (this.sucursalesSeleccionadas.length !== 0) {
+      this.serviceService
+        .getPreguntasResumen(
+          fechaDesde,
+          fechaHasta,
+          horaInicio,
+          horaFin,
+          this.sucursalesSeleccionadas,
+          this.selectedEncuestas,
+          '-2'
+        )
+        .subscribe(
+          (servicio: any) => {
+            console.log(' servicio encuesta ', servicio)
+            // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
+            this.servicioEncuesta = servicio.turnos;
+            this.malRequestE = false;
+            this.malRequestEPag = false;
+
+            // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
+            if (this.configE.currentPage > 1) {
+              this.configE.currentPage = 1;
+            }
+
+            let totalE = this.servicioEncuesta.map(
+              (res) => res.conteo_respuestas
+            );
+            let total = 0;
+            for (let i = 0; i < totalE.length; i++) {
+              total += totalE[i];
+            }
+            this.respuestasTotal = total;
+          },
+          (error) => {
+            if (error.status == 400) {
+              // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
+              this.servicioEncuesta = null;
+              this.malRequestE = true;
+              this.malRequestEPag = true;
+
+              // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
+              // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
+              if (this.servicioEncuesta == null) {
+                this.configE.totalItems = 0;
+              } else {
+                this.configE.totalItems = this.servicioEncuesta.length;
+              }
+
+              // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
+              this.configE = {
+                itemsPerPage: this.MAX_PAGS,
+                currentPage: 1,
+              };
+
+              // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
+              this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
+                timeOut: 6000,
+              });
+            }
+          }
+        );
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
 
   /** ********************************************************************************************************** **
    ** **                                          ENCUESTA INDIVIDUAL                                         ** **
