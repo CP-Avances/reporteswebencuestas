@@ -60,11 +60,19 @@ export class HeaderComponent implements OnInit {
   }
 
   w3_open() {
-    document.getElementById("menu-lateral").style.display = "block";
+    const menu_lateral = document.getElementById("menu-lateral");
+    if(menu_lateral){
+      menu_lateral.style.display = "block";
+    }
+    //document.getElementById("menu-lateral").style.display = "block";
   }
 
   w3_close() {
-    document.getElementById("mySidebar").style.display = "none";
+    const mySidebar = document.getElementById("mySidebar");
+    if(mySidebar){
+      mySidebar.style.display = "none";
+    }
+    //document.getElementById("mySidebar").style.display = "none";
   }
 
 }

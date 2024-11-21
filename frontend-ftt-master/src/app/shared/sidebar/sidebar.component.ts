@@ -14,7 +14,7 @@ export class SidebarComponent implements OnInit{
 
   isMenuOpen = true;
 
-  userDisplayName = '';
+  userDisplayName:any = '';
 
   constructor(
     public router: Router,

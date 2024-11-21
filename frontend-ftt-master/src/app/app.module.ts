@@ -4,7 +4,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { NgChartsModule } from 'ng2-charts';
+import { BaseChartDirective } from 'ng2-charts';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { DpDatePickerModule } from 'ng2-date-picker'; //USANDO ESTA LIBRERIA
 
@@ -36,7 +36,7 @@ import { TokenInterceptorService } from './services/token-interceptor.service';
     BrowserAnimationsModule,
     AppRoutingModule,
     HttpClientModule,
-    NgChartsModule,
+    BaseChartDirective ,
     FormsModule,
     DpDatePickerModule,
     PagesModule,

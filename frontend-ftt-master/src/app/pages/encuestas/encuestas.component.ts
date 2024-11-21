@@ -9,12 +9,9 @@ import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
 
 // COMPLEMENTOS PARA PDF Y EXCEL
-import * as pdfFonts from "pdfmake/build/vfs_fonts";
-import * as pdfMake from "pdfmake/build/pdfmake";
+import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import * as XLSX from "xlsx";
 import moment from "moment";
-
-(<any>pdfMake).vfs = pdfFonts.pdfMake.vfs;
 
 const EXCEL_EXTENSION = ".xlsx";
 
@@ -144,7 +141,7 @@ export class EncuestasComponent {
   seleccionMultipleE: boolean = false;
   seleccionMultipleI: boolean = false;
   encuestaSeleccionada: string[] = [];
-  cajeroSeleccionado: string;
+  cajeroSeleccionado: any;
 
   //MOSTRAR CAJEROS
   mostrarCajeros: boolean = false;
@@ -169,7 +166,8 @@ export class EncuestasComponent {
     private router: Router,
     private auth: AuthenticationService,
     public datePipe: DatePipe,
-    private imagenesService: ImagenesService
+    private imagenesService: ImagenesService,
+    public validar: ValidacionesService
   ) {
     // SETEO DE ITEM DE PAGINACION CUANTOS ITEMS POR PAGINA, DESDE QUE PAGINA EMPIEZA, EL TOTAL DE ITEMS RESPECTIVAMENTE
     // ENTRADAS AL SISTEMA
@@ -246,7 +244,7 @@ export class EncuestasComponent {
     // CARGAR LOGO PARA LOS REPORTES
     this.imagenesService
       .cargarImagen()
-      .then((result: string) => {
+      .then((result: any) => {
         this.urlImagen = result;
       })
       .catch((error) => {
@@ -766,7 +764,7 @@ export class EncuestasComponent {
 
   ExportTOExcelEntradasSistema() {
     //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio = [];
+    let jsonServicio:any = [];
     for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
       jsonServicio.push({
         Usuario: this.servicioTurnosFecha[i].Usuario,
@@ -780,7 +778,7 @@ export class EncuestasComponent {
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
     const header = Object.keys(this.servicioTurnosFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols = [];
+    var wscols:any = [];
     for (var i = 0; i < header.length; i++) {
       // CABECERAS AÑADIDAS CON ESPACIOS
       wscols.push({ wpx: 150 });
@@ -795,7 +793,7 @@ export class EncuestasComponent {
 
   ExportTOExcelPreguntasRespuestas() {
     //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio = [];
+    let jsonServicio:any = [];
     for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
       jsonServicio.push({
         Cajero: this.servicioTurnosTotalFecha[i].usuario,
@@ -813,7 +811,7 @@ export class EncuestasComponent {
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
     const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols = [];
+    var wscols:any = [];
     for (var i = 0; i < header.length; i++) {
       // CABECERAS AÑADIDAS CON ESPACIOS
       wscols.push({ wpx: 150 });
@@ -829,7 +827,7 @@ export class EncuestasComponent {
 
   ExportTOExcelPreguntasResumen() {
     //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio = [];
+    let jsonServicio:any = [];
     if (this.todasSucursalesTTF || this.seleccionMultiple) {
       for (let i = 0; i < this.servicioResumen.length; i++) {
         jsonServicio.push({
@@ -857,7 +855,7 @@ export class EncuestasComponent {
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
     const header = Object.keys(this.servicioResumen[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols = [];
+    var wscols:any = [];
     for (var i = 0; i < header.length; i++) {
       // CABECERAS AÑADIDAS CON ESPACIOS
       wscols.push({ wpx: 150 });
@@ -890,7 +888,7 @@ export class EncuestasComponent {
   }
 
   //----GENERACION DE PDF'S----
-  generarPdfEntradasSistema(action = "open", pdf: number) {
+  async generarPdfEntradasSistema(action = "open", pdf: number) {
     //Seteo de rango de fechas de la consulta para impresión en PDF
     var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
       .toString()
@@ -903,7 +901,7 @@ export class EncuestasComponent {
     let horaFin = this.horaFinTF.nativeElement.value;
 
     // var cod = this.codSucursal.nativeElement.value.toString().trim();
-
+    const pdfMake = await this.validar.ImportarPDF();
     //Definicion de funcion delegada para setear estructura del PDF
     let documentDefinition;
     if (pdf === 1) {
@@ -1068,7 +1066,7 @@ export class EncuestasComponent {
     };
   }
 
-  generarPdfPreguntasRespuestas(action = "open", pdf: number) {
+  async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
     //Seteo de rango de fechas de la consulta para impresión en PDF
     var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
       .toString()
@@ -1076,6 +1074,8 @@ export class EncuestasComponent {
     var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
       .toString()
       .trim();
+
+    const pdfMake = await this.validar.ImportarPDF();
 
     //Definicion de funcion delegada para setear estructura del PDF
     let documentDefinition;
@@ -1251,10 +1251,12 @@ export class EncuestasComponent {
     };
   }
 
-  generarPdfPreguntasResumen(action = "open", pdf: number) {
+  async generarPdfPreguntasResumen(action = "open", pdf: number) {
     //Seteo de rango de fechas de la consulta para impresión en PDF
     var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
     var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
+
+    const pdfMake = await this.validar.ImportarPDF();
 
     //Definicion de funcion delegada para setear estructura del PDF
     let documentDefinition;
