@@ -86,6 +86,26 @@ router.get("/getallencuestas/:sucursales", verifivarToken_1.TokenValidation, (re
         }
     });
 });
+router.get("/getencuestastotales", verifivarToken_1.TokenValidation, (req, res) => {
+    const query = `
+    SELECT * FROM encuesta;
+    `;
+    mysql_1.default.ejecutarQuery(query, (err, encuestasT) => {
+        if (err) {
+            res.status(400).json({
+                ok: false,
+                error: err,
+            });
+            console.log(err);
+        }
+        else {
+            res.json({
+                ok: true,
+                encuestasT,
+            });
+        }
+    });
+});
 /** ************************************************************************************************************ **
  ** **                                  TRATAMIENTO PREGUNTAS                                                 ** **
  ** ************************************************************************************************************ **/
@@ -281,6 +301,63 @@ router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
             res.json({
                 ok: true,
                 turnos,
+            });
+        }
+    });
+});
+router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas", verifivarToken_1.TokenValidation, (req, res) => {
+    const fDesde = req.params.fechaDesde;
+    console.log('ver fecha desde ', fDesde);
+    const fHasta = req.params.fechaHasta;
+    console.log('ver fecha hasta ', fHasta);
+    const hInicio = req.params.horaInicio;
+    console.log('ver hora desde ', hInicio);
+    const hFin = req.params.horaFin;
+    console.log('ver hora hasta ', hFin);
+    const listaEncuestas = req.params.encuestas;
+    const encuestasArray = listaEncuestas.split(",");
+    let todasEncuestas = false;
+    let diaCompleto = false;
+    let hFinAux = 0;
+    if (encuestasArray.includes("-2")) {
+        todasEncuestas = true;
+    }
+    if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
+        diaCompleto = true;
+    }
+    else {
+        hFinAux = parseInt(hFin) - 1;
+    }
+    const query = `
+      SELECT
+          encuesta.COD_EN,
+          encuesta.NOM_EN,
+          sucursal.COD_SUC,
+          sucursal.NOM_SUC,
+          COUNT(DISTINCT evaluacion.CODIGO_RESPUESTA) AS total_encuestas
+      FROM
+          evaluacion
+          JOIN pregunta ON evaluacion.COD_PR = pregunta.COD_PR
+          JOIN encuesta ON pregunta.COD_EN = encuesta.COD_EN
+          JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
+      WHERE 
+          STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
+          ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
+          ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
+      GROUP BY 
+          encuesta.COD_EN, encuesta.NOM_EN, sucursal.COD_SUC, sucursal.NOM_SUC;
+    `;
+    mysql_1.default.ejecutarQuery(query, (err, resumen) => {
+        if (err) {
+            res.status(400).json({
+                ok: false,
+                error: err,
+            });
+        }
+        else {
+            res.json({
+                ok: true,
+                resumen,
             });
         }
     });

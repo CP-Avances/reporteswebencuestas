@@ -37,7 +37,6 @@ export class PagesComponent implements OnInit {
           menuLateral.style.display = "block";
         }
       }
-
     }
   }
 

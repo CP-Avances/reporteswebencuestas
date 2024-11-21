@@ -5,6 +5,7 @@ import { NgModule } from '@angular/core';
 import { ConfiguracionComponent } from './configuracion/configuracion.component';
 import { UsuariosComponent } from './usuarios/usuarios.component';
 import { PagesComponent } from './pages.component';
+import { EncuestasComponent } from './encuestas/encuestas.component';
 
 
 const routes: Routes = [
@@ -15,7 +16,8 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: '', component: UsuariosComponent, canActivate: [AuthGuard] },
-      { path: 'configuracion', component: ConfiguracionComponent, canActivate: [AuthGuard] }
+      { path: 'encuestas', component: EncuestasComponent, canActivate: [AuthGuard] },
+      { path: 'configuracion', component: ConfiguracionComponent, canActivate: [AuthGuard] },
     ]
   },
 ];
