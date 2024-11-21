@@ -43,8 +43,8 @@ export class ServiceService {
     return this.http.get<servicio[]>(this.URL + "/respuestasresumen/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + cajeros + "/" + preguntas);
   }
 
-  getResumenEncuesta(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/resumenencuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas);
+  getResumenEncuesta(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/resumenencuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales);
   }
 
   /** ****************************************************************************************************************** **

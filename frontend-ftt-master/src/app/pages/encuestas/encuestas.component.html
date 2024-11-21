@@ -1,5 +1,5 @@
 <div class="card">
-    <h2 class="card-header">ENCUESTAS</h2>
+    <h2>ENCUESTAS</h2>
     <div class="card-body">
         <form>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -9,7 +9,7 @@
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link" id="resumen-tab" data-toggle="tab" href="#resumen" role="tab"
-                        aria-controls="resumen" aria-selected="false">ENCUESTAS - SUCURSAL</a>
+                        aria-controls="resumen" aria-selected="false">ENCUESTAS SUCURSAL</a>
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link " id="totalfecha-tab" data-toggle="tab" href="#totalfecha" role="tab"
@@ -219,7 +219,7 @@
                         (click)="generarPdfPreguntasRespuestas('hola', 1)">PDF</button>
                 </div>
 
-                <!-- *********************************** RESUMEN PREGUNTAS *************************************** -->
+                <!-- *********************************** LISTA DE ENCUESTAS POR SUCURSAL *************************************** -->
                 <div class="tab-pane fade" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
                     <br><br>
                     <div class="container">
@@ -253,7 +253,7 @@
                             <div class="col-6">
                                 <mat-select multiple class="form-control" name="selectmake"
                                     [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
-                                    <mat-option [value]="-1" (click)="selectAll('todasSucursalesTTF')">
+                                    <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
                                         Todas las sucursales
                                     </mat-option>
                                     <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
@@ -264,25 +264,13 @@
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
                                     [(value)]="selectedEncuestas" placeholder="Encuestas">
-                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2"
+                                    <mat-option *ngIf="mostrarEncuestaTotal" [value]="-2"
                                         (click)="selectAll('todasEncuestas')">
                                         Todas las encuestas
                                     </mat-option>
-                                    <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
-                                        (click)="selectAll('encuestasSeleccionadas')" [disabled]="todasEncuestas">
+                                    <mat-option *ngFor="let option of encuestasTotales" [value]="option.COD_EN"
+                                        [disabled]="todasEncuestas">
                                         {{option.NOM_EN}}
-                                    </mat-option>
-                                </mat-select>
-                                <br><br>
-                                <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="selectedPreguntas" placeholder="Preguntas">
-                                    <mat-option *ngIf="mostrarPreguntas" [value]="-2"
-                                        (click)="selectAll('allSelected')">
-                                        Todas las preguntas
-                                    </mat-option>
-                                    <mat-option *ngFor="let option of preguntas" [value]="option.COD_PR"
-                                        [disabled]="allSelected">
-                                        {{option.SEC_PR}}
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
@@ -299,24 +287,16 @@
                         <table class="table table-striped" id="contentResumen" #contentResumen #tableResumen>
                             <thead>
                                 <tr>
-                                    <th class="text-center">Sucursal
-                                    </th>
-                                    <th class="text-center">Encuesta
-                                    </th>
-                                    <th class="text-center">Titulo</th>
-                                    <th class="text-center">Pregunta</th>
-                                    <th class="text-center">Respuesta</th>
-                                    <th class="text-center">Cantidad de respuestas</th>
+                                    <th class="text-center">Sucursal</th>
+                                    <th class="text-center">Encuesta</th>
+                                    <th class="text-center">Encuestas realizadas</th>
                                 </tr>
                             </thead>
                             <tbody *ngIf="!malRequestR">
                                 <tr *ngFor="let servicioResumen of servicioResumen | paginate:configR">
-                                    <td> {{servicioResumen.sucursal}}</td>
-                                    <td> {{servicioResumen.encuesta}}</td>
-                                    <td> {{servicioResumen.titulo}}</td>
-                                    <td> {{servicioResumen.pregunta}}</td>
-                                    <td> {{servicioResumen.respuesta}}</td>
-                                    <td> {{servicioResumen.conteo_respuestas}} </td>
+                                    <td> {{servicioResumen.NOM_SUC}}</td>
+                                    <td> {{servicioResumen.NOM_EN}}</td>
+                                    <td> {{servicioResumen.total_encuestas}} </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -384,7 +364,7 @@
                         </div>
                     </div>
                     <br>
-                    <h3>RESUMEN DE ENCUESTAS REALIZADAS</h3>
+                    <h3>RESPUESTAS</h3>
                     <hr>
                     <div class="table-responsive">
                         <table class="table table-striped" id="contentEncuesta" #contentEncuesta #tableEncuesta>

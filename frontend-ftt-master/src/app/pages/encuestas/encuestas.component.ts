@@ -276,11 +276,8 @@ export class EncuestasComponent {
           ? this.getPreguntas(this.encuestaSeleccionada)
           : null;
         break;
-      case "todasSucursalesTTF":
+      case "todasSucursales":
         this.todasSucursalesTTF = !this.todasSucursalesTTF;
-        this.todasSucursalesTTF
-          ? this.getEncuestas(this.sucursalesSeleccionadas)
-          : null;
         break;
       case "sucursalesSeleccionadasE":
         this.seleccionMultiple = this.sucursalesSeleccionadas.length > 1;
@@ -604,21 +601,20 @@ export class EncuestasComponent {
     let horaInicio = this.horaInicioR.nativeElement.value;
     let horaFin = this.horaFinR.nativeElement.value;
 
-    if (this.sucursalesSeleccionadas.length !== 0) {
+    if (this.selectedEncuestas.length !== 0) {
       this.serviceService
-        .getPreguntasResumen(
+        .getResumenEncuesta(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
-          this.sucursalesSeleccionadas,
           this.selectedEncuestas,
-          this.selectedPreguntas
+          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
         )
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioResumen = servicio.turnos;
+            this.servicioResumen = servicio.resumen;
             this.malRequestR = false;
             this.malRequestRPag = false;
 
@@ -628,7 +624,7 @@ export class EncuestasComponent {
             }
 
             let totalR = this.servicioResumen.map(
-              (res) => res.conteo_respuestas
+              (res) => res.total_encuestas
             );
             let total = 0;
             for (let i = 0; i < totalR.length; i++) {
@@ -687,6 +683,7 @@ export class EncuestasComponent {
           horaInicio,
           horaFin,
           this.encuestasTodas,
+          '-1'
         )
         .subscribe(
           (servicio: any) => {
@@ -1259,7 +1256,7 @@ export class EncuestasComponent {
     const pdfMake = await this.validar.ImportarPDF();
 
     //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition;
+    let documentDefinition: any;
     if (pdf === 1) {
       documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta);
     }
@@ -1282,7 +1279,7 @@ export class EncuestasComponent {
   }
 
   //Funcion delegada para seteo de información
-  getDocumentResumen(fechaDesde, fechaHasta) {
+  getDocumentResumen(fechaDesde: any, fechaHasta: any) {
     //Se obtiene la fecha actual
     let f = new Date();
     f.setUTCHours(f.getHours());
@@ -1290,6 +1287,7 @@ export class EncuestasComponent {
 
     return {
       //Seteo de marca de agua y encabezado con nombre de usuario logueado
+      pageSize: 'A4',
       watermark: {
         text: this.marca,
         color: "blue",
@@ -1305,7 +1303,7 @@ export class EncuestasComponent {
         opacity: 0.3,
       },
       //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage, pageCount, fecha) {
+      footer: function (currentPage: any, pageCount: any, fecha: any) {
         fecha = f.toJSON().split("T")[0];
         var timer = f.toJSON().split("T")[1].slice(0, 5);
         return [
@@ -1342,7 +1340,7 @@ export class EncuestasComponent {
             {
               width: "*",
               alignment: "center",
-              text: "Reporte - Respuestas totales ",
+              text: "REPORTE ENCUENTAS REALIZADAS",
               bold: true,
               fontSize: 15,
               margin: [-90, 20, 0, 0],
@@ -1356,7 +1354,7 @@ export class EncuestasComponent {
         this.CampoDetalleResumen(this.servicioResumen),
         {
           style: "subtitulos",
-          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
+          text: "TOTAL DE ENCUESTAS REALIZADAS: " + this.respuestasTotal,
         }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
@@ -1375,7 +1373,7 @@ export class EncuestasComponent {
         itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
         itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
         subtitulos: {
-          fontSize: 16,
+          fontSize: 14,
           alignment: "center",
           margin: [0, 5, 0, 10],
         },
@@ -1394,73 +1392,39 @@ export class EncuestasComponent {
 
   //Funcion para llenar la tabla con la consulta realizada al backend
   CampoDetalleResumen(servicio: any[]) {
-    if (this.todasSucursalesTTF) {
-      return {
-        style: "tableMargin",
-        table: {
-          headerRows: 1,
-          widths: ["auto", "auto", "*", 200, "auto", "auto"],
-
-          body: [
-            [
-              { text: "Sucursal", style: "tableHeader" },
-              { text: "Encuesta", style: "tableHeader" },
-              { text: "Titulo", style: "tableHeader" },
-              { text: "Pregunta", style: "tableHeader" },
-              { text: "Respuesta", style: "tableHeader" },
-              { text: "Cantidad de respuestas", style: "tableHeader" },
+    return {
+      columns: [
+        { width: '*', text: '' },
+        {
+          width: 'auto',
+          style: "tableMargin",
+          table: {
+            headerRows: 1,
+            widths: ["auto", "*", "auto"],
+            body: [
+              [
+                { text: "Sucursal", style: "tableHeader" },
+                { text: "Encuesta", style: "tableHeader" },
+                { text: "Encuestas realizadas", style: "tableHeader" },
+              ],
+              ...servicio.map((res) => {
+                return [
+                  { style: "itemsTable", text: res.NOM_SUC },
+                  { style: "itemsTable", text: res.NOM_EN },
+                  { style: "itemsTable", text: res.total_encuestas },
+                ];
+              }),
             ],
-            ...servicio.map((res) => {
-              return [
-                { style: "itemsTable", text: res.sucursal },
-                { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.titulo },
-                { style: "itemsTable", text: res.pregunta },
-                { style: "itemsTable", text: res.respuesta },
-                { style: "itemsTable", text: res.conteo_respuestas },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex) {
-            return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+          },
+          layout: {
+            fillColor: function (rowIndex) {
+              return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+            },
           },
         },
-      };
-    } else {
-      return {
-        style: "tableMargin",
-        table: {
-          headerRows: 1,
-          widths: ["auto", "*", 200, "auto", "auto"],
-
-          body: [
-            [
-              { text: "Encuesta", style: "tableHeader" },
-              { text: "Titulo", style: "tableHeader" },
-              { text: "Pregunta", style: "tableHeader" },
-              { text: "Respuesta", style: "tableHeader" },
-              { text: "Cantidad de respuestas", style: "tableHeader" },
-            ],
-            ...servicio.map((res) => {
-              return [
-                { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.titulo },
-                { style: "itemsTable", text: res.pregunta },
-                { style: "itemsTable", text: res.respuesta },
-                { style: "itemsTable", text: res.conteo_respuestas },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex) {
-            return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-          },
-        },
-      };
-    }
+        { width: '*', text: '' },
+      ]
+    };
   }
 
   //Funcion para llenar la tabla con la consulta realizada al backend

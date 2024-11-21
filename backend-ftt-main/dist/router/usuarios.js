@@ -305,7 +305,7 @@ router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
         }
     });
 });
-router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas", verifivarToken_1.TokenValidation, (req, res) => {
+router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
     console.log('ver fecha desde ', fDesde);
     const fHasta = req.params.fechaHasta;
@@ -314,11 +314,17 @@ router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encu
     console.log('ver hora desde ', hInicio);
     const hFin = req.params.horaFin;
     console.log('ver hora hasta ', hFin);
+    const listaSucursales = req.params.sucursales;
+    const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
+    let todasSucursales = false;
     let todasEncuestas = false;
     let diaCompleto = false;
     let hFinAux = 0;
+    if (sucursalesArray.includes("-1")) {
+        todasSucursales = true;
+    }
     if (encuestasArray.includes("-2")) {
         todasEncuestas = true;
     }
@@ -342,6 +348,7 @@ router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encu
           JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
       WHERE 
           STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
+          ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
           ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
           ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
       GROUP BY 

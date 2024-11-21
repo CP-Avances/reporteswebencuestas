@@ -340,7 +340,7 @@ router.get(
 );
 
 router.get(
-  "/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas", TokenValidation,
+  "/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales", TokenValidation,
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
@@ -351,11 +351,18 @@ router.get(
     console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
     console.log('ver hora hasta ', hFin)
+    const listaSucursales = req.params.sucursales;
+    const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
+    let todasSucursales = false;
     let todasEncuestas = false;
     let diaCompleto = false;
     let hFinAux = 0;
+
+    if (sucursalesArray.includes("-1")) {
+      todasSucursales = true
+    }
 
     if (encuestasArray.includes("-2")) {
       todasEncuestas = true
@@ -382,6 +389,7 @@ router.get(
           JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
       WHERE 
           STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
+          ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
           ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
           ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
       GROUP BY 
