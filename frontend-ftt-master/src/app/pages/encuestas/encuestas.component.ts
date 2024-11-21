@@ -19,12 +19,12 @@ import moment from "moment";
 const EXCEL_EXTENSION = ".xlsx";
 
 @Component({
-  selector: "app-usuarios",
-  templateUrl: "./usuarios.component.html",
-  styleUrls: ["./usuarios.component.scss"],
+  selector: 'app-encuestas',
+  templateUrl: './encuestas.component.html',
+  styleUrls: ['./encuestas.component.scss']
 })
 
-export class UsuariosComponent implements OnInit {
+export class EncuestasComponent {
   // SETEO DE FECHAS PRIMER DIA DEL MES ACTUAL Y DIA ACTUAL
   fromDate: any;
   toDate: any;
@@ -1497,4 +1497,5 @@ export class UsuariosComponent implements OnInit {
       },
     };
   }
+
 }

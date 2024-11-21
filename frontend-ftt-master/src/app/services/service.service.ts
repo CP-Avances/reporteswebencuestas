@@ -43,6 +43,10 @@ export class ServiceService {
     return this.http.get<servicio[]>(this.URL + "/respuestasresumen/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + cajeros + "/" + preguntas);
   }
 
+  getResumenEncuesta(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/resumenencuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas);
+  }
+
   /** ****************************************************************************************************************** **
    ** **                                  TRATAMIENTO DATOS USUARIOS - CAJEROS                                        ** **
    ** ****************************************************************************************************************** **/
@@ -67,6 +71,10 @@ export class ServiceService {
 
   getAllEncuestas(sucursales: any): Observable<cajero[]> {
     return this.http.get<cajero[]>(this.URL + "/getallencuestas/" + sucursales);
+  }
+
+  getEncuestasTotales(): Observable<cajero[]> {
+    return this.http.get<cajero[]>(this.URL + "/getencuestastotales");
   }
 
 

@@ -16,6 +16,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { NgxPaginationModule } from 'ngx-pagination';
 import { ConfiguracionComponent } from './configuracion/configuracion.component';
+import { EncuestasComponent } from './encuestas/encuestas.component';
 
 @NgModule({
   declarations: [
@@ -23,12 +24,14 @@ import { ConfiguracionComponent } from './configuracion/configuracion.component'
     UsuariosComponent,
     PagesComponent,
     ConfiguracionComponent,
+    EncuestasComponent,
   ],
   exports: [
 
     UsuariosComponent,
     PagesComponent,
-    ConfiguracionComponent
+    ConfiguracionComponent,
+    EncuestasComponent,
   ],
   imports: [
     CommonModule,

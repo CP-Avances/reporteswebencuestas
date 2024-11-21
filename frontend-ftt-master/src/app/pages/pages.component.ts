@@ -26,7 +26,6 @@ export class PagesComponent implements OnInit {
       } else {
         document.getElementById("menu-lateral").style.display = "block";
       }
-
     }
   }
 

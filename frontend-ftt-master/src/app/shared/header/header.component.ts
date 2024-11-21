@@ -32,7 +32,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     customSidebar();
-    this.imagenesService.cargarImagen().then((result: string) => {
+    this.imagenesService.cargarImagen().then((result: any) => {
       this.urlImagen = result;
       this.mostrarLogo = true;
     }).catch((error) => {
@@ -49,6 +49,22 @@ export class HeaderComponent implements OnInit {
   salir() {
     this.auth.logout();
     this.router.navigateByUrl('/');
+  }
+
+  mostrarMenu() {
+    this.menuMostrarOcultar.emit(true);
+  }
+
+  ocultarMenu() {
+    this.menuMostrarOcultar.emit(false);
+  }
+
+  w3_open() {
+    document.getElementById("menu-lateral").style.display = "block";
+  }
+
+  w3_close() {
+    document.getElementById("mySidebar").style.display = "none";
   }
 
 }
