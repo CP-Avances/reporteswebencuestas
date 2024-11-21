@@ -52,7 +52,7 @@ export class ImagenesService {
         reject("Error al cargar la imagen");
       };
       this.obtenerImagen()
-        .then((urlImagen: string) => {
+        .then((urlImagen: any) => {
           img.src = urlImagen;
         })
         .catch((error) => {

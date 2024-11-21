@@ -5,7 +5,7 @@
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
-    "strict": false,
+    "strict": true,
     "noImplicitOverride": false,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": false,
@@ -27,7 +27,12 @@
     "strictPropertyInitialization": false,
     "allowSyntheticDefaultImports": true,
   },
+  "include": [
+    "src",
+    "src/typings"
+  ],
   "angularCompilerOptions": {
+    "standalone": false,
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,

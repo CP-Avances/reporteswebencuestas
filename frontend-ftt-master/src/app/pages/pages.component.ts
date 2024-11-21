@@ -19,12 +19,23 @@ export class PagesComponent implements OnInit {
 
   w3_close() {
     if (screen.width < 1024) {
-      document.getElementById("menu-lateral").style.display = "block";
+      const menuLateral = document.getElementById("menu-lateral");
+      if (menuLateral) {
+        menuLateral.style.display = "block";
+      }
+      //document.getElementById("menu-lateral").style.display = "block";
     } else {
       if (screen.width < 1280) {
-        document.getElementById("menu-lateral").style.display = "block";
+        const menuLateral = document.getElementById("menu-lateral");
+        if (menuLateral) {
+          menuLateral.style.display = "block";
+        }
+        //document.getElementById("menu-lateral").style.display = "block";
       } else {
-        document.getElementById("menu-lateral").style.display = "block";
+        const menuLateral = document.getElementById("menu-lateral");
+        if (menuLateral) {
+          menuLateral.style.display = "block";
+        }
       }
 
     }

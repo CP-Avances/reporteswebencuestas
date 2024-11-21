@@ -16,8 +16,15 @@ export class Utils {
             img.onload = () => {
                 canvas.height = img.height;
                 canvas.width = img.width;
-                canvas.getContext("2d").drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
+
+                const context = canvas.getContext("2d");
+                if (context) {
+                    context.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                }
+                //canvas.getContext("2d").drawImage(img, 0, 0);
+                //resolve(canvas.toDataURL('image/png'));
+
             }
             img.onerror = () => reject('Imagen no disponible')
             img.src = localPath;
@@ -32,7 +39,11 @@ export class Utils {
             img.onload = () => {
                 canvas.height = img.height;
                 canvas.width = img.width;
-                canvas.getContext("2d").drawImage(img, 0, 0);
+                //canvas.getContext("2d").drawImage(img, 0, 0);
+                const context = canvas.getContext("2d");
+                if (context) {
+                    context.drawImage(img, 0, 0);
+                }
                 observer.next(canvas.toDataURL('image/png'));
                 observer.complete()
 
@@ -49,8 +60,13 @@ export class Utils {
             let canvas = document.createElement('canvas');
             canvas.height = img.height;
             canvas.width = img.width;
-            canvas.getContext("2d").drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
+            //canvas.getContext("2d").drawImage(img, 0, 0);
+            const context = canvas.getContext("2d");
+            if (context) {
+                context.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            }
+            //resolve(canvas.toDataURL('image/png'));
           };
           img.onerror = () => reject('Imagen no disponible');
           img.src = base64Image;

@@ -10,7 +10,7 @@ import { map } from 'rxjs/operators';
 
 export class AuthenticationService {
 
-  userToken: String;
+  userToken: any;
   public user: usuario;
   username: '';
   password: '';

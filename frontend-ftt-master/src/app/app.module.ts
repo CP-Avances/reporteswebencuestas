@@ -43,7 +43,7 @@ import { TokenInterceptorService } from './services/token-interceptor.service'
     AuthModule,
     ToastrModule.forRoot(),
     NgSelectModule,
-    NgxPaginationModule,
+    NgxPaginationModule
   ],
   providers: [
     AuthGuard,

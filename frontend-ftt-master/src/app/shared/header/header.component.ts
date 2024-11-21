@@ -32,7 +32,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     customSidebar();
-    this.imagenesService.cargarImagen().then((result: string) => {
+    this.imagenesService.cargarImagen().then((result: any) => {
       this.urlImagen = result;
       this.mostrarLogo = true;
     }).catch((error) => {
