@@ -689,6 +689,7 @@ export class UsuariosComponent implements OnInit {
           horaInicio,
           horaFin,
           this.encuestasTodas,
+          '-1'
         )
         .subscribe(
           (servicio: any) => {
