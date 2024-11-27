@@ -1,5 +1,4 @@
 import { Component, ViewChild, ElementRef, EventEmitter, Output } from "@angular/core";
-import { DateTime } from 'luxon';
 import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
@@ -9,22 +8,20 @@ import { AuthenticationService } from "../../services/authentication.service";
 import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
 
-
 // COMPLEMENTOS PARA PDF Y EXCEL
 import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import * as XLSX from "xlsx";
 import moment from "moment";
-import { Chart, Title } from "chart.js/auto";
 
 const EXCEL_EXTENSION = ".xlsx";
 
 @Component({
-  selector: 'app-encuestas',
-  templateUrl: './encuestas.component.html',
-  styleUrls: ['./encuestas.component.scss']
+  selector: 'app-preguntas',
+  templateUrl: './preguntas.component.html',
+  styleUrls: ['./preguntas.component.scss']
 })
 
-export class EncuestasComponent {
+export class PreguntasComponent {
   // SETEO DE FECHAS PRIMER DIA DEL MES ACTUAL Y DIA ACTUAL
   fromDate: any;
   toDate: any;
@@ -116,7 +113,7 @@ export class EncuestasComponent {
   date: any;
 
   // VARIABLE USADA EN EXPORTACION A EXCEL
-  p_color: any = '#0077b6';
+  p_color: any = "#0077b6";
 
   // MAXIMO DE ITEMS MOSTRADO DE TABLA EN PANTALLA
   private MAX_PAGS = 10;
@@ -160,9 +157,6 @@ export class EncuestasComponent {
   //Totales
   respuestasTotal: number;
   respuestasTotalC: number;
-
-  //GRAFICO
-  chart: any;
 
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
 
@@ -268,7 +262,6 @@ export class EncuestasComponent {
         break;
       case "todosLosCajeros":
         this.todosLosCajeros = !this.todosLosCajeros;
-        this.todosLosCajeros ? this.getEncuestas("-1") : null;
         break;
       case "todasEncuestasI":
         this.todasEncuestasI = !this.todasEncuestasI;
@@ -282,7 +275,7 @@ export class EncuestasComponent {
           ? this.getPreguntas(this.encuestaSeleccionada)
           : null;
         break;
-      case "todasSucursales":
+      case "todasSucursalesTTF":
         this.todasSucursalesTTF = !this.todasSucursalesTTF;
         break;
       case "sucursalesSeleccionadasE":
@@ -437,7 +430,6 @@ export class EncuestasComponent {
     this.respuestasTotalC = 0;
     this.encuestasTodas = [];
     this.soloEncuestas = false;
-    this.preguntas_respuestas = [];
   }
 
   // COMPRUEBA SI SE REALIZO UNA BUSQUEDA POR SUCURSALES
@@ -522,7 +514,7 @@ export class EncuestasComponent {
   /** ********************************************************************************************************** **
    ** **                                    PREGUNTAS Y RESPUESTAS                                             ** **
    ** ********************************************************************************************************** **/
-  preguntas_respuestas: any = [];
+
   buscarPreguntasRespuestas() {
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
@@ -535,57 +527,40 @@ export class EncuestasComponent {
     let horaInicio = this.horaInicioTTF.nativeElement.value;
     let horaFin = this.horaFinTTF.nativeElement.value;
 
-    if (this.encuestaSeleccionada.length !== 0) {
+    if (
+      this.usuariosSeleccionados.length !== 0 &&
+      this.encuestaSeleccionada.length !== 0
+    ) {
       this.serviceService
-        .getListaPreguntasRespuestas(
+        .getPreguntasRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
+          this.usuariosSeleccionados,
           this.encuestaSeleccionada,
-          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
-          '-2'
+          this.selectedPreguntas
         )
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosTotalFecha = servicio.resumen;
-            console.log(' datos ...', this.servicioTurnosTotalFecha)
-            let auxiliar = servicio.resumen;
-            let usuario_encuesta = auxiliar.filter(
-              (valor: any, indice: any, self: any) =>
-                self.findIndex((v: any) => v.CODIGO_RESPUESTA === valor.CODIGO_RESPUESTA) === indice
-            );
-            //console.log(' valores usuario ', usuario_encuesta)
-            this.preguntas_respuestas = usuario_encuesta;
-            this.preguntas_respuestas.forEach((usu: any) => {
-              let nuevo: any = [];
-              auxiliar.forEach((preg: any) => {
-                if (preg.CODIGO_RESPUESTA === usu.CODIGO_RESPUESTA) {
-                  const fecha = DateTime.fromISO(preg.fecha_hora, { zone: 'utc' });
-                  let data = {
-                    codigo_pregunta: preg.codigo_pregunta,
-                    titulo: preg.titulo,
-                    pregunta: preg.pregunta,
-                    respuesta: preg.respuesta,
-                    fecha_hora: preg.fecha_hora,
-                    fecha: fecha.toFormat('dd/MM/yyyy'),
-                    hora: fecha.toFormat('HH:mm:ss'),
-                  }
-                  nuevo.push(data);
-                }
-              })
-              nuevo.sort((a: any, b: any) => a.codigo_pregunta - b.codigo_pregunta);
-              usu.informacion = nuevo;
-            })
-            //console.log(' ver general ', this.preguntas_respuestas)
+            this.servicioTurnosTotalFecha = servicio.turnos;
             this.malRequestTTF = false;
             this.malRequestTTFPag = false;
+
             // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
             if (this.configTTF.currentPage > 1) {
               this.configTTF.currentPage = 1;
             }
-            this.respuestasTotalC = this.preguntas_respuestas.length;
+
+            let totalR = this.servicioTurnosTotalFecha.map(
+              (res) => res.conteo_respuestas
+            );
+            let total = 0;
+            for (let i = 0; i < totalR.length; i++) {
+              total += totalR[i];
+            }
+            this.respuestasTotalC = total;
           },
           (error) => {
             if (error.status == 400) {
@@ -633,17 +608,17 @@ export class EncuestasComponent {
 
     if (this.selectedEncuestas.length !== 0) {
       this.serviceService
-        .getResumenEncuesta(
+        .getResumenPreguntasSucursal(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
-          this.selectedEncuestas,
           this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
+          this.selectedEncuestas,
+          this.selectedPreguntas.length === 0 ? '-2' : this.selectedPreguntas
         )
         .subscribe(
           (servicio: any) => {
-            console.log('EncuestasSucursales: ', servicio );
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             this.servicioResumen = servicio.resumen;
             this.malRequestR = false;
@@ -655,89 +630,13 @@ export class EncuestasComponent {
             }
 
             let totalR = this.servicioResumen.map(
-              (res) => res.total_encuestas
+              (res) => res.conteo_respuestas
             );
             let total = 0;
             for (let i = 0; i < totalR.length; i++) {
               total += totalR[i];
             }
             this.respuestasTotal = total;
-
-            //GENERACION DE GRAFICO  
-            let nombresSucursales = Array.from(new Set(this.servicioResumen.map((res) => res.NOM_SUC)));
-            let nombresEncuestas = Array.from(new Set(this.servicioResumen.map((res) => res.NOM_EN)));
-
-            var i: number;
-            var valores: any = [];
-            for (i = 0; i < nombresSucursales.length; i++) {
-              const sucursal = nombresSucursales[i];
-              const data = nombresEncuestas.map((encuesta) => {
-                // Encontrar el total_encuestas para la sucursal y la encuesta actual
-                const encuestaSucursal = this.servicioResumen.find(
-                  (res) => res.NOM_SUC === sucursal && res.NOM_EN === encuesta
-                );
-                return encuestaSucursal ? encuestaSucursal.total_encuestas : 0; // Si no hay datos, asigna 0
-              });
-
-              valores.push(
-                {
-                  label: (nombresSucursales[i] as string),
-                  data: data,
-                  backgroundColor: this.generarColorAleatorio()
-                }
-              );
-            }
-
-            //TOTALES POR CADA SUCURSAL
-            let totalPorSucursal = nombresSucursales.map((sucursal) =>
-              this.servicioResumen
-                .filter((res) => res.NOM_SUC === sucursal) // Filtrar por sucursal
-                .reduce((sum, res) => sum + res.total_encuestas, 0) // Sumar los valores de total_encuestas
-            );
-
-            console.log('Totales: ', totalPorSucursal);
-
-            var totalesData = {
-              type: "scatter",
-              label: "Totales",
-              data: totalPorSucursal,
-              backgroundColor: this.generarColorAleatorio(),
-            };
-
-            valores.push(totalesData);
-
-            var graficoData = {
-              labels: nombresEncuestas,
-              datasets: valores,
-            };
-
-            if (this.chart != undefined || this.chart != null) {
-              this.chart.destroy();
-            }
-
-            this.chart = new Chart("canvaResumenEncuestas", {
-              type: "bar",
-              data: graficoData,
-              options: {
-                plugins: {
-                  datalabels: {
-                    color: "black",
-                    labels: {
-                      title: {
-                        font: {
-                          weight: "bold",
-                        },
-                      },
-                    },
-                  },
-                },
-                scales: {},
-                responsive: true,
-              }
-            }
-            );
-            
-
           },
           (error) => {
             if (error.status == 400) {
@@ -784,13 +683,14 @@ export class EncuestasComponent {
 
     if (this.encuestasTodas.length !== 0) {
       this.serviceService
-        .getResumenEncuesta(
+        .getResumenPreguntasRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
+          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
           this.encuestasTodas,
-          '-1'
+          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
         )
         .subscribe(
           (servicio: any) => {
@@ -804,15 +704,7 @@ export class EncuestasComponent {
             if (this.configE.currentPage > 1) {
               this.configE.currentPage = 1;
             }
-
-            let totalE = this.servicioEncuesta.map(
-              (res) => res.total_encuestas
-            );
-            let total = 0;
-            for (let i = 0; i < totalE.length; i++) {
-              total += totalE[i];
-            }
-            this.respuestasTotal = total;
+            this.respuestasTotal = this.servicioEncuesta.length;
           },
           (error) => {
             if (error.status == 400) {
@@ -896,73 +788,58 @@ export class EncuestasComponent {
   }
 
   ExportTOExcelPreguntasRespuestas() {
-    if (this.preguntas_respuestas.length != 0) {
-      //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
-      let nuevo: Array<any> = [];
-      let c = 0;
-      this.preguntas_respuestas.forEach((preg) => {
-        preg.informacion.forEach((inf: any) => {
-          c = c + 1;
-          let ele = {
-            'N°': c,
-            Sucursal: preg.sucursal,
-            Cajero: preg.NOM_US,
-            Encuesta: preg.encuesta,
-            'Código encuesta': preg.CODIGO_RESPUESTA,
-            Titulo: inf.titulo,
-            pregunta: inf.pregunta,
-            respuesta: inf.respuesta,
-            fecha: inf.fecha,
-            hora: inf.hora,
-          };
-          nuevo.push(ele);
-        });
+    //Mapeo de información de consulta a formato JSON para exportar a Excel
+    let jsonServicio:any = [];
+    for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
+      jsonServicio.push({
+        Cajero: this.servicioTurnosTotalFecha[i].usuario,
+        Encuesta: this.servicioTurnosTotalFecha[i].encuesta,
+        Titulo: this.servicioTurnosTotalFecha[i].titulo,
+        Pregunta: this.servicioTurnosTotalFecha[i].pregunta,
+        Respuesta: this.servicioTurnosTotalFecha[i].respuesta,
+        "Cantidad de respuestas":
+          this.servicioTurnosTotalFecha[i].conteo_respuestas,
       });
-      jsonServicio = nuevo;
-      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
-      for (var i = 0; i < header.length; i++) {
-        // CABECERAS AÑADIDAS CON ESPACIOS
-        wscols.push({ wpx: 150 });
-      }
-      ws["!cols"] = wscols;
-
-      XLSX.utils.book_append_sheet(wb, ws, "LISTA ENCUESTAS");
-      XLSX.writeFile(
-        wb,
-        "LISTA ENCUESTAS " + new Date().toLocaleString() + EXCEL_EXTENSION
-      );
     }
+
+    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
+    const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+    var wscols:any = [];
+    for (var i = 0; i < header.length; i++) {
+      // CABECERAS AÑADIDAS CON ESPACIOS
+      wscols.push({ wpx: 150 });
+    }
+    ws["!cols"] = wscols;
+
+    XLSX.utils.book_append_sheet(wb, ws, "RESUMEN");
+    XLSX.writeFile(
+      wb,
+      "CAJEROS RESUMEN " + new Date().toLocaleString() + EXCEL_EXTENSION
+    );
   }
 
-  ExportTOExcelPreguntasResumen(opcion: any) {
-    let resultados: any = [];
-    if (opcion === 1) {
-      resultados = this.servicioEncuesta;
-    }
-    else {
-      resultados = this.servicioResumen;
-    }
-    if (resultados.length != 0) {
+  ExportTOExcelPreguntasResumen() {
+    if (this.servicioResumen.length != 0) {
       //Mapeo de información de consulta a formato JSON para exportar a Excel
       let jsonServicio:any = [];
-      for (let i = 0; i < resultados.length; i++) {
+      for (let i = 0; i < this.servicioResumen.length; i++) {
         jsonServicio.push({
-          Sucursal: resultados[i].NOM_SUC,
-          Encuesta: resultados[i].NOM_EN,
-          "Encuestas realizadas": resultados[i].total_encuestas,
+          Sucursal: this.servicioResumen[i].sucursal,
+          Encuesta: this.servicioResumen[i].encuesta,
+          Titulo: this.servicioResumen[i].titulo,
+          Pregunta: this.servicioResumen[i].pregunta,
+          Respuesta: this.servicioResumen[i].respuesta,
+          "Cantidad de respuestas": this.servicioResumen[i].conteo_respuestas,
         });
       }
       //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
       const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
       const wb: XLSX.WorkBook = XLSX.utils.book_new();
       // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(resultados[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+      const header = Object.keys(this.servicioResumen[0]); // NOMBRE DE CABECERAS DE COLUMNAS
       var wscols:any = [];
       for (var i = 0; i < header.length; i++) {
         // CABECERAS AÑADIDAS CON ESPACIOS
@@ -973,13 +850,47 @@ export class EncuestasComponent {
       XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
       XLSX.writeFile(
         wb,
-        "Resumen Encuestas " + new Date().toLocaleString() + EXCEL_EXTENSION
+        "Preguntas resumen " + new Date().toLocaleString() + EXCEL_EXTENSION
+      );
+    }
+  }
+
+  ExportTOExcelPreguntasEncuesta() {
+    if (this.servicioEncuesta.length != 0) {
+      //Mapeo de información de consulta a formato JSON para exportar a Excel
+      let jsonServicio:any = [];
+      for (let i = 0; i < this.servicioEncuesta.length; i++) {
+        jsonServicio.push({
+          Sucursal: this.servicioEncuesta[i].sucursal,
+          'Código encuesta': this.servicioEncuesta[i].codigo_respuesta,
+          Encuesta: this.servicioEncuesta[i].nombre_encuesta,
+          Cajero: this.servicioEncuesta[i].nombre_usuario,
+          'Preguntas encuesta': this.servicioEncuesta[i].numero_preguntas,
+          "Respuestas Encuesta": this.servicioEncuesta[i].conteo_respuestas,
+        });
+      }
+      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
+      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
+      const header = Object.keys(this.servicioEncuesta[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+      var wscols:any = [];
+      for (var i = 0; i < header.length; i++) {
+        // CABECERAS AÑADIDAS CON ESPACIOS
+        wscols.push({ wpx: 150 });
+      }
+      ws["!cols"] = wscols;
+
+      XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
+      XLSX.writeFile(
+        wb,
+        "Preguntas resumen " + new Date().toLocaleString() + EXCEL_EXTENSION
       );
     }
   }
 
 
-  validarHoras(hInicio: any, hFin: any) {
+  validarHoras(hInicio, hFin) {
     let diaCompleto: boolean = false;
 
     if (hInicio == "-1" || hFin == "-1" || parseInt(hInicio) > parseInt(hFin)) {
@@ -1011,8 +922,9 @@ export class EncuestasComponent {
 
     // var cod = this.codSucursal.nativeElement.value.toString().trim();
     const pdfMake = await this.validar.ImportarPDF();
+
     //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition: any;
+    let documentDefinition;
     if (pdf === 1) {
       documentDefinition = this.getDocumentturnosfecha(
         fechaDesde,
@@ -1176,45 +1088,44 @@ export class EncuestasComponent {
   }
 
   async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
-    if (this.preguntas_respuestas.length != 0) {
-      //Seteo de rango de fechas de la consulta para impresión en PDF
-      var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
-        .toString()
-        .trim();
-      var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
-        .toString()
-        .trim();
+    //Seteo de rango de fechas de la consulta para impresión en PDF
+    var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
+      .toString()
+      .trim();
+    var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
+      .toString()
+      .trim();
 
-      const pdfMake = await this.validar.ImportarPDF();
-      //Definicion de funcion delegada para setear estructura del PDF
-      let documentDefinition: any;
-      if (pdf === 1) {
-        documentDefinition = this.getDocumentturnosTotalfecha(
-          fechaDesde,
-          fechaHasta
-        );
-      }
-      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-      switch (action) {
-        case "open":
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-        case "print":
-          pdfMake.createPdf(documentDefinition).print();
-          break;
-        case "download":
-          pdfMake.createPdf(documentDefinition).download();
-          break;
+    const pdfMake = await this.validar.ImportarPDF();
 
-        default:
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-      }
+    //Definicion de funcion delegada para setear estructura del PDF
+    let documentDefinition;
+    if (pdf === 1) {
+      documentDefinition = this.getDocumentturnosTotalfecha(
+        fechaDesde,
+        fechaHasta
+      );
+    }
+    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
+    switch (action) {
+      case "open":
+        pdfMake.createPdf(documentDefinition).open();
+        break;
+      case "print":
+        pdfMake.createPdf(documentDefinition).print();
+        break;
+      case "download":
+        pdfMake.createPdf(documentDefinition).download();
+        break;
+
+      default:
+        pdfMake.createPdf(documentDefinition).open();
+        break;
     }
   }
 
   //Funcion delegada para seteo de información
-  getDocumentturnosTotalfecha(fechaDesde: any, fechaHasta: any) {
+  getDocumentturnosTotalfecha(fechaDesde, fechaHasta) {
     //Se obtiene la fecha actual
     let f = new Date();
     f.setUTCHours(f.getHours());
@@ -1237,7 +1148,7 @@ export class EncuestasComponent {
         opacity: 0.3,
       },
       //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
+      footer: function (currentPage, pageCount, fecha) {
         fecha = f.toJSON().split("T")[0];
         var timer = f.toJSON().split("T")[1].slice(0, 5);
         return [
@@ -1274,155 +1185,7 @@ export class EncuestasComponent {
             {
               width: "*",
               alignment: "center",
-              text: "LISTA DE ENCUESTAS",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Período de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.EstructurarDatosPDF(this.preguntas_respuestas),
-        {
-          style: "subtitulos",
-          text: "TOTAL DE ENCUESTAS: " + this.respuestasTotalC,
-        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: '#0096c7' },
-        centrado: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color, margin: [0, 7, 0, 0] },
-        itemsTable: { fontSize: 8 },
-        derecha: { fontSize: 10, margin: [0, 3, 0, 3], fillColor: this.p_color, alignment: 'rigth' },
-        itemsTableInfoEmpleado: { fontSize: 9, margin: [0, -1, 0, -2], fillColor: this.p_color },
-        itemsTableCentrado: { fontSize: 8, alignment: 'center' },
-        tableMargin: { margin: [0, 0, 0, 0] },
-        tableMarginCabecera: { margin: [0, 15, 0, 0] },
-        tableMarginCabeceraEmpleado: { margin: [0, 10, 0, 0] },
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        subtitulos: {
-          fontSize: 14,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
-
-
-  async generarPdfPreguntasResumen(action = "open", pdf: number, opcion: any) {
-    if (this.servicioResumen.length != 0) {
-      //Seteo de rango de fechas de la consulta para impresión en PDF
-      var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
-      var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
-
-      const pdfMake = await this.validar.ImportarPDF();
-
-      //Definicion de funcion delegada para setear estructura del PDF
-      let documentDefinition: any;
-      if (pdf === 1) {
-        documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta, opcion);
-      }
-      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-      switch (action) {
-        case "open":
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-        case "print":
-          pdfMake.createPdf(documentDefinition).print();
-          break;
-        case "download":
-          pdfMake.createPdf(documentDefinition).download();
-          break;
-
-        default:
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-      }
-    }
-  }
-
-  //Funcion delegada para seteo de información
-  getDocumentResumen(fechaDesde: any, fechaHasta: any, opcion: any) {
-    var canvasPdf = document.querySelector("#canvaResumenEncuestas") as HTMLCanvasElement;
-    var canvasPdfImg = canvasPdf.toDataURL("image/png");
-    
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
-
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      pageSize: 'A4',
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "REPORTE ENCUENTAS REALIZADAS",
+              text: "Reporte - Cajeros resumen ",
               bold: true,
               fontSize: 15,
               margin: [-90, 20, 0, 0],
@@ -1433,12 +1196,191 @@ export class EncuestasComponent {
           style: "subtitulos",
           text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
         },
-        this.CampoDetalleResumen(opcion),
+        this.CampoDetalleTotal(this.servicioTurnosTotalFecha),
         {
           style: "subtitulos",
-          text: "TOTAL DE ENCUESTAS REALIZADAS: " + this.respuestasTotal,
+          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotalC,
         }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-        this.graficoImagen(canvasPdfImg),
+      ],
+      styles: {
+        tableTotal: {
+          fontSize: 30,
+          bold: true,
+          alignment: "center",
+          fillColor: this.p_color,
+        },
+        tableHeader: {
+          fontSize: 9,
+          bold: true,
+          alignment: "center",
+          fillColor: this.p_color,
+        },
+        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
+        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
+        subtitulos: {
+          fontSize: 16,
+          alignment: "center",
+          margin: [0, 5, 0, 10],
+        },
+        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
+        CabeceraTabla: {
+          fontSize: 12,
+          alignment: "center",
+          margin: [0, 8, 0, 8],
+          fillColor: this.p_color,
+        },
+        quote: { margin: [5, -2, 0, -2], italics: true },
+        small: { fontSize: 8, color: "blue", opacity: 0.5 },
+      },
+    };
+  }
+
+  //Funcion para llenar la tabla con la consulta realizada al backend
+  CampoDetalleTotal(servicio: any[]) {
+    return {
+      style: "tableMargin",
+      table: {
+        headerRows: 1,
+        widths: ["auto", "auto", "*", 200, "auto", "auto"],
+
+        body: [
+          [
+            { text: "Cajero", style: "tableHeader" },
+            { text: "Encuesta", style: "tableHeader" },
+            { text: "Titulo", style: "tableHeader" },
+            { text: "Pregunta", style: "tableHeader" },
+            { text: "Respuesta", style: "tableHeader" },
+            { text: "Cantidad de respuestas", style: "tableHeader" },
+          ],
+          ...servicio.map((res) => {
+            return [
+              { style: "itemsTable", text: res.usuario },
+              { style: "itemsTable", text: res.encuesta },
+              { style: "itemsTable", text: res.titulo },
+              { style: "itemsTable", text: res.pregunta },
+              { style: "itemsTable", text: res.respuesta },
+              { style: "itemsTable", text: res.conteo_respuestas },
+            ];
+          }),
+        ],
+      },
+      layout: {
+        fillColor: function (rowIndex) {
+          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+        },
+      },
+    };
+  }
+
+  async generarPdfPreguntasResumen(action = "open", pdf: number) {
+    if (this.servicioResumen.length != 0) {
+      //Seteo de rango de fechas de la consulta para impresión en PDF
+      var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
+      var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
+
+      const pdfMake = await this.validar.ImportarPDF();
+
+      //Definicion de funcion delegada para setear estructura del PDF
+      let documentDefinition;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta);
+      }
+      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
+
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
+    }
+  }
+
+  //Funcion delegada para seteo de información
+  getDocumentResumen(fechaDesde, fechaHasta) {
+    //Se obtiene la fecha actual
+    let f = new Date();
+    f.setUTCHours(f.getHours());
+    this.date = f.toJSON();
+
+    return {
+      //Seteo de marca de agua y encabezado con nombre de usuario logueado
+      watermark: {
+        text: this.marca,
+        color: "blue",
+        opacity: 0.1,
+        bold: true,
+        italics: false,
+        fontSize: 52,
+      },
+      header: {
+        text: "Impreso por:  " + this.userDisplayName,
+        margin: 10,
+        fontSize: 9,
+        opacity: 0.3,
+      },
+      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
+      footer: function (currentPage: any, pageCount: any, fecha: any) {
+        fecha = f.toJSON().split("T")[0];
+        var timer = f.toJSON().split("T")[1].slice(0, 5);
+        return [
+          {
+            margin: [10, 20, 10, 0],
+            columns: [
+              "Fecha: " + fecha + " Hora: " + timer,
+              {
+                text: [
+                  {
+                    text:
+                      "© Pag " + currentPage.toString() + " of " + pageCount,
+                    alignment: "right",
+                    color: "blue",
+                    opacity: 0.5,
+                  },
+                ],
+              },
+            ],
+            fontSize: 9,
+            color: "#A4B8FF",
+          },
+        ];
+      },
+      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
+      content: [
+        {
+          columns: [
+            {
+              image: this.urlImagen,
+              width: 90,
+              height: 45,
+            },
+            {
+              width: "*",
+              alignment: "center",
+              text: "REPORTE DE RESUMEN DE PREGUNTAS",
+              bold: true,
+              fontSize: 15,
+              margin: [-90, 20, 0, 0],
+            },
+          ],
+        },
+        {
+          style: "subtitulos",
+          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
+        },
+        this.CampoDetalleResumen(this.servicioResumen),
+        {
+          style: "subtitulos",
+          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
+        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
         tableTotal: {
@@ -1473,159 +1415,220 @@ export class EncuestasComponent {
     };
   }
 
-  //TRASPASO DE GRAFICO A ESTRUCTURA PARA PDF
-  graficoImagen(imagen: any) {
-    const marginLeftRight = 50;
-    const marginTopBottom = 50;
+  //Funcion para llenar la tabla con la consulta realizada al backend
+  CampoDetalleResumen(servicio: any[]) {
+    return {
+      style: "tableMargin",
+      table: {
+        headerRows: 1,
+        widths: ["auto", "auto", "auto", "*", "auto", "auto"],
 
-    // Tamaño disponible en puntos
-    const maxWidth = 595.28 - marginLeftRight * 2; // Ancho disponible
-    const maxHeight = 841.89 - marginTopBottom * 2; // Alto disponible
+        body: [
+          [
+            { text: "SUCURSAL", style: "tableHeader" },
+            { text: "ENCUESTA", style: "tableHeader" },
+            { text: "TITULO", style: "tableHeader" },
+            { text: "PREGUNTA", style: "tableHeader" },
+            { text: "RESPUESTA", style: "tableHeader" },
+            { text: "TOTAL RESPUESTA", style: "tableHeader" },
+          ],
+          ...servicio.map((res) => {
+            return [
+              { style: "itemsTable", text: res.sucursal },
+              { style: "itemsTable", text: res.encuesta },
+              { style: "itemsTable", text: res.titulo },
+              { style: "itemsTable", text: res.pregunta },
+              { style: "itemsTable", text: res.respuesta },
+              { style: "itemsTable", text: res.conteo_respuestas },
+            ];
+          }),
+        ],
+      },
+      layout: {
+        fillColor: function (rowIndex) {
+          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+        },
+      },
+    };
+  }
+
+  async generarPdfPreguntasEncuesta(action = "open", pdf: number) {
+    if (this.servicioEncuesta.length != 0) {
+      //Seteo de rango de fechas de la consulta para impresión en PDF
+      var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
+      var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
+
+      const pdfMake = await this.validar.ImportarPDF();
+
+      //Definicion de funcion delegada para setear estructura del PDF
+      let documentDefinition;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentEncuesta(fechaDesde, fechaHasta);
+      }
+      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
+
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
+    }
+  }
+
+  //Funcion delegada para seteo de información
+  getDocumentEncuesta(fechaDesde, fechaHasta) {
+    //Se obtiene la fecha actual
+    let f = new Date();
+    f.setUTCHours(f.getHours());
+    this.date = f.toJSON();
 
     return {
-      image: imagen,
-      fit: [maxWidth, maxHeight],
-      margin: [0, 50, 0, 10],
-      alignment: "center",
-      //pageBreak: "after",//PARAMETRO PARA DEJAR EN LA MISMA HOJA
-    }
+      //Seteo de marca de agua y encabezado con nombre de usuario logueado
+      watermark: {
+        text: this.marca,
+        color: "blue",
+        opacity: 0.1,
+        bold: true,
+        italics: false,
+        fontSize: 52,
+      },
+      header: {
+        text: "Impreso por:  " + this.userDisplayName,
+        margin: 10,
+        fontSize: 9,
+        opacity: 0.3,
+      },
+      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
+      footer: function (currentPage: any, pageCount: any, fecha: any) {
+        fecha = f.toJSON().split("T")[0];
+        var timer = f.toJSON().split("T")[1].slice(0, 5);
+        return [
+          {
+            margin: [10, 20, 10, 0],
+            columns: [
+              "Fecha: " + fecha + " Hora: " + timer,
+              {
+                text: [
+                  {
+                    text:
+                      "© Pag " + currentPage.toString() + " of " + pageCount,
+                    alignment: "right",
+                    color: "blue",
+                    opacity: 0.5,
+                  },
+                ],
+              },
+            ],
+            fontSize: 9,
+            color: "#A4B8FF",
+          },
+        ];
+      },
+      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
+      content: [
+        {
+          columns: [
+            {
+              image: this.urlImagen,
+              width: 90,
+              height: 45,
+            },
+            {
+              width: "*",
+              alignment: "center",
+              text: "REPORTE DE RESUMEN DE PREGUNTAS",
+              bold: true,
+              fontSize: 15,
+              margin: [-90, 20, 0, 0],
+            },
+          ],
+        },
+        {
+          style: "subtitulos",
+          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
+        },
+        this.CampoDetalleEncuesta(this.servicioEncuesta),
+        {
+          style: "subtitulos",
+          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
+        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
+      ],
+      styles: {
+        tableTotal: {
+          fontSize: 30,
+          bold: true,
+          alignment: "center",
+          fillColor: this.p_color,
+        },
+        tableHeader: {
+          fontSize: 9,
+          bold: true,
+          alignment: "center",
+          fillColor: this.p_color,
+        },
+        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
+        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
+        subtitulos: {
+          fontSize: 14,
+          alignment: "center",
+          margin: [0, 5, 0, 10],
+        },
+        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
+        CabeceraTabla: {
+          fontSize: 12,
+          alignment: "center",
+          margin: [0, 8, 0, 8],
+          fillColor: this.p_color,
+        },
+        quote: { margin: [5, -2, 0, -2], italics: true },
+        small: { fontSize: 8, color: "blue", opacity: 0.5 },
+      },
+    };
   }
 
   //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleResumen(opcion: any) {
-    let servicio: any = [];
-    if (opcion === 1) {
-      servicio = this.servicioEncuesta;
-    }
-    else {
-      servicio = this.servicioResumen;
-    }
-    if (servicio.length != 0) {
-      return {
-        columns: [
-          { width: '*', text: '' },
-          {
-            width: 'auto',
-            style: "tableMargin",
-            table: {
-              headerRows: 1,
-              widths: ["auto", "*", "auto"],
-              body: [
-                [
-                  { text: "Sucursal", style: "tableHeader" },
-                  { text: "Encuesta", style: "tableHeader" },
-                  { text: "Encuestas realizadas", style: "tableHeader" },
-                ],
-                ...servicio.map((res) => {
-                  return [
-                    { style: "itemsTable", text: res.NOM_SUC },
-                    { style: "itemsTable", text: res.NOM_EN },
-                    { style: "itemsTable", text: res.total_encuestas },
-                  ];
-                }),
-              ],
-            },
-            layout: {
-              fillColor: function (rowIndex: any) {
-                return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-              },
-            },
-          },
-          { width: '*', text: '' },
-        ]
-      };
-    }
-  }
+  CampoDetalleEncuesta(servicio: any[]) {
+    return {
+      style: "tableMargin",
+      table: {
+        headerRows: 1,
+        widths: ["auto", "auto", "auto", "*", "auto", "auto"],
 
-
-
-  EstructurarDatosPDF(data: any[]): Array<any> {
-    console.log('ver pdf ', data)
-    let n: any = [];
-    data.forEach((selec: any) => {
-      //let reg = this.validar.SumarRegistros(arr_reg)
-      // PRESENTACION DE LA INFORMACION
-      n.push({
-        style: 'tableMarginCabeceraEmpleado',
-        table: {
-          widths: ['*', '*'],
-          headerRows: 2,
-          body: [
-            [
-              {
-                border: [true, true, false, false],
-                text: 'SUCURSAL: ' + selec.sucursal,
-                style: 'itemsTableInfoEmpleado'
-              },
-              {
-                border: [true, true, true, false],
-                text: 'ENCUESTA: ' + selec.encuesta,
-                style: 'itemsTableInfoEmpleado'
-              },
-            ],
-            [
-              {
-                border: [true, false, false, false],
-                text: 'CAJERO: ' + selec.NOM_US,
-                style: 'itemsTableInfoEmpleado',
-              },
-              {
-                border: [true, false, true, false],
-                text: 'N° Preguntas: ' + selec.informacion.length,
-                style: 'itemsTableInfoEmpleado',
-              },
-
-            ],
+        body: [
+          [
+            { text: "SUCURSAL", style: "tableHeader" },
+            { text: "CODIGO ENCUESTA", style: "tableHeader" },
+            { text: "ENCUESTA", style: "tableHeader" },
+            { text: "CAJERO", style: "tableHeader" },
+            { text: "PREGUNTAS ENCUESTA", style: "tableHeader" },
+            { text: "RESPUESTAS ENCUESTA", style: "tableHeader" },
           ],
+          ...servicio.map((res) => {
+            return [
+              { style: "itemsTable", text: res.sucursal },
+              { style: "itemsTable", text: res.codigo_respuesta },
+              { style: "itemsTable", text: res.nombre_encuesta },
+              { style: "itemsTable", text: res.nombre_usuario },
+              { style: "itemsTable", text: res.numero_preguntas },
+              { style: "itemsTable", text: res.conteo_respuestas },
+            ];
+          }),
+        ],
+      },
+      layout: {
+        fillColor: function (rowIndex) {
+          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
         },
-      });
-      n.push({
-        style: 'tableMargin',
-        table: {
-          widths: ['auto', 'auto', '*', 'auto', 'auto', 'auto'],
-          headerRows: 1,
-          body: [
-            [
-              { text: 'N°', style: 'tableHeader' },
-              { text: 'TÍTULO', style: 'tableHeader' },
-              { text: 'PREGUNTA', style: 'tableHeader' },
-              { text: 'RESPUESTA', style: 'tableHeader' },
-              { text: 'FECHA', style: 'tableHeader' },
-              { text: 'HORA', style: 'tableHeader' },
-            ],
-            ...selec.informacion.map((inf: any) => {
-              const fecha = DateTime.fromISO(inf.fecha_hora, { zone: 'utc' });
-              return [
-                {
-                  style: 'itemsTableCentrado',
-                  text: selec.informacion.indexOf(inf) + 1,
-                },
-                { style: 'itemsTableCentrado', text: inf.titulo },
-                { style: 'itemsTable', text: inf.pregunta },
-                { style: 'itemsTableCentrado', text: inf.respuesta },
-                { style: 'itemsTableCentrado', text: fecha.toFormat('dd/MM/yyyy') },
-                { style: 'itemsTableCentrado', text: fecha.toFormat('HH:mm:ss') },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex: any) {
-            // #E5E7E9
-            return rowIndex % 2 === 0 ? '#caf0f8' : null;
-          },
-        },
-      });
-    });
-    return n;
+      },
+    };
   }
-
-  generarColorAleatorio(): string {
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
-    const a = (Math.random() * 0.5 + 0.5).toFixed(2); // Transparencia entre 0.5 y 1
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
-  }
-
 }

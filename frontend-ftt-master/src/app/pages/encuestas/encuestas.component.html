@@ -4,106 +4,15 @@
         <form>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item" (click)="limpiar()">
-                    <a class="nav-link active" id="encuesta-tab" data-toggle="tab" href="#encuestas" role="tab"
-                        aria-controls="encuestas" aria-selected="true">RESUMEN ENCUESTAS</a>
-                </li>
-                <li class="nav-item" (click)="limpiar()">
-                    <a class="nav-link" id="resumen-tab" data-toggle="tab" href="#resumen" role="tab"
-                        aria-controls="resumen" aria-selected="false">ENCUESTAS SUCURSAL</a>
+                    <a class="nav-link active" id="resumen-tab" data-toggle="tab" href="#resumen" role="tab"
+                        aria-controls="resumen" aria-selected="true">RESUMEN ENCUESTAS</a>
                 </li>
                 <li class="nav-item" (click)="limpiar()">
                     <a class="nav-link " id="totalfecha-tab" data-toggle="tab" href="#totalfecha" role="tab"
-                        aria-controls="totalfecha" aria-selected="false">ENCUESTAS</a>
+                        aria-controls="totalfecha" aria-selected="false">LISTA ENCUESTAS</a>
                 </li>
-                <li class="nav-item" (click)="limpiar()">
-                    <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home"
-                        aria-selected="false">ENCUESTAS GRAFICO</a>
-                </li>
-                
             </ul>
-
             <div class="tab-content" id="myTabContent">
-                <!-- *********************************** ENTRADAS Y SALIDAS *************************************** -->
-                <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
-                    <br><br>
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="contenedor-fechas mt-2 mb-2">
-                                    <div>
-                                        <label for="fromDateTurnosFecha">Fecha desde: &nbsp;</label>
-                                        <input type="date" id="fromDateTurnosFecha" value="{{fromDate}}" [max]="toDate"
-                                            name="fromDateTurnosFecha" #fromDateTurnosFecha><br><br>
-                                    </div>
-                                    <div>
-                                        <label for="toDateTurnosFecha">Fecha hasta: &nbsp;</label>
-                                        <input type="date" id="toDateTurnosFecha" value="{{toDate}}" [max]="toDate"
-                                            name="toDateTurnosFecha" #toDateTurnosFecha>
-                                    </div>
-                                </div>
-                                <div class="contenedor-horas">
-                                    <select class="form-control" name="selectmake" #horaInicioTF>
-                                        <option value="-1" selected>Hora Inicio</option>
-                                        <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
-                                        </option>
-                                    </select>
-                                    <select class="form-control ml-2" name="selectmake" #horaFinTF>
-                                        <option value="-1" selected>Hora Fin</option>
-                                        <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <mat-select multiple class="form-control" name="selectmake" [(value)]="selectedItems"
-                                    placeholder="Cajeros">
-                                    <mat-option *ngIf="mostrarCajeros" [value]="-2" (click)="selectAll('allSelected')">
-                                        Todos los cajeros
-                                    </mat-option>
-                                    <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
-                                        [disabled]="allSelected">
-                                        {{option.NOM_US}}
-                                    </mat-option>
-                                </mat-select>
-                                <br><br>
-                                <button type="button" class="btn btn-search" (click)="buscarEntradas()">
-                                    <span class="glyphicon glyphicon-filter"></span> Buscar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <br>
-                    <h3>ENTRADAS AL SISTEMA</h3>
-                    <hr>
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="contentTurnosFecha" #contentTurnosFecha
-                            #tableTurnosFecha>
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Cajero</th>
-                                    <th class="text-center">Fecha</th>
-                                </tr>
-                            </thead>
-                            <tbody *ngIf="!malRequestTF">
-                                <tr id="tr-id-1" class="tr-class-1"
-                                    *ngFor="let servicioTurnosFecha of servicioTurnosFecha | paginate:configTF">
-                                    <td> {{servicioTurnosFecha.Usuario}}</td>
-                                    <td> {{servicioTurnosFecha.Fecha}}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <pagination-controls *ngIf="!malRequestTFPag" id="usuariosTF"
-                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
-                            (pageChange)="pageChangedTF($event)">
-                        </pagination-controls>
-                    </div>
-                    <br>
-                    <button type="button" class="btn btn-info mx-2"
-                        (click)="ExportTOExcelEntradasSistema()">EXCEL</button>
-                    <button type="button" class="btn btn-info"
-                        (click)="generarPdfEntradasSistema('hola', 1)">PDF</button>
-                </div>
-
                 <!-- *********************************** PREGUNTAS Y RESPUESTAS *************************************** -->
                 <div class="tab-pane fade" id="totalfecha" role="tabpanel" aria-labelledby="totalfecha-tab">
                     <br><br>
@@ -138,37 +47,25 @@
                             </div>
                             <div class="col-6">
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="usuariosSeleccionados" placeholder="Cajeros">
-                                    <mat-option [value]="-2" (click)="selectAll('todosLosCajeros')">
-                                        Todos los cajeros
-                                    </mat-option>
-                                    <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
-                                        [disabled]="todosLosCajeros" (click)="selectAll('cajerosSeleccionados')">
-                                        {{option.NOM_US}}
-                                    </mat-option>
-                                </mat-select>
-                                <br><br>
-                                <mat-select multiple class="form-control" name="selectmake"
                                     [(value)]="encuestaSeleccionada" placeholder="Encuestas">
-                                    <mat-option *ngIf="mostrarEncuestas" [value]="-2"
-                                        (click)="selectAll('todasEncuestasI')">
+                                    <mat-option *ngIf="mostrarEncuestaTotal" [value]="-2"
+                                        (click)="selectAll('todasEncuestas')">
                                         Todas las encuestas
                                     </mat-option>
-                                    <mat-option *ngFor="let option of encuestas" [value]="option.COD_EN"
-                                        (click)="selectAll('encuestasSeleccionadasI')" [disabled]="todasEncuestasI">
+                                    <mat-option *ngFor="let option of encuestasTotales" [value]="option.COD_EN"
+                                        [disabled]="todasEncuestas">
                                         {{option.NOM_EN}}
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="selectedPreguntas" placeholder="Preguntas">
-                                    <mat-option *ngIf="mostrarPreguntas" [value]="-2"
-                                        (click)="selectAll('allSelected')">
-                                        Todas las preguntas
+                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
+                                    <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
+                                        Todas las sucursales
                                     </mat-option>
-                                    <mat-option *ngFor="let option of preguntas" [value]="option.COD_PR"
-                                        [disabled]="allSelected">
-                                        {{option.SEC_PR}}
+                                    <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
+                                        [disabled]="todasSucursalesTTF">
+                                        {{option.NOM_SUC}}
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
@@ -185,25 +82,47 @@
                         <table class="table table-striped" id="contentTurnosTotalFecha" #contentTurnosTotalFecha
                             #tableTurnosTotalFecha>
                             <thead>
-                                <tr>
-                                    <th class="text-center">Cajero</th>
-                                    <th class="text-center">Encuesta</th>
-                                    <th class="text-center">Titulo</th>
-                                    <th class="text-center fixed-column">Pregunta</th>
-                                    <th class="text-center">Respuesta</th>
-                                    <th class="text-center">Cantidad de respuestas</th>
-                                </tr>
                             </thead>
                             <tbody *ngIf="!malRequestTTF">
-                                <tr
-                                    *ngFor="let servicioTurnosTotalFecha of servicioTurnosTotalFecha | paginate:configTTF">
-                                    <td>{{servicioTurnosTotalFecha.usuario}}</td>
-                                    <td>{{servicioTurnosTotalFecha.encuesta}}</td>
-                                    <td>{{servicioTurnosTotalFecha.titulo}}</td>
-                                    <td>{{servicioTurnosTotalFecha.pregunta}}</td>
-                                    <td>{{servicioTurnosTotalFecha.respuesta}}</td>
-                                    <td>{{servicioTurnosTotalFecha.conteo_respuestas}}</td>
-                                </tr>
+                                <ng-container *ngFor="let dato of preguntas_respuestas | paginate:configTTF">
+                                    <!-- Fila para CODIGO_RESPUESTA y NOM_US -->
+                                    <tr style="background-color:#0077b6; color:black;">
+                                        <td [attr.colspan]="3" style="text-align: left;"> <strong>SUCURSAL:</strong> {{
+                                            dato.sucursal }}</td>
+                                        <td [attr.colspan]="3" style="text-align: left;"> <strong>CAJERO:</strong> {{
+                                            dato.NOM_US }}</td>
+                                    </tr>
+
+                                    <!-- Fila para ENCUESTA -->
+                                    <tr style="background-color:#0077b6; color:black;">
+                                        <td [attr.colspan]="3" style="text-align: left;"><strong>ENCUESTA:</strong> {{
+                                            dato.encuesta }}
+                                        </td>
+                                        <td [attr.colspan]="3" style="text-align: left;"><strong>N° PREGUNTAS:</strong>
+                                            {{ dato.informacion.length }}
+                                        </td>
+                                    </tr>
+
+                                    <!-- Fila para cabecera de preguntas y respuestas -->
+                                    <tr style="background-color:#0096c7; color:black; font-weight: 500px;">
+                                        <td>N°</td>
+                                        <td>TÍTULO</td>
+                                        <td>PREGUNTAS</td>
+                                        <td>RESPUESTAS</td>
+                                        <td>FECHA</td>
+                                        <td>HORA</td>
+                                    </tr>
+
+                                    <!-- Filas para PREGUNTA y RESPUESTA -->
+                                    <tr *ngFor="let info of dato.informacion, let i = index">
+                                        <td style="font-weight: bold;">{{ i + 1 }}</td>
+                                        <td>{{ info.titulo }}</td>
+                                        <td style="text-align: left;">{{ info.pregunta }}</td>
+                                        <td>{{ info.respuesta }}</td>
+                                        <td>{{ info.fecha }}</td>
+                                        <td>{{ info.hora }}</td>
+                                    </tr>
+                                </ng-container>
                             </tbody>
                         </table>
                         <pagination-controls *ngIf="!malRequestTTFPag" id="usuariosTTF"
@@ -220,7 +139,7 @@
                 </div>
 
                 <!-- *********************************** LISTA DE ENCUESTAS POR SUCURSAL *************************************** -->
-                <div class="tab-pane fade" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
+                <div class="tab-pane fade show active" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
                     <br><br>
                     <div class="container">
                         <div class="row">
@@ -252,17 +171,6 @@
                             </div>
                             <div class="col-6">
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
-                                    <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
-                                        Todas las sucursales
-                                    </mat-option>
-                                    <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
-                                        (click)="selectAll('sucursalesSeleccionadasE')" [disabled]="todasSucursalesTTF">
-                                        {{option.NOM_SUC}}
-                                    </mat-option>
-                                </mat-select>
-                                <br><br>
-                                <mat-select multiple class="form-control" name="selectmake"
                                     [(value)]="selectedEncuestas" placeholder="Encuestas">
                                     <mat-option *ngIf="mostrarEncuestaTotal" [value]="-2"
                                         (click)="selectAll('todasEncuestas')">
@@ -271,6 +179,17 @@
                                     <mat-option *ngFor="let option of encuestasTotales" [value]="option.COD_EN"
                                         [disabled]="todasEncuestas">
                                         {{option.NOM_EN}}
+                                    </mat-option>
+                                </mat-select>
+                                <br><br>
+                                <mat-select multiple class="form-control" name="selectmake"
+                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
+                                    <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
+                                        Todas las sucursales
+                                    </mat-option>
+                                    <mat-option *ngFor="let option of sucursales" [value]="option.COD_SUC"
+                                        [disabled]="todasSucursalesTTF">
+                                        {{option.NOM_SUC}}
                                     </mat-option>
                                 </mat-select>
                                 <br><br>
@@ -308,100 +227,16 @@
                     </div>
                     <br>
                     <button type="button" class="btn btn-info mx-2"
-                        (click)="ExportTOExcelPreguntasResumen()">EXCEL</button>
+                        (click)="ExportTOExcelPreguntasResumen(2)">EXCEL</button>
                     <button type="button" class="btn btn-info"
-                        (click)="generarPdfPreguntasResumen('hola', 1)">PDF</button>
+                        (click)="generarPdfPreguntasResumen('hola', 1, 2)">PDF</button>
 
                     <!-- GRAFICO -->
                     <br> <br>
                     <div id="canvasResumenEncuesta">
                         <h3>GRÁFICO RESUMEN ENCUESTA</h3>
-                        <canvas id="canvaEncuestasSucursal">{{chart}}</canvas>
+                        <canvas id="canvaResumenEncuestas">{{chart}}</canvas>
                     </div>
-                </div>
-
-                <!-- *********************************** LISTA DE ENCUESTAS - RESUMEN ENCUESTAS *************************************** -->
-                <div class="tab-pane fade show active" id="encuestas" role="tabpanel" aria-labelledby="encuesta-tab">
-                    <br><br>
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="contenedor-fechas mt-2 mb-2">
-                                    <div>
-                                        <label for="fromDateEncuesta">Fecha desde: &nbsp;</label>
-                                        <input type="date" id="fromDateEncuesta" value="{{fromDate}}" [max]="toDate"
-                                            name="fromDateEncuesta" #fromDateEncuesta><br><br>
-                                    </div>
-                                    <div>
-                                        <label for="toDateEncuesta">Fecha hasta: &nbsp;</label>
-                                        <input type="date" id="toDateEncuesta" value="{{toDate}}" [max]="toDate"
-                                            name="toDateEncuesta" #toDateEncuesta>
-                                    </div>
-                                </div>
-                                <div class="contenedor-horas">
-                                    <select class="form-control" name="selectmake" #horaInicioE>
-                                        <option value="-1" selected>Hora Inicio</option>
-                                        <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
-                                        </option>
-                                    </select>
-                                    <select class="form-control ml-2" name="selectmake" #horaFinE>
-                                        <option value="-1" selected>Hora Fin</option>
-                                        <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <mat-select multiple class="form-control" name="selectmake" [(ngModel)]="encuestasTodas"
-                                    placeholder="Encuestas">
-                                    <mat-option *ngIf="mostrarEncuestaTotal" [value]="-2"
-                                        (click)="selectAll('soloEncuestas')">
-                                        Todas las encuestas
-                                    </mat-option>
-                                    <mat-option *ngFor="let option of encuestasTotales" [value]="option.COD_EN"
-                                        [disabled]="soloEncuestas">
-                                        {{option.NOM_EN}}
-                                    </mat-option>
-                                </mat-select>
-                                <br><br>
-                                <button type="button" class="btn btn-search" (click)="buscarListaEncuestas()">
-                                    <span class="glyphicon glyphicon-filter"></span> Buscar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <br>
-                    <h3>RESPUESTAS</h3>
-                    <hr>
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="contentEncuesta" #contentEncuesta #tableEncuesta>
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Sucursal</th>
-                                    <th class="text-center">Encuesta</th>
-                                    <th class="text-center">Encuestas realizadas</th>
-                                </tr>
-                            </thead>
-                            <tbody *ngIf="!malRequestE">
-                                <tr *ngFor="let servicioEncuesta of servicioEncuesta | paginate:configE">
-                                    <td> {{servicioEncuesta.NOM_SUC}}</td>
-                                    <td> {{servicioEncuesta.NOM_EN}}</td>
-                                    <td> {{servicioEncuesta.total_encuestas}} </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <pagination-controls *ngIf="!malRequestEPag" id="usuariosR"
-                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
-                            (pageChange)="pageChangedE($event)">
-                        </pagination-controls>
-                        <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotal}}</h4>
-                    </div>
-                    <br>
-                    <button type="button" class="btn btn-info mx-2"
-                        (click)="ExportTOExcelPreguntasResumen()">EXCEL</button>
-                    <button type="button" class="btn btn-info"
-                        (click)="generarPdfPreguntasResumen('hola', 1)">PDF</button>
-
                 </div>
 
             </div>

@@ -43,8 +43,24 @@ export class ServiceService {
     return this.http.get<servicio[]>(this.URL + "/respuestasresumen/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + cajeros + "/" + preguntas);
   }
 
+  getResumenPreguntasSucursal(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, encuestas: any, preguntas: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/preguntas-encuesta-sucursal/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + preguntas);
+  }
+
+  getResumenPreguntasRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, encuestas: any, usuarios: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/encuesta-sucursal/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + usuarios);
+  }
+
   getResumenEncuesta(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any): Observable<servicio[]> {
     return this.http.get<servicio[]>(this.URL + "/resumenencuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales);
+  }
+
+  getListaPreguntasRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any, usuarios: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/listapreguntasrespuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales + "/" + usuarios);
+  }
+
+  getEncuestasCajero(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, encuestas: any, usuarios: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/encuestascajeros/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + usuarios);
   }
 
   /** ****************************************************************************************************************** **

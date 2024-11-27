@@ -3,6 +3,7 @@ import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import { Utils } from "../../utils/util";
+import { DateTime } from 'luxon';
 
 import { AuthenticationService } from "../../services/authentication.service";
 import { ImagenesService } from "../../shared/imagenes.service";
@@ -113,7 +114,7 @@ export class UsuariosComponent implements OnInit {
   date: any;
 
   // VARIABLE USADA EN EXPORTACION A EXCEL
-  p_color: any;
+  p_color: any = '#0077b6';
 
   // MAXIMO DE ITEMS MOSTRADO DE TABLA EN PANTALLA
   private MAX_PAGS = 10;
@@ -262,7 +263,6 @@ export class UsuariosComponent implements OnInit {
         break;
       case "todosLosCajeros":
         this.todosLosCajeros = !this.todosLosCajeros;
-        this.todosLosCajeros ? this.getEncuestas("-1") : null;
         break;
       case "todasEncuestasI":
         this.todasEncuestasI = !this.todasEncuestasI;
@@ -276,11 +276,8 @@ export class UsuariosComponent implements OnInit {
           ? this.getPreguntas(this.encuestaSeleccionada)
           : null;
         break;
-      case "todasSucursalesTTF":
+      case "todasSucursales":
         this.todasSucursalesTTF = !this.todasSucursalesTTF;
-        this.todasSucursalesTTF
-          ? this.getEncuestas(this.sucursalesSeleccionadas)
-          : null;
         break;
       case "sucursalesSeleccionadasE":
         this.seleccionMultiple = this.sucursalesSeleccionadas.length > 1;
@@ -290,7 +287,6 @@ export class UsuariosComponent implements OnInit {
         break;
       case "todasEncuestas":
         this.todasEncuestas = !this.todasEncuestas;
-        this.todasEncuestas ? this.getPreguntas(this.selectedEncuestas) : null;
         break;
       case "encuestasSeleccionadas":
         this.seleccionMultipleE = this.selectedEncuestas.length > 1;
@@ -428,6 +424,13 @@ export class UsuariosComponent implements OnInit {
     this.encuestas = [];
     this.encuestaSeleccionada = [];
     this.cajeroSeleccionado = null;
+    this.servicioResumen = [];
+    this.servicioEncuesta = [];
+    this.respuestasTotal = 0;
+    this.respuestasTotalC = 0;
+    this.encuestasTodas = [];
+    this.soloEncuestas = false;
+    this.preguntas_respuestas = [];
   }
 
   // COMPRUEBA SI SE REALIZO UNA BUSQUEDA POR SUCURSALES
@@ -512,7 +515,7 @@ export class UsuariosComponent implements OnInit {
   /** ********************************************************************************************************** **
    ** **                                    PREGUNTAS Y RESPUESTAS                                             ** **
    ** ********************************************************************************************************** **/
-
+  preguntas_respuestas: any = [];
   buscarPreguntasRespuestas() {
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
@@ -525,40 +528,57 @@ export class UsuariosComponent implements OnInit {
     let horaInicio = this.horaInicioTTF.nativeElement.value;
     let horaFin = this.horaFinTTF.nativeElement.value;
 
-    if (
-      this.usuariosSeleccionados.length !== 0 &&
-      this.encuestaSeleccionada.length !== 0
-    ) {
+    if (this.encuestaSeleccionada.length !== 0) {
       this.serviceService
-        .getPreguntasRespuestas(
+        .getListaPreguntasRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
-          this.usuariosSeleccionados,
           this.encuestaSeleccionada,
-          this.selectedPreguntas
+          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
+          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
         )
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosTotalFecha = servicio.turnos;
+            this.servicioTurnosTotalFecha = servicio.resumen;
+            console.log(' datos ...', this.servicioTurnosTotalFecha)
+            let auxiliar = servicio.resumen;
+            let usuario_encuesta = auxiliar.filter(
+              (valor: any, indice: any, self: any) =>
+                self.findIndex((v: any) => v.CODIGO_RESPUESTA === valor.CODIGO_RESPUESTA) === indice
+            );
+            //console.log(' valores usuario ', usuario_encuesta)
+            this.preguntas_respuestas = usuario_encuesta;
+            this.preguntas_respuestas.forEach((usu: any) => {
+              let nuevo: any = [];
+              auxiliar.forEach((preg: any) => {
+                if (preg.CODIGO_RESPUESTA === usu.CODIGO_RESPUESTA) {
+                  const fecha = DateTime.fromISO(preg.fecha_hora, { zone: 'utc' });
+                  let data = {
+                    codigo_pregunta: preg.codigo_pregunta,
+                    titulo: preg.titulo,
+                    pregunta: preg.pregunta,
+                    respuesta: preg.respuesta,
+                    fecha_hora: preg.fecha_hora,
+                    fecha: fecha.toFormat('dd/MM/yyyy'),
+                    hora: fecha.toFormat('HH:mm:ss'),
+                  }
+                  nuevo.push(data);
+                }
+              })
+              nuevo.sort((a: any, b: any) => a.codigo_pregunta - b.codigo_pregunta);
+              usu.informacion = nuevo;
+            })
+            //console.log(' ver general ', this.preguntas_respuestas)
             this.malRequestTTF = false;
             this.malRequestTTFPag = false;
-
             // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
             if (this.configTTF.currentPage > 1) {
               this.configTTF.currentPage = 1;
             }
-
-            let totalR = this.servicioTurnosTotalFecha.map(
-              (res) => res.conteo_respuestas
-            );
-            let total = 0;
-            for (let i = 0; i < totalR.length; i++) {
-              total += totalR[i];
-            }
-            this.respuestasTotalC = total;
+            this.respuestasTotalC = this.preguntas_respuestas.length;
           },
           (error) => {
             if (error.status == 400) {
@@ -604,21 +624,22 @@ export class UsuariosComponent implements OnInit {
     let horaInicio = this.horaInicioR.nativeElement.value;
     let horaFin = this.horaFinR.nativeElement.value;
 
-    if (this.sucursalesSeleccionadas.length !== 0) {
+    if (this.selectedEncuestas.length !== 0) {
       this.serviceService
-        .getPreguntasResumen(
+        .getEncuestasCajero(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
-          this.sucursalesSeleccionadas,
+          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
           this.selectedEncuestas,
-          this.selectedPreguntas
+          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
         )
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioResumen = servicio.turnos;
+            this.servicioResumen = servicio.resumen;
+            console.log('resumen ', this.servicioResumen)
             this.malRequestR = false;
             this.malRequestRPag = false;
 
@@ -628,7 +649,7 @@ export class UsuariosComponent implements OnInit {
             }
 
             let totalR = this.servicioResumen.map(
-              (res) => res.conteo_respuestas
+              (res: any) => res.encuestas_realizadas
             );
             let total = 0;
             for (let i = 0; i < totalR.length; i++) {
@@ -764,114 +785,122 @@ export class UsuariosComponent implements OnInit {
   }
 
   ExportTOExcelEntradasSistema() {
-    //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio:any = [];
-    for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
-      jsonServicio.push({
-        Usuario: this.servicioTurnosFecha[i].Usuario,
-        Fecha: new Date(this.servicioTurnosFecha[i].fecha_),
-        Hora: this.servicioTurnosFecha[i].hora_,
-      });
-    }
+    if (this.servicioTurnosFecha.length != 0) {
+      //Mapeo de información de consulta a formato JSON para exportar a Excel
+      let jsonServicio:any = [];
+      for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
+        jsonServicio.push({
+          Usuario: this.servicioTurnosFecha[i].Usuario,
+          Fecha: new Date(this.servicioTurnosFecha[i].fecha_),
+          Hora: this.servicioTurnosFecha[i].hora_,
+        });
+      }
 
-    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-    const header = Object.keys(this.servicioTurnosFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols:any = [];
-    for (var i = 0; i < header.length; i++) {
-      // CABECERAS AÑADIDAS CON ESPACIOS
-      wscols.push({ wpx: 150 });
+      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
+      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
+      const header = Object.keys(this.servicioTurnosFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+      var wscols:any = [];
+      for (var i = 0; i < header.length; i++) {
+        // CABECERAS AÑADIDAS CON ESPACIOS
+        wscols.push({ wpx: 150 });
+      }
+      ws["!cols"] = wscols;
+      XLSX.utils.book_append_sheet(wb, ws, "Entradas");
+      XLSX.writeFile(
+        wb,
+        "Entradas al sistema " + new Date().toLocaleString() + EXCEL_EXTENSION
+      );
     }
-    ws["!cols"] = wscols;
-    XLSX.utils.book_append_sheet(wb, ws, "Entradas");
-    XLSX.writeFile(
-      wb,
-      "Entradas al sistema " + new Date().toLocaleString() + EXCEL_EXTENSION
-    );
   }
 
   ExportTOExcelPreguntasRespuestas() {
-    //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio:any = [];
-    for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
-      jsonServicio.push({
-        Cajero: this.servicioTurnosTotalFecha[i].usuario,
-        Encuesta: this.servicioTurnosTotalFecha[i].encuesta,
-        Titulo: this.servicioTurnosTotalFecha[i].titulo,
-        Pregunta: this.servicioTurnosTotalFecha[i].pregunta,
-        Respuesta: this.servicioTurnosTotalFecha[i].respuesta,
-        "Cantidad de respuestas":
-          this.servicioTurnosTotalFecha[i].conteo_respuestas,
+    if (this.preguntas_respuestas.length != 0) {
+      //Mapeo de información de consulta a formato JSON para exportar a Excel
+      let jsonServicio:any = [];
+      let nuevo: Array<any> = [];
+      let c = 0;
+      this.preguntas_respuestas.forEach((preg) => {
+        preg.informacion.forEach((inf: any) => {
+          c = c + 1;
+          let ele = {
+            'N°': c,
+            Sucursal: preg.sucursal,
+            Cajero: preg.NOM_US,
+            Encuesta: preg.encuesta,
+            'Código encuesta': preg.CODIGO_RESPUESTA,
+            Titulo: inf.titulo,
+            pregunta: inf.pregunta,
+            respuesta: inf.respuesta,
+            fecha: inf.fecha,
+            hora: inf.hora,
+          };
+          nuevo.push(ele);
+        });
       });
-    }
+      jsonServicio = nuevo;
+      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
+      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
+      const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+      var wscols:any = [];
+      for (var i = 0; i < header.length; i++) {
+        // CABECERAS AÑADIDAS CON ESPACIOS
+        wscols.push({ wpx: 150 });
+      }
+      ws["!cols"] = wscols;
 
-    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-    const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols:any = [];
-    for (var i = 0; i < header.length; i++) {
-      // CABECERAS AÑADIDAS CON ESPACIOS
-      wscols.push({ wpx: 150 });
+      XLSX.utils.book_append_sheet(wb, ws, "LISTA ENCUESTAS");
+      XLSX.writeFile(
+        wb,
+        "LISTA ENCUESTAS " + new Date().toLocaleString() + EXCEL_EXTENSION
+      );
     }
-    ws["!cols"] = wscols;
-
-    XLSX.utils.book_append_sheet(wb, ws, "RESUMEN");
-    XLSX.writeFile(
-      wb,
-      "CAJEROS RESUMEN " + new Date().toLocaleString() + EXCEL_EXTENSION
-    );
   }
 
-  ExportTOExcelPreguntasResumen() {
-    //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio:any = [];
-    if (this.todasSucursalesTTF || this.seleccionMultiple) {
-      for (let i = 0; i < this.servicioResumen.length; i++) {
+  ExportTOExcelPreguntasResumen(opcion: any) {
+    let resultados: any = [];
+    if (opcion === 1) {
+      resultados = this.servicioEncuesta;
+    }
+    else {
+      resultados = this.servicioResumen;
+    }
+    if (resultados.length != 0) {
+      //Mapeo de información de consulta a formato JSON para exportar a Excel
+      let jsonServicio:any = [];
+      for (let i = 0; i < resultados.length; i++) {
         jsonServicio.push({
-          Sucursal: this.servicioResumen[i].sucursal,
-          Encuesta: this.servicioResumen[i].encuesta,
-          Titulo: this.servicioResumen[i].titulo,
-          Pregunta: this.servicioResumen[i].pregunta,
-          Respuesta: this.servicioResumen[i].respuesta,
-          "Cantidad de respuestas": this.servicioResumen[i].conteo_respuestas,
+          Sucursal: resultados[i].nombre_sucursal,
+          Encuesta: resultados[i].nombre_encuesta,
+          Uusario: resultados[i].nombre_usuario,
+          "Encuestas realizadas": resultados[i].encuestas_realizadas,
         });
       }
-    } else {
-      for (let i = 0; i < this.servicioResumen.length; i++) {
-        jsonServicio.push({
-          Encuesta: this.servicioResumen[i].encuesta,
-          Titulo: this.servicioResumen[i].titulo,
-          Pregunta: this.servicioResumen[i].pregunta,
-          Respuesta: this.servicioResumen[i].respuesta,
-          "Cantidad de respuestas": this.servicioResumen[i].conteo_respuestas,
-        });
+      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
+      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
+      const header = Object.keys(resultados[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+      var wscols:any = [];
+      for (var i = 0; i < header.length; i++) {
+        // CABECERAS AÑADIDAS CON ESPACIOS
+        wscols.push({ wpx: 150 });
       }
-    }
-    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-    const header = Object.keys(this.servicioResumen[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols:any = [];
-    for (var i = 0; i < header.length; i++) {
-      // CABECERAS AÑADIDAS CON ESPACIOS
-      wscols.push({ wpx: 150 });
-    }
-    ws["!cols"] = wscols;
+      ws["!cols"] = wscols;
 
-    XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
-    XLSX.writeFile(
-      wb,
-      "Preguntas resumen " + new Date().toLocaleString() + EXCEL_EXTENSION
-    );
+      XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
+      XLSX.writeFile(
+        wb,
+        "Resumen Encuestas Usuarios" + new Date().toLocaleString() + EXCEL_EXTENSION
+      );
+    }
   }
 
 
-  validarHoras(hInicio, hFin) {
+  validarHoras(hInicio: any, hFin: any) {
     let diaCompleto: boolean = false;
 
     if (hInicio == "-1" || hFin == "-1" || parseInt(hInicio) > parseInt(hFin)) {
@@ -890,44 +919,46 @@ export class UsuariosComponent implements OnInit {
 
   //----GENERACION DE PDF'S----
   async generarPdfEntradasSistema(action = "open", pdf: number) {
-    //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
+    if (this.servicioTurnosFecha.length != 0) {
+      //Seteo de rango de fechas de la consulta para impresión en PDF
+      var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
+        .toString()
+        .trim();
+      var fechaHasta = this.toDateTurnosFecha.nativeElement.value
+        .toString()
+        .trim();
 
-    let horaInicio = this.horaInicioTF.nativeElement.value;
-    let horaFin = this.horaFinTF.nativeElement.value;
+      let horaInicio = this.horaInicioTF.nativeElement.value;
+      let horaFin = this.horaFinTF.nativeElement.value;
 
-    // var cod = this.codSucursal.nativeElement.value.toString().trim();
+      // var cod = this.codSucursal.nativeElement.value.toString().trim();
+      const pdfMake = await this.validar.ImportarPDF();
 
-    //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition;
-    if (pdf === 1) {
-      documentDefinition = this.getDocumentturnosfecha(
-        fechaDesde,
-        fechaHasta,
-        horaInicio,
-        horaFin
-      );
-    }
-    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-    const pdfMake = await this.validar.ImportarPDF();
-    switch (action) {
-      case "open":
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-      case "print":
-        pdfMake.createPdf(documentDefinition).print();
-        break;
-      case "download":
-        pdfMake.createPdf(documentDefinition).download();
-        break;
-      default:
-        pdfMake.createPdf(documentDefinition).open();
-        break;
+      //Definicion de funcion delegada para setear estructura del PDF
+      let documentDefinition: any;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentturnosfecha(
+          fechaDesde,
+          fechaHasta,
+          horaInicio,
+          horaFin
+        );
+      }
+      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
     }
   }
 
@@ -1069,44 +1100,45 @@ export class UsuariosComponent implements OnInit {
   }
 
   async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
-    //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
-      .toString()
-      .trim();
+    if (this.preguntas_respuestas.length != 0) {
+      //Seteo de rango de fechas de la consulta para impresión en PDF
+      var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
+        .toString()
+        .trim();
+      var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
+        .toString()
+        .trim();
 
-    const pdfMake = await this.validar.ImportarPDF();
+      const pdfMake = await this.validar.ImportarPDF();
+      //Definicion de funcion delegada para setear estructura del PDF
+      let documentDefinition: any;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentturnosTotalfecha(
+          fechaDesde,
+          fechaHasta
+        );
+      }
+      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
 
-    //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition;
-    if (pdf === 1) {
-      documentDefinition = this.getDocumentturnosTotalfecha(
-        fechaDesde,
-        fechaHasta
-      );
-    }
-    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-    switch (action) {
-      case "open":
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-      case "print":
-        pdfMake.createPdf(documentDefinition).print();
-        break;
-      case "download":
-        pdfMake.createPdf(documentDefinition).download();
-        break;
-
-      default:
-        pdfMake.createPdf(documentDefinition).open();
-        break;
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
     }
   }
 
   //Funcion delegada para seteo de información
-  getDocumentturnosTotalfecha(fechaDesde, fechaHasta) {
+  getDocumentturnosTotalfecha(fechaDesde: any, fechaHasta: any) {
     //Se obtiene la fecha actual
     let f = new Date();
     f.setUTCHours(f.getHours());
@@ -1129,7 +1161,7 @@ export class UsuariosComponent implements OnInit {
         opacity: 0.3,
       },
       //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage, pageCount, fecha) {
+      footer: function (currentPage: any, pageCount: any, fecha: any) {
         fecha = f.toJSON().split("T")[0];
         var timer = f.toJSON().split("T")[1].slice(0, 5);
         return [
@@ -1166,7 +1198,7 @@ export class UsuariosComponent implements OnInit {
             {
               width: "*",
               alignment: "center",
-              text: "Reporte - Cajeros resumen ",
+              text: "LISTA DE ENCUESTAS",
               bold: true,
               fontSize: 15,
               margin: [-90, 20, 0, 0],
@@ -1175,40 +1207,40 @@ export class UsuariosComponent implements OnInit {
         },
         {
           style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
+          text: "Período de " + fechaDesde + " hasta " + fechaHasta,
         },
-        this.CampoDetalleTotal(this.servicioTurnosTotalFecha),
+        this.EstructurarDatosPDF(this.preguntas_respuestas),
         {
           style: "subtitulos",
-          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotalC,
+          text: "TOTAL DE ENCUESTAS: " + this.respuestasTotalC,
         }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
+        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: '#0096c7' },
+        centrado: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color, margin: [0, 7, 0, 0] },
+        itemsTable: { fontSize: 8 },
+        derecha: { fontSize: 10, margin: [0, 3, 0, 3], fillColor: this.p_color, alignment: 'rigth' },
+        itemsTableInfoEmpleado: { fontSize: 9, margin: [0, -1, 0, -2], fillColor: this.p_color },
+        itemsTableCentrado: { fontSize: 8, alignment: 'center' },
+        tableMargin: { margin: [0, 0, 0, 0] },
+        tableMarginCabecera: { margin: [0, 15, 0, 0] },
+        tableMarginCabeceraEmpleado: { margin: [0, 10, 0, 0] },
         tableTotal: {
           fontSize: 30,
           bold: true,
           alignment: "center",
           fillColor: this.p_color,
         },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 16,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
         CabeceraTabla: {
           fontSize: 12,
           alignment: "center",
           margin: [0, 8, 0, 8],
           fillColor: this.p_color,
+        },
+        subtitulos: {
+          fontSize: 14,
+          alignment: "center",
+          margin: [0, 5, 0, 10],
         },
         quote: { margin: [5, -2, 0, -2], italics: true },
         small: { fontSize: 8, color: "blue", opacity: 0.5 },
@@ -1216,75 +1248,40 @@ export class UsuariosComponent implements OnInit {
     };
   }
 
-  //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleTotal(servicio: any[]) {
-    return {
-      style: "tableMargin",
-      table: {
-        headerRows: 1,
-        widths: ["auto", "auto", "*", 200, "auto", "auto"],
 
-        body: [
-          [
-            { text: "Cajero", style: "tableHeader" },
-            { text: "Encuesta", style: "tableHeader" },
-            { text: "Titulo", style: "tableHeader" },
-            { text: "Pregunta", style: "tableHeader" },
-            { text: "Respuesta", style: "tableHeader" },
-            { text: "Cantidad de respuestas", style: "tableHeader" },
-          ],
-          ...servicio.map((res) => {
-            return [
-              { style: "itemsTable", text: res.usuario },
-              { style: "itemsTable", text: res.encuesta },
-              { style: "itemsTable", text: res.titulo },
-              { style: "itemsTable", text: res.pregunta },
-              { style: "itemsTable", text: res.respuesta },
-              { style: "itemsTable", text: res.conteo_respuestas },
-            ];
-          }),
-        ],
-      },
-      layout: {
-        fillColor: function (rowIndex) {
-          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-        },
-      },
-    };
-  }
+  async generarPdfPreguntasResumen(action = "open", pdf: number, opcion: any) {
+    if (this.servicioResumen.length != 0) {
+      //Seteo de rango de fechas de la consulta para impresión en PDF
+      var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
+      var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
 
-  async generarPdfPreguntasResumen(action = "open", pdf: number) {
-    //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
-    var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
+      const pdfMake = await this.validar.ImportarPDF();
+      //Definicion de funcion delegada para setear estructura del PDF
+      let documentDefinition: any;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta, opcion);
+      }
+      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
 
-    const pdfMake = await this.validar.ImportarPDF();
-
-    //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition;
-    if (pdf === 1) {
-      documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta);
-    }
-    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-    switch (action) {
-      case "open":
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-      case "print":
-        pdfMake.createPdf(documentDefinition).print();
-        break;
-      case "download":
-        pdfMake.createPdf(documentDefinition).download();
-        break;
-
-      default:
-        pdfMake.createPdf(documentDefinition).open();
-        break;
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
     }
   }
 
   //Funcion delegada para seteo de información
-  getDocumentResumen(fechaDesde, fechaHasta) {
+  getDocumentResumen(fechaDesde: any, fechaHasta: any, opcion: any) {
     //Se obtiene la fecha actual
     let f = new Date();
     f.setUTCHours(f.getHours());
@@ -1292,6 +1289,7 @@ export class UsuariosComponent implements OnInit {
 
     return {
       //Seteo de marca de agua y encabezado con nombre de usuario logueado
+      pageSize: 'A4',
       watermark: {
         text: this.marca,
         color: "blue",
@@ -1307,7 +1305,7 @@ export class UsuariosComponent implements OnInit {
         opacity: 0.3,
       },
       //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage, pageCount, fecha) {
+      footer: function (currentPage: any, pageCount: any, fecha: any) {
         fecha = f.toJSON().split("T")[0];
         var timer = f.toJSON().split("T")[1].slice(0, 5);
         return [
@@ -1344,7 +1342,7 @@ export class UsuariosComponent implements OnInit {
             {
               width: "*",
               alignment: "center",
-              text: "Reporte - Respuestas totales ",
+              text: "REPORTE ENCUENTAS REALIZADAS",
               bold: true,
               fontSize: 15,
               margin: [-90, 20, 0, 0],
@@ -1355,10 +1353,10 @@ export class UsuariosComponent implements OnInit {
           style: "subtitulos",
           text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
         },
-        this.CampoDetalleResumen(this.servicioResumen),
+        this.CampoDetalleResumen(opcion),
         {
           style: "subtitulos",
-          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
+          text: "TOTAL DE ENCUESTAS REALIZADAS: " + this.respuestasTotal,
         }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
@@ -1377,7 +1375,7 @@ export class UsuariosComponent implements OnInit {
         itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
         itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
         subtitulos: {
-          fontSize: 16,
+          fontSize: 14,
           alignment: "center",
           margin: [0, 5, 0, 10],
         },
@@ -1395,112 +1393,134 @@ export class UsuariosComponent implements OnInit {
   }
 
   //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleResumen(servicio: any[]) {
-    if (this.todasSucursalesTTF) {
+  CampoDetalleResumen(opcion: any) {
+    let servicio: any = [];
+    if (opcion === 1) {
+      servicio = this.servicioEncuesta;
+    }
+    else {
+      servicio = this.servicioResumen;
+    }
+    if (servicio.length != 0) {
       return {
-        style: "tableMargin",
-        table: {
-          headerRows: 1,
-          widths: ["auto", "auto", "*", 200, "auto", "auto"],
-
-          body: [
-            [
-              { text: "Sucursal", style: "tableHeader" },
-              { text: "Encuesta", style: "tableHeader" },
-              { text: "Titulo", style: "tableHeader" },
-              { text: "Pregunta", style: "tableHeader" },
-              { text: "Respuesta", style: "tableHeader" },
-              { text: "Cantidad de respuestas", style: "tableHeader" },
-            ],
-            ...servicio.map((res) => {
-              return [
-                { style: "itemsTable", text: res.sucursal },
-                { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.titulo },
-                { style: "itemsTable", text: res.pregunta },
-                { style: "itemsTable", text: res.respuesta },
-                { style: "itemsTable", text: res.conteo_respuestas },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex) {
-            return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+        columns: [
+          { width: '*', text: '' },
+          {
+            width: 'auto',
+            style: "tableMargin",
+            table: {
+              headerRows: 1,
+              widths: ["auto", "*", "auto", "auto"],
+              body: [
+                [
+                  { text: "Sucursal", style: "tableHeader" },
+                  { text: "Encuesta", style: "tableHeader" },
+                  { text: "Cajero", style: "tableHeader" },
+                  { text: "Encuestas realizadas", style: "tableHeader" },
+                ],
+                ...servicio.map((res: any) => {
+                  return [
+                    { style: "itemsTable", text: res.nombre_sucursal },
+                    { style: "itemsTable", text: res.nombre_encuesta },
+                    { style: "itemsTable", text: res.nombre_usuario },
+                    { style: "itemsTable", text: res.encuestas_realizadas },
+                  ];
+                }),
+              ],
+            },
+            layout: {
+              fillColor: function (rowIndex: any) {
+                return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+              },
+            },
           },
-        },
-      };
-    } else {
-      return {
-        style: "tableMargin",
-        table: {
-          headerRows: 1,
-          widths: ["auto", "*", 200, "auto", "auto"],
-
-          body: [
-            [
-              { text: "Encuesta", style: "tableHeader" },
-              { text: "Titulo", style: "tableHeader" },
-              { text: "Pregunta", style: "tableHeader" },
-              { text: "Respuesta", style: "tableHeader" },
-              { text: "Cantidad de respuestas", style: "tableHeader" },
-            ],
-            ...servicio.map((res) => {
-              return [
-                { style: "itemsTable", text: res.encuesta },
-                { style: "itemsTable", text: res.titulo },
-                { style: "itemsTable", text: res.pregunta },
-                { style: "itemsTable", text: res.respuesta },
-                { style: "itemsTable", text: res.conteo_respuestas },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex) {
-            return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-          },
-        },
+          { width: '*', text: '' },
+        ]
       };
     }
   }
 
-  //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleMeta(servicio: any[]) {
-    return {
-      style: "tableMargin",
-      table: {
-        headerRows: 1,
-        widths: ["auto", "auto", "auto", "*", 200, "auto"],
 
-        body: [
-          [
-            { text: "Fecha", style: "tableHeader" },
-            { text: "Usuario", style: "tableHeader" },
-            { text: "Encuesta", style: "tableHeader" },
-            { text: "Titulo", style: "tableHeader" },
-            { text: "Pregunta", style: "tableHeader" },
-            { text: "Respuesta", style: "tableHeader" },
+
+  EstructurarDatosPDF(data: any[]): Array<any> {
+    console.log('ver pdf ', data)
+    let n: any = [];
+    data.forEach((selec: any) => {
+      //let reg = this.validar.SumarRegistros(arr_reg)
+      // PRESENTACION DE LA INFORMACION
+      n.push({
+        style: 'tableMarginCabeceraEmpleado',
+        table: {
+          widths: ['*', '*'],
+          headerRows: 2,
+          body: [
+            [
+              {
+                border: [true, true, false, false],
+                text: 'SUCURSAL: ' + selec.sucursal,
+                style: 'itemsTableInfoEmpleado'
+              },
+              {
+                border: [true, true, true, false],
+                text: 'ENCUESTA: ' + selec.encuesta,
+                style: 'itemsTableInfoEmpleado'
+              },
+            ],
+            [
+              {
+                border: [true, false, false, false],
+                text: 'CAJERO: ' + selec.NOM_US,
+                style: 'itemsTableInfoEmpleado',
+              },
+              {
+                border: [true, false, true, false],
+                text: 'N° Preguntas: ' + selec.informacion.length,
+                style: 'itemsTableInfoEmpleado',
+              },
+
+            ],
           ],
-          ...servicio.map((res) => {
-            return [
-              { style: "itemsTable", text: res.fecha },
-              { style: "itemsTable", text: res.usuario_NOM_US },
-              { style: "itemsTable", text: res.encuesta_NOM_EN },
-              { style: "itemsTable", text: res.pregunta_SEC_PR },
-              { style: "itemsTable", text: res.pregunta_PREG_PR },
-              { style: "itemsTable", text: res.respuesta },
-            ];
-          }),
-        ],
-      },
-      layout: {
-        fillColor: function (rowIndex) {
-          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
         },
-      },
-    };
+      });
+      n.push({
+        style: 'tableMargin',
+        table: {
+          widths: ['auto', 'auto', '*', 'auto', 'auto', 'auto'],
+          headerRows: 1,
+          body: [
+            [
+              { text: 'N°', style: 'tableHeader' },
+              { text: 'TÍTULO', style: 'tableHeader' },
+              { text: 'PREGUNTA', style: 'tableHeader' },
+              { text: 'RESPUESTA', style: 'tableHeader' },
+              { text: 'FECHA', style: 'tableHeader' },
+              { text: 'HORA', style: 'tableHeader' },
+            ],
+            ...selec.informacion.map((inf: any) => {
+              const fecha = DateTime.fromISO(inf.fecha_hora, { zone: 'utc' });
+              return [
+                {
+                  style: 'itemsTableCentrado',
+                  text: selec.informacion.indexOf(inf) + 1,
+                },
+                { style: 'itemsTableCentrado', text: inf.titulo },
+                { style: 'itemsTable', text: inf.pregunta },
+                { style: 'itemsTableCentrado', text: inf.respuesta },
+                { style: 'itemsTableCentrado', text: fecha.toFormat('dd/MM/yyyy') },
+                { style: 'itemsTableCentrado', text: fecha.toFormat('HH:mm:ss') },
+              ];
+            }),
+          ],
+        },
+        layout: {
+          fillColor: function (rowIndex: any) {
+            // #E5E7E9
+            return rowIndex % 2 === 0 ? '#caf0f8' : null;
+          },
+        },
+      });
+    });
+    return n;
   }
 
-  
 }

@@ -29,7 +29,7 @@ import { TokenInterceptorService } from './services/token-interceptor.service';
 @NgModule({
   declarations: [
     AppComponent,
-    FilterPipe,
+    FilterPipe
   ],
   imports: [
     BrowserModule,
