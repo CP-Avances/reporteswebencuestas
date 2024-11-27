@@ -311,9 +311,16 @@
                         (click)="ExportTOExcelPreguntasResumen()">EXCEL</button>
                     <button type="button" class="btn btn-info"
                         (click)="generarPdfPreguntasResumen('hola', 1)">PDF</button>
+
+                    <!-- GRAFICO -->
+                    <br> <br>
+                    <div id="canvasResumenEncuesta">
+                        <h3>GRÁFICO RESUMEN ENCUESTA</h3>
+                        <canvas id="canvaEncuestasSucursal">{{chart}}</canvas>
+                    </div>
                 </div>
 
-                <!-- *********************************** LISTA DE ENCUESTAS *************************************** -->
+                <!-- *********************************** LISTA DE ENCUESTAS - RESUMEN ENCUESTAS *************************************** -->
                 <div class="tab-pane fade show active" id="encuestas" role="tabpanel" aria-labelledby="encuesta-tab">
                     <br><br>
                     <div class="container">
@@ -394,6 +401,7 @@
                         (click)="ExportTOExcelPreguntasResumen()">EXCEL</button>
                     <button type="button" class="btn btn-info"
                         (click)="generarPdfPreguntasResumen('hola', 1)">PDF</button>
+
                 </div>
 
             </div>

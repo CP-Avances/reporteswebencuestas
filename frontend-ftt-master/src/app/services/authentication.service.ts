@@ -16,7 +16,7 @@ export class AuthenticationService {
   password: '';
   us: '';
 
-  private URL = "http://192.168.0.145:3006";
+  private URL = "http://192.168.0.144:3006";
 
 
   constructor(

@@ -12,6 +12,7 @@ import { ServiceService } from "../../services/service.service";
 import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import * as XLSX from "xlsx";
 import moment from "moment";
+import { Chart } from "chart.js/auto";
 
 const EXCEL_EXTENSION = ".xlsx";
 
@@ -157,6 +158,9 @@ export class EncuestasComponent {
   //Totales
   respuestasTotal: number;
   respuestasTotalC: number;
+
+  //GRAFICO
+  chart: any;
 
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
 
@@ -613,6 +617,7 @@ export class EncuestasComponent {
         )
         .subscribe(
           (servicio: any) => {
+            console.log('EncuestasSucursales: ', servicio );
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             this.servicioResumen = servicio.resumen;
             this.malRequestR = false;
@@ -631,6 +636,92 @@ export class EncuestasComponent {
               total += totalR[i];
             }
             this.respuestasTotal = total;
+
+            //GENERACION DE GRAFICO            
+            let nombresSucursales = Array.from(new Set(this.servicioResumen.map((res) => res.NOM_SUC)));
+            let nombresEncuestas = Array.from(new Set(this.servicioResumen.map((res) => res.NOM_EN)));
+
+            var i: number;
+            var valores: any = [];
+            for (i = 0; i < nombresSucursales.length; i++) {
+              const sucursal = nombresSucursales[i];
+              const data = nombresEncuestas.map((encuesta) => {
+                // Encontrar el total_encuestas para la sucursal y la encuesta actual
+                const encuestaSucursal = this.servicioResumen.find(
+                  (res) => res.NOM_SUC === sucursal && res.NOM_EN === encuesta
+                );
+                return encuestaSucursal ? encuestaSucursal.total_encuestas : 0; // Si no hay datos, asigna 0
+              });
+
+              valores.push(
+                {
+                  label: (nombresSucursales[i] as string),
+                  data: data,
+                  backgroundColor: this.generarColorAleatorio()
+                }
+              );
+            }
+
+            //TOTALES POR CADA SUCURSAL
+            var valoresT: any[] = [];
+
+            // Iterar por cada sucursal para calcular la suma de total_encuestas
+            nombresSucursales.forEach((sucursal) => {
+              // Sumar los valores de total_encuestas correspondientes a la sucursal actual
+              const sumaTotalEncuestas = this.servicioResumen
+                .filter((res) => res.NOM_SUC === sucursal)
+                .reduce((sum, res) => sum + res.total_encuestas, 0);
+
+              // Agregar el objeto con la información correspondiente
+              valoresT.push({
+                type: "scatter",
+                label: "Totales",
+                data: [sumaTotalEncuestas], // Aquí podrías personalizar la estructura
+                backgroundColor: this.generarColorAleatorio(),
+              });
+            });
+
+            console.log('Totales: ', valoresT);
+
+            var totalesData = {
+              type: "scatter",
+              label: "Totales",
+              data: [2, 4, 2, 5],
+              backgroundColor: this.generarColorAleatorio(),
+            };
+
+            valores.push(valoresT);
+
+            var graficoData = {
+              labels: nombresEncuestas,
+              datasets: valores,
+            };
+
+            if (this.chart != undefined || this.chart != null) {
+              this.chart.destroy();
+            }
+
+            this.chart = new Chart("canvaEncuestasSucursal", {
+              type: "bar",
+              data: graficoData,
+              options: {
+                plugins: {
+                  datalabels: {
+                    color: "black",
+                    labels: {
+                      title: {
+                        font: {
+                          weight: "bold",
+                        },
+                      },
+                    },
+                  },
+                },
+                scales: {},
+                responsive: true,
+              }
+            }
+            );
           },
           (error) => {
             if (error.status == 400) {
@@ -1462,6 +1553,43 @@ export class EncuestasComponent {
         },
       },
     };
+  }
+
+  generarColorAleatorio(): string {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    const a = (Math.random() * 0.5 + 0.5).toFixed(2); // Transparencia entre 0.5 y 1
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+
+  grafico() {
+    const DATA_COUNT = 8;
+    const MIN = 10;
+    const MAX = 100;
+
+    const labels:any = [];
+    for (let i = 0; i < DATA_COUNT; ++i) {
+      labels.push('Label ' + i);
+    }
+
+    const numberCfg = {count: DATA_COUNT, min: MIN, max: MAX};
+
+    const data = {
+      labels: labels,
+      datasets: [{
+        data: numberCfg,
+      }, {
+        data: numberCfg,
+      }, {
+        data: numberCfg,
+      }]
+    };
+
+    this.chart = new Chart("canvaResumenEncuesta", {
+      type: 'line',
+      data
+    });
   }
 
 }
