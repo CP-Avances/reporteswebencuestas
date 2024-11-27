@@ -663,34 +663,22 @@ export class EncuestasComponent {
             }
 
             //TOTALES POR CADA SUCURSAL
-            var valoresT: any[] = [];
+            let totalPorSucursal = nombresSucursales.map((sucursal) =>
+              this.servicioResumen
+                .filter((res) => res.NOM_SUC === sucursal) // Filtrar por sucursal
+                .reduce((sum, res) => sum + res.total_encuestas, 0) // Sumar los valores de total_encuestas
+            );
 
-            // Iterar por cada sucursal para calcular la suma de total_encuestas
-            nombresSucursales.forEach((sucursal) => {
-              // Sumar los valores de total_encuestas correspondientes a la sucursal actual
-              const sumaTotalEncuestas = this.servicioResumen
-                .filter((res) => res.NOM_SUC === sucursal)
-                .reduce((sum, res) => sum + res.total_encuestas, 0);
-
-              // Agregar el objeto con la información correspondiente
-              valoresT.push({
-                type: "scatter",
-                label: "Totales",
-                data: [sumaTotalEncuestas], // Aquí podrías personalizar la estructura
-                backgroundColor: this.generarColorAleatorio(),
-              });
-            });
-
-            console.log('Totales: ', valoresT);
+            console.log('Totales: ', totalPorSucursal);
 
             var totalesData = {
               type: "scatter",
               label: "Totales",
-              data: [2, 4, 2, 5],
+              data: [totalPorSucursal],
               backgroundColor: this.generarColorAleatorio(),
             };
 
-            valores.push(valoresT);
+            valores.push(totalesData);
 
             var graficoData = {
               labels: nombresEncuestas,
