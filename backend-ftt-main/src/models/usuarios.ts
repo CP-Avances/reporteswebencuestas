@@ -6,4 +6,3 @@ export interface Usuario{
     usua_estado: number,
     usua_tipo: number
 }
-

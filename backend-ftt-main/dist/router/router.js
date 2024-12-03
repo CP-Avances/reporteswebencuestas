@@ -14,16 +14,9 @@ let jwt = require('jsonwebtoken');
 const router = (0, express_1.Router)();
 // MANEJO DE RUTAS DE ALMACENAMIENTO DE ARCHIVOS
 const ObtenerRuta = function () {
-    var ruta = '';
+    let ruta = '';
     let separador = path_1.default.sep;
-    for (var i = 0; i < __dirname.split(separador).length - 2; i++) {
-        if (ruta === '') {
-            ruta = __dirname.split(separador)[i];
-        }
-        else {
-            ruta = ruta + separador + __dirname.split(separador)[i];
-        }
-    }
+    ruta = path_1.default.join(__dirname, `..${separador}..`);
     return ruta + separador + 'imagenesReportes';
 };
 const storage = multer_1.default.diskStorage({

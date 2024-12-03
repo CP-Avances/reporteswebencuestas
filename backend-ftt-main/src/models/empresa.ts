@@ -12,5 +12,4 @@ export interface Empresa{
     empr_msjbienvenida: string,
     empr_msjpie: string,
     empr_msjcaja: string
-
 }

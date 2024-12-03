@@ -12,16 +12,9 @@ const router = Router();
 
 // MANEJO DE RUTAS DE ALMACENAMIENTO DE ARCHIVOS
 const ObtenerRuta = function () {
-    var ruta = '';
+    let ruta = '';
     let separador = path.sep;
-    for (var i = 0; i < __dirname.split(separador).length - 2; i++) {
-        if (ruta === '') {
-            ruta = __dirname.split(separador)[i];
-        }
-        else {
-            ruta = ruta + separador + __dirname.split(separador)[i];
-        }
-    }
+    ruta = path.join(__dirname, `..${separador}..`);
     return ruta + separador + 'imagenesReportes';
 }
 
@@ -94,7 +87,6 @@ const ImagenBase64LogosEmpresas = function (path_file: string) {
     }
 }
 
-
 // RUTAS PRUEBA
 router.get('/heroes', (req: Request, res: Response) => {
     res.json({
@@ -111,7 +103,6 @@ router.get('/heroes/:id', (req: Request, res: Response) => {
         id: id
     })
 });
-
 
 // QUERYS
 router.get('/usuarios', TokenValidation, cors(), (req: Request, res: Response) => {
@@ -135,7 +126,6 @@ router.get('/usuarios', TokenValidation, cors(), (req: Request, res: Response) =
     })
 });
 
-
 router.get('/usuario/:id', TokenValidation, (req: Request, res: Response) => {
     const id = req.params.id;
     const escapeId = MySQL.instance.cnn.escape(id);
@@ -158,7 +148,6 @@ router.get('/usuario/:id', TokenValidation, (req: Request, res: Response) => {
         }
     })
 });
-
 
 // GETUSER
 router.get('/username/:usua_login', TokenValidation, (req: Request, res: Response) => {
@@ -311,7 +300,6 @@ router.get('/getMeta', TokenValidation, (req: Request, res: Response) => {
     });
 });
 
-
 // GUARDAR MARCA DE AGUA
 router.get('/setMarca/:marca', TokenValidation, (req, res) => {
 
@@ -339,7 +327,6 @@ router.get('/setMarca/:marca', TokenValidation, (req, res) => {
     })
 }
 );
-
 
 router.get('/getMarca', TokenValidation, (req: Request, res: Response) => {
     const query =
