@@ -4,7 +4,7 @@ const mysql = require("mysql2");
 class MySQL {
     constructor() {
         this.conectado = false;
-        this.cnn = mysql.createConnection({
+        this.cnn = mysql.createPool({
             host: '192.168.0.145',
             port: 3307,
             user: 'admin123',
@@ -32,7 +32,7 @@ class MySQL {
         });
     }
     conectarDB() {
-        this.cnn.connect((err) => {
+        this.cnn.query('SELECT 1', (err, results) => {
             if (err) {
                 console.log('Base de datos no conecta!! : ' + JSON.stringify(err, undefined, 2));
                 return;
