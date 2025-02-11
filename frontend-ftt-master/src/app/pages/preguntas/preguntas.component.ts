@@ -3,15 +3,17 @@ import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import { Utils } from "../../utils/util";
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 import { AuthenticationService } from "../../services/authentication.service";
 import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
 
 // COMPLEMENTOS PARA PDF Y EXCEL
-import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import * as XLSX from "xlsx";
 import moment from "moment";
+import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 
 const EXCEL_EXTENSION = ".xlsx";
 
@@ -25,97 +27,33 @@ export class PreguntasComponent {
   // SETEO DE FECHAS PRIMER DIA DEL MES ACTUAL Y DIA ACTUAL
   fromDate: any;
   toDate: any;
+  date: any;
 
   // CAPTURA DE ELEMENTOS DE LA INTERFAZ VISUAL PARA TRATARLOS Y CAPTURAR DATOS
-  @ViewChild("content") element: ElementRef;
-  @ViewChild("fromDateTurnosFecha") fromDateTurnosFecha: ElementRef;
-  @ViewChild("toDateTurnosFecha") toDateTurnosFecha: ElementRef;
-  @ViewChild("fromDateTurnosTotalFecha") fromDateTurnosTotalFecha: ElementRef;
-  @ViewChild("toDateTurnosTotalFecha") toDateTurnosTotalFecha: ElementRef;
-  @ViewChild("fromDateResumen") fromDateResumen: ElementRef;
-  @ViewChild("toDateResumen") toDateResumen: ElementRef;
-  @ViewChild("fromDateEncuesta") fromDateEncuesta: ElementRef;
-  @ViewChild("toDateEncuesta") toDateEncuesta: ElementRef;
+  @ViewChild("fechaDesde") fechaDesde: ElementRef;
+  @ViewChild("fechaHasta") fechaHasta: ElementRef;
+  @ViewChild("horaInicio") horaInicio: ElementRef;
+  @ViewChild("horaFin") horaFin: ElementRef;
 
-
-  @ViewChild("fromDatePromAtencion") fromDatePromAtencion: ElementRef;
-  @ViewChild("toDatePromAtencion") toDatePromAtencion: ElementRef;
-  @ViewChild("fromDateTiempoAtencion") fromDateTiempoAtencion: ElementRef;
-  @ViewChild("toDateTiempoAtencion") toDateTiempoAtencion: ElementRef;
-  @ViewChild("fromDateAtencionUsua") fromDateAtencionUsua: ElementRef;
-  @ViewChild("toDateAtencionUsua") toDateAtencionUsua: ElementRef;
-  @ViewChild("fromDateUES") fromDateUES: ElementRef;
-  @ViewChild("toDateUES") toDateUES: ElementRef;
-
-  @ViewChild("horaInicioTF") horaInicioTF: ElementRef;
-  @ViewChild("horaFinTF") horaFinTF: ElementRef;
-  @ViewChild("horaInicioTTF") horaInicioTTF: ElementRef;
-  @ViewChild("horaFinTTF") horaFinTTF: ElementRef;
-  @ViewChild("horaInicioR") horaInicioR: ElementRef;
-  @ViewChild("horaFinR") horaFinR: ElementRef;
-  @ViewChild("horaInicioE") horaInicioE: ElementRef;
-  @ViewChild("horaFinE") horaFinE: ElementRef;
-
-
-
-  @ViewChild("horaInicioTPA") horaInicioTPA: ElementRef;
-  @ViewChild("horaFinTPA") horaFinTPA: ElementRef;
-  @ViewChild("horaInicioTA") horaInicioTA: ElementRef;
-  @ViewChild("horaFinTA") horaFinTA: ElementRef;
-  @ViewChild("horaInicioAU") horaInicioAU: ElementRef;
-  @ViewChild("horaFinAU") horaFinAU: ElementRef;
-  @ViewChild("horaInicioES") horaInicioES: ElementRef;
-  @ViewChild("horaFinES") horaFinES: ElementRef;
 
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
   sucursales: any[];
   cajerosUsuarios: any = [];
-  encuestas: any = [];
-  preguntas: any = [];
-  servicioTurnosFecha: any = [];
-  servicioTurnosTotalFecha: any = [];
-  servicioResumen: any = [];
-  servicioEncuesta: any = [];
+  entradas_salidas: any = [];
 
   // BANDERAS PARA MOSTRAR LA TABLA CORRESPONDIENTE A LAS CONSULTAS
-  todasSucursalesTPA: boolean = false;
-  todasSucursalesTA: boolean = false;
-  todasSucursalesTF: boolean = false;
-  todasSucursalesTTF: boolean = false;
-  todasSucursalesTM: boolean = false;
-  todasSucursalesES: boolean = false;
-  todasSucursalesAU: boolean = false;
-  todasEncuestas: boolean = false;
-  todasEncuestasI: boolean = false;
+  todasSucursales: boolean = false;
   todosLosCajeros: boolean = false;
-  soloEncuestas: boolean = false;
 
   // BANDERAS PARA QUE NO SE QUEDE EN PANTALLA CONSULTAS ANTERIORES
   malRequestTF: boolean = false;
-  malRequestTTF: boolean = false;
-  malRequestR: boolean = false;
-  malRequestE: boolean = false;
   malRequestTFPag: boolean = false;
-  malRequestTTFPag: boolean = false;
-  malRequestRPag: boolean = false;
-  malRequestEPag: boolean = false;
 
   // USUARIO QUE INGRESO AL SISTEMA
   userDisplayName: any;
 
   // CONTROL PAGINACION
   configTF: any;
-  configTTF: any;
-  configR: any;
-  configE: any;
-
-  // FECHA CAPTURADA DEL SERVIDOR
-  date: any;
-
-  // VARIABLE USADA EN EXPORTACION A EXCEL
-  p_color: any = "#0077b6";
-
-  // MAXIMO DE ITEMS MOSTRADO DE TABLA EN PANTALLA
   private MAX_PAGS = 10;
 
   // PALABRAS DE COMPONENTE DE PAGINACION
@@ -125,48 +63,37 @@ export class PreguntasComponent {
   };
 
   // IMAGEN LOGO
+  p_color: any = '#0077b6';
   urlImagen: string;
   nombreImagen: any[];
+  private imagen: any;
 
   //OPCIONES MULTIPLES
   allSelected: boolean = false;
   selectedItems: string[] = [];
-  selectedEncuestas: string[] = [];
-  selectedPreguntas: string[] = [];
   selectedFechas: string[] = [];
   sucursalesSeleccionadas: string[] = [];
-  encuestasTodas: string[] = [];
   usuariosSeleccionados: string[] = [];
-  seleccionMultiple: boolean = false;
-  seleccionMultipleE: boolean = false;
-  seleccionMultipleI: boolean = false;
-  encuestaSeleccionada: string[] = [];
   cajeroSeleccionado: any;
 
-  //MOSTRAR CAJEROS
+  // MOSTRAR CAJEROS
   mostrarCajeros: boolean = false;
-  mostrarEncuestas: boolean = false;
-  mostrarPreguntas: boolean = false;
   mostrarFechas: boolean = false;
 
-  //Variables de informacion
+  // VARIABLES DE INFORMACION
   valor: number;
   marca: string = "FullTime Tickets";
   horas: number[] = [];
 
-  //Totales
-  respuestasTotal: number;
-  respuestasTotalC: number;
-
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
 
   constructor(
+    private imagenesService: ImagenesService,
     private serviceService: ServiceService,
     private toastr: ToastrService,
     private router: Router,
     private auth: AuthenticationService,
     public datePipe: DatePipe,
-    private imagenesService: ImagenesService,
     public validar: ValidacionesService
   ) {
     // SETEO DE ITEM DE PAGINACION CUANTOS ITEMS POR PAGINA, DESDE QUE PAGINA EMPIEZA, EL TOTAL DE ITEMS RESPECTIVAMENTE
@@ -175,28 +102,7 @@ export class PreguntasComponent {
       id: "usuariosTF",
       itemsPerPage: this.MAX_PAGS,
       currentPage: 1,
-      totalItems: this.servicioTurnosFecha.length,
-    };
-    // RESUMEN CAJEROS
-    this.configTTF = {
-      id: "usuariosTTF",
-      itemsPerPage: this.MAX_PAGS,
-      currentPage: 1,
-      totalItems: this.servicioTurnosTotalFecha.length,
-    };
-    // RESUMEN PREGUNTAS
-    this.configR = {
-      id: "usuariosR",
-      itemsPerPage: this.MAX_PAGS,
-      currentPage: 1,
-      totalItems: this.servicioResumen.length,
-    };
-    // RESUMEN ENCUESTAS REALIZADAS
-    this.configE = {
-      id: "usuariosE",
-      itemsPerPage: this.MAX_PAGS,
-      currentPage: 1,
-      totalItems: this.servicioEncuesta.length,
+      totalItems: this.entradas_salidas.length,
     };
     for (let i = 0; i <= 24; i++) {
       this.horas.push(i);
@@ -208,18 +114,6 @@ export class PreguntasComponent {
   pageChangedTF(event: any) {
     this.configTF.currentPage = event;
   }
-  // RESUMEN CAJEROS
-  pageChangedTTF(event: any) {
-    this.configTTF.currentPage = event;
-  }
-  // RESUMEN PREGUNTAS
-  pageChangedR(event: any) {
-    this.configR.currentPage = event;
-  }
-  // RESUMEN ENCUESTAS
-  pageChangedE(event: any) {
-    this.configE.currentPage = event;
-  }
 
   ngOnInit(): void {
     var f = moment();
@@ -228,18 +122,13 @@ export class PreguntasComponent {
     // CARGAMOS COMPONENTES SELECTS HTML
     this.getMarca();
     this.getlastday();
-    this.getCajeros();
     this.getSucursales();
-    this.getEncuestasTotales();
 
     // CARGAMOS NOMBRE DE USUARIO LOGUEADO
     this.userDisplayName = sessionStorage.getItem("loggedUser");
 
     // SETEO DE BANDERAS CUANDO EL RESULTADO DE LA PETICION HTTP NO ES 200 OK
     this.malRequestTFPag = true;
-    this.malRequestTTFPag = true;
-    this.malRequestRPag = true;
-    this.malRequestEPag = true;
 
     // CARGAR LOGO PARA LOS REPORTES
     this.imagenesService
@@ -257,48 +146,38 @@ export class PreguntasComponent {
   // OPCIONES DE SELECCION DE DATOS
   selectAll(opcion: string) {
     switch (opcion) {
-      case "allSelected":
-        this.allSelected = !this.allSelected;
+      case "todasSucursales":
+        this.todasSucursales = !this.todasSucursales;
+        if (this.todasSucursales) {
+          this.getCajeros(this.sucursalesSeleccionadas);
+        } else {
+          if (this.sucursalesSeleccionadas.length != 0) {
+            this.getCajeros(this.sucursalesSeleccionadas);
+          }
+        }
+        // LIMPIAR FORMULARIO
+        this.cajerosUsuarios = [];
+        this.mostrarCajeros = false;
         break;
-      case "todosLosCajeros":
+
+      case "sucursalesSeleccionadas":
+        if (this.sucursalesSeleccionadas.length > 0) {
+          this.getCajeros(this.sucursalesSeleccionadas);
+        } else {
+          // LIMPIAR FORMULARIO
+          this.cajerosUsuarios = [];
+          this.mostrarCajeros = false;
+        }
+        break;
+
+      case "todosCajeros":
         this.todosLosCajeros = !this.todosLosCajeros;
+        if (!this.todosLosCajeros) {
+          this.selectedItems = [];
+        }
         break;
-      case "todasEncuestasI":
-        this.todasEncuestasI = !this.todasEncuestasI;
-        this.todasEncuestasI
-          ? this.getPreguntas(this.encuestaSeleccionada)
-          : null;
-        break;
-      case "encuestasSeleccionadasI":
-        this.seleccionMultipleI = this.encuestaSeleccionada.length > 1;
-        this.encuestaSeleccionada.length > 0
-          ? this.getPreguntas(this.encuestaSeleccionada)
-          : null;
-        break;
-      case "todasSucursalesTTF":
-        this.todasSucursalesTTF = !this.todasSucursalesTTF;
-        break;
-      case "sucursalesSeleccionadasE":
-        this.seleccionMultiple = this.sucursalesSeleccionadas.length > 1;
-        this.sucursalesSeleccionadas.length > 0
-          ? this.getEncuestas(this.sucursalesSeleccionadas)
-          : null;
-        break;
-      case "todasEncuestas":
-        this.todasEncuestas = !this.todasEncuestas;
-        this.todasEncuestas ? this.getPreguntas(this.selectedEncuestas) : null;
-        break;
-      case "encuestasSeleccionadas":
-        this.seleccionMultipleE = this.selectedEncuestas.length > 1;
-        this.selectedEncuestas.length > 0
-          ? this.getPreguntas(this.selectedEncuestas)
-          : null;
-        break;
-      case "soloEncuestas":
-        this.soloEncuestas = !this.soloEncuestas;
-        break;
+
       case "cajerosSeleccionados":
-        this.getEncuestas("-1");
         break;
       default:
         break;
@@ -321,10 +200,11 @@ export class PreguntasComponent {
   }
 
   // CONSULTA DE LISTA DE CAJEROS
-  getCajeros() {
-    this.serviceService.getAllCajerosS().subscribe(
+  getCajeros(sucursal: any) {
+    this.serviceService.getCajerosEstado(sucursal, this.estadoCajero).subscribe(
       (cajeros: any) => {
         this.cajerosUsuarios = cajeros.cajeros;
+        console.log('ver cajeros ', this.cajerosUsuarios)
         this.mostrarCajeros = true;
       },
       (error) => {
@@ -336,60 +216,13 @@ export class PreguntasComponent {
     );
   }
 
-  // CONSULTA DE DATOS DE ENCUESTAS
-  getEncuestas(sucursal: any) {
-    this.serviceService.getAllEncuestas(sucursal).subscribe(
-      (cajeros: any) => {
-        let respuesta = cajeros.cajeros;
-        this.encuestas = respuesta.filter(
-          (valor: any, indice: any, self: any) =>
-            self.findIndex((v: any) => v.COD_EN === valor.COD_EN) === indice
-        );
-        //console.log(' encuestas ', this.encuestas)
-        this.mostrarEncuestas = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.encuestas = [];
-          this.mostrarEncuestas = false;
-        }
-      }
-    );
+  // METODO PARA SELCCIONAR ESTADO DE USUARIOS
+  estadoCajero: number = 2;
+  CambiarEstado(estado: number) {
+    this.estadoCajero = estado;
+    this.limpiar();
   }
 
-  // CONSULTA DE DATOS DE TODAS LAS ENCUESTAS
-  encuestasTotales: any = [];
-  mostrarEncuestaTotal: boolean = false;
-  getEncuestasTotales() {
-    this.serviceService.getEncuestasTotales().subscribe(
-      (res: any) => {
-        this.encuestasTotales = res.encuestasT;
-        this.mostrarEncuestaTotal = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.encuestasTotales = [];
-          this.mostrarEncuestaTotal = false;
-        }
-      }
-    );
-  }
-
-  // CONSULTA DE DATOS DE PREGUNTAS
-  getPreguntas(sucursal: any) {
-    this.serviceService.getAllPreguntas(sucursal).subscribe(
-      (cajeros: any) => {
-        this.preguntas = cajeros.cajeros;
-        this.mostrarPreguntas = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.preguntas = [];
-          this.mostrarPreguntas = false;
-        }
-      }
-    );
-  }
 
   // CONSULATA PARA LLENAR LA LISTA DE SURCURSALES.
   getSucursales() {
@@ -402,34 +235,14 @@ export class PreguntasComponent {
   limpiar() {
     this.selectedItems = [];
     this.allSelected = false;
-    this.todasSucursalesTPA = false;
-    this.todasSucursalesTA = false;
-    this.todasSucursalesTF = false;
-    this.todasSucursalesTTF = false;
+    this.todasSucursales = false;
     this.todosLosCajeros = false;
-    this.todasEncuestas = false;
-    this.todasEncuestasI = false;
-    this.todasSucursalesTM = false;
-    this.todasSucursalesES = false;
-    this.todasSucursalesAU = false;
-    this.seleccionMultiple = false;
-    this.seleccionMultipleE = false;
-    this.seleccionMultipleI = false;
+    this.mostrarCajeros = false;
     this.sucursalesSeleccionadas = [];
     this.usuariosSeleccionados = [];
-    this.selectedEncuestas = [];
-    this.selectedPreguntas = [];
     this.selectedFechas = [];
-    this.mostrarEncuestas = false;
-    this.encuestas = [];
-    this.encuestaSeleccionada = [];
     this.cajeroSeleccionado = null;
-    this.servicioResumen = [];
-    this.servicioEncuesta = [];
-    this.respuestasTotal = 0;
-    this.respuestasTotalC = 0;
-    this.encuestasTodas = [];
-    this.soloEncuestas = false;
+    this.cajerosUsuarios = [];
   }
 
   // COMPRUEBA SI SE REALIZO UNA BUSQUEDA POR SUCURSALES
@@ -447,19 +260,19 @@ export class PreguntasComponent {
    ** **                                     ENTRADAS AL SISTEMA                                              ** **
    ** ********************************************************************************************************** **/
 
-  buscarEntradas() {
+  BuscarEntradas() {
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
+    var fechaDesde = this.fechaDesde.nativeElement.value
       .toString()
       .trim();
-    var fechaHasta = this.toDateTurnosFecha.nativeElement.value
+    var fechaHasta = this.fechaHasta.nativeElement.value
       .toString()
       .trim();
 
-    let horaInicio = this.horaInicioTF.nativeElement.value;
-    let horaFin = this.horaFinTF.nativeElement.value;
+    let horaInicio = this.horaInicio.nativeElement.value;
+    let horaFin = this.horaFin.nativeElement.value;
 
-    if (this.selectedItems.length !== 0) {
+    if (this.sucursalesSeleccionadas.length != 0 && this.selectedItems.length != 0) {
       this.serviceService
         .getEntradasSalidas(
           fechaDesde,
@@ -471,7 +284,7 @@ export class PreguntasComponent {
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosFecha = servicio.turnos;
+            this.entradas_salidas = servicio.turnos;
             this.malRequestTF = false;
             this.malRequestTFPag = false;
 
@@ -483,16 +296,16 @@ export class PreguntasComponent {
           (error) => {
             if (error.status == 400) {
               // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioTurnosFecha = null;
+              this.entradas_salidas = null;
               this.malRequestTF = true;
               this.malRequestTFPag = true;
 
               // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
               // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioTurnosFecha == null) {
+              if (this.entradas_salidas == null) {
                 this.configTF.totalItems = 0;
               } else {
-                this.configTF.totalItems = this.servicioTurnosFecha.length;
+                this.configTF.totalItems = this.entradas_salidas.length;
               }
 
               // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
@@ -511,455 +324,231 @@ export class PreguntasComponent {
     }
   }
 
-  /** ********************************************************************************************************** **
-   ** **                                    PREGUNTAS Y RESPUESTAS                                             ** **
-   ** ********************************************************************************************************** **/
-
-  buscarPreguntasRespuestas() {
-    // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
-      .toString()
-      .trim();
-
-    let horaInicio = this.horaInicioTTF.nativeElement.value;
-    let horaFin = this.horaFinTTF.nativeElement.value;
-
-    if (
-      this.usuariosSeleccionados.length !== 0 &&
-      this.encuestaSeleccionada.length !== 0
-    ) {
-      this.serviceService
-        .getPreguntasRespuestas(
-          fechaDesde,
-          fechaHasta,
-          horaInicio,
-          horaFin,
-          this.usuariosSeleccionados,
-          this.encuestaSeleccionada,
-          this.selectedPreguntas
-        )
-        .subscribe(
-          (servicio: any) => {
-            // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosTotalFecha = servicio.turnos;
-            this.malRequestTTF = false;
-            this.malRequestTTFPag = false;
-
-            // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
-            if (this.configTTF.currentPage > 1) {
-              this.configTTF.currentPage = 1;
-            }
-
-            let totalR = this.servicioTurnosTotalFecha.map(
-              (res) => res.conteo_respuestas
-            );
-            let total = 0;
-            for (let i = 0; i < totalR.length; i++) {
-              total += totalR[i];
-            }
-            this.respuestasTotalC = total;
-          },
-          (error) => {
-            if (error.status == 400) {
-              // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioTurnosTotalFecha = null;
-              this.malRequestTTF = true;
-              this.malRequestTTFPag = true;
-
-              // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
-              // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioTurnosTotalFecha == null) {
-                this.configTTF.totalItems = 0;
-              } else {
-                this.configTTF.totalItems =
-                  this.servicioTurnosTotalFecha.length;
-              }
-
-              // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
-              this.configTTF = {
-                itemsPerPage: this.MAX_PAGS,
-                currentPage: 1,
-              };
-
-              // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
-              this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
-                timeOut: 6000,
-              });
-            }
-          }
-        );
-    }
-  }
-
-  /** ********************************************************************************************************** **
-   ** **                                      RESUMEN DE PREGUNTAS                                            ** **
-   ** ********************************************************************************************************** **/
-
-  buscarRespuestas() {
-    // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
-    var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
-
-    let horaInicio = this.horaInicioR.nativeElement.value;
-    let horaFin = this.horaFinR.nativeElement.value;
-
-    if (this.selectedEncuestas.length !== 0) {
-      this.serviceService
-        .getResumenPreguntasSucursal(
-          fechaDesde,
-          fechaHasta,
-          horaInicio,
-          horaFin,
-          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
-          this.selectedEncuestas,
-          this.selectedPreguntas.length === 0 ? '-2' : this.selectedPreguntas
-        )
-        .subscribe(
-          (servicio: any) => {
-            // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioResumen = servicio.resumen;
-            this.malRequestR = false;
-            this.malRequestRPag = false;
-
-            // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
-            if (this.configR.currentPage > 1) {
-              this.configR.currentPage = 1;
-            }
-
-            let totalR = this.servicioResumen.map(
-              (res) => res.conteo_respuestas
-            );
-            let total = 0;
-            for (let i = 0; i < totalR.length; i++) {
-              total += totalR[i];
-            }
-            this.respuestasTotal = total;
-          },
-          (error) => {
-            if (error.status == 400) {
-              // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioResumen = null;
-              this.malRequestR = true;
-              this.malRequestRPag = true;
-
-              // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
-              // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioResumen == null) {
-                this.configR.totalItems = 0;
-              } else {
-                this.configR.totalItems = this.servicioResumen.length;
-              }
-
-              // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
-              this.configR = {
-                itemsPerPage: this.MAX_PAGS,
-                currentPage: 1,
-              };
-
-              // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
-              this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
-                timeOut: 6000,
-              });
-            }
-          }
-        );
-    }
-  }
-
-  /** ********************************************************************************************************** **
-   ** **                                        LISTA DE ENCUESTAS                                            ** **
-   ** ********************************************************************************************************** **/
-
-  buscarListaEncuestas() {
-    // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateEncuesta.nativeElement.value.toString().trim();
-    var fechaHasta = this.toDateEncuesta.nativeElement.value.toString().trim();
-
-    let horaInicio = this.horaInicioE.nativeElement.value;
-    let horaFin = this.horaFinE.nativeElement.value;
-
-    if (this.encuestasTodas.length !== 0) {
-      this.serviceService
-        .getResumenPreguntasRespuestas(
-          fechaDesde,
-          fechaHasta,
-          horaInicio,
-          horaFin,
-          this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
-          this.encuestasTodas,
-          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
-        )
-        .subscribe(
-          (servicio: any) => {
-            console.log(' servicio encuesta ', servicio)
-            // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioEncuesta = servicio.resumen;
-            this.malRequestE = false;
-            this.malRequestEPag = false;
-
-            // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
-            if (this.configE.currentPage > 1) {
-              this.configE.currentPage = 1;
-            }
-            this.respuestasTotal = this.servicioEncuesta.length;
-          },
-          (error) => {
-            if (error.status == 400) {
-              // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioEncuesta = null;
-              this.malRequestE = true;
-              this.malRequestEPag = true;
-
-              // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
-              // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioEncuesta == null) {
-                this.configE.totalItems = 0;
-              } else {
-                this.configE.totalItems = this.servicioEncuesta.length;
-              }
-
-              // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
-              this.configE = {
-                itemsPerPage: this.MAX_PAGS,
-                currentPage: 1,
-              };
-
-              // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
-              this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
-                timeOut: 6000,
-              });
-            }
-          }
-        );
-    }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-  /** ********************************************************************************************************** **
-   ** **                                          ENCUESTA INDIVIDUAL                                         ** **
-   ** ********************************************************************************************************** **/
-
-
-  // en el controlador de Angular
-  convertirObjetoACadena(objeto) {
-    return objeto.toString();
+  ObtenerNombreSucursal(sucursales: any) {
+    const listaSucursales = sucursales;
+    let nombreSucursal = "";
+    listaSucursales.forEach((elemento: any) => {
+      const cod = elemento;
+      if (cod == "-1") {
+        nombreSucursal = "GENERALES";
+        return;
+      }
+      const nombre = this.sucursales.find(
+        (sucursal) => sucursal.empr_codigo == cod
+      ).empr_nombre;
+      nombreSucursal += `${nombre} `;
+    });
+    return nombreSucursal;
   }
 
   ExportTOExcelEntradasSistema() {
-    //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio:any = [];
-    for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
-      jsonServicio.push({
-        Usuario: this.servicioTurnosFecha[i].Usuario,
-        Fecha: new Date(this.servicioTurnosFecha[i].fecha_),
-        Hora: this.servicioTurnosFecha[i].hora_,
-      });
-    }
-
-    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-    const header = Object.keys(this.servicioTurnosFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols:any = [];
-    for (var i = 0; i < header.length; i++) {
-      // CABECERAS AÑADIDAS CON ESPACIOS
-      wscols.push({ wpx: 150 });
-    }
-    ws["!cols"] = wscols;
-    XLSX.utils.book_append_sheet(wb, ws, "Entradas");
-    XLSX.writeFile(
-      wb,
-      "Entradas al sistema " + new Date().toLocaleString() + EXCEL_EXTENSION
-    );
-  }
-
-  ExportTOExcelPreguntasRespuestas() {
-    //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio:any = [];
-    for (let i = 0; i < this.servicioTurnosTotalFecha.length; i++) {
-      jsonServicio.push({
-        Cajero: this.servicioTurnosTotalFecha[i].usuario,
-        Encuesta: this.servicioTurnosTotalFecha[i].encuesta,
-        Titulo: this.servicioTurnosTotalFecha[i].titulo,
-        Pregunta: this.servicioTurnosTotalFecha[i].pregunta,
-        Respuesta: this.servicioTurnosTotalFecha[i].respuesta,
-        "Cantidad de respuestas":
-          this.servicioTurnosTotalFecha[i].conteo_respuestas,
-      });
-    }
-
-    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-    const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols:any = [];
-    for (var i = 0; i < header.length; i++) {
-      // CABECERAS AÑADIDAS CON ESPACIOS
-      wscols.push({ wpx: 150 });
-    }
-    ws["!cols"] = wscols;
-
-    XLSX.utils.book_append_sheet(wb, ws, "RESUMEN");
-    XLSX.writeFile(
-      wb,
-      "CAJEROS RESUMEN " + new Date().toLocaleString() + EXCEL_EXTENSION
-    );
-  }
-
-  ExportTOExcelPreguntasResumen() {
-    if (this.servicioResumen.length != 0) {
-      //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
-      for (let i = 0; i < this.servicioResumen.length; i++) {
+    if (this.entradas_salidas.length != 0) {
+      // Mapeo de informacion de consulta a formato JSON para exportar a Excel
+      let jsonServicio: any = [];
+      for (let i = 0; i < this.entradas_salidas.length; i++) {
         jsonServicio.push({
-          Sucursal: this.servicioResumen[i].sucursal,
-          Encuesta: this.servicioResumen[i].encuesta,
-          Titulo: this.servicioResumen[i].titulo,
-          Pregunta: this.servicioResumen[i].pregunta,
-          Respuesta: this.servicioResumen[i].respuesta,
-          "Cantidad de respuestas": this.servicioResumen[i].conteo_respuestas,
+          Usuario: this.entradas_salidas[i].Usuario,
+          Fecha: new Date(this.entradas_salidas[i].fecha_),
+          Hora: this.entradas_salidas[i].hora_,
         });
       }
+
       //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
       const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
       const wb: XLSX.WorkBook = XLSX.utils.book_new();
       // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(this.servicioResumen[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
+      const header = Object.keys(this.entradas_salidas[0]); // NOMBRE DE CABECERAS DE COLUMNAS
+      var wscols: any = [];
       for (var i = 0; i < header.length; i++) {
         // CABECERAS AÑADIDAS CON ESPACIOS
         wscols.push({ wpx: 150 });
       }
       ws["!cols"] = wscols;
-
-      XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
+      XLSX.utils.book_append_sheet(wb, ws, "Entradas");
       XLSX.writeFile(
         wb,
-        "Preguntas resumen " + new Date().toLocaleString() + EXCEL_EXTENSION
+        "Entradas al sistema " + new Date().toLocaleString() + EXCEL_EXTENSION
       );
     }
   }
 
-  ExportTOExcelPreguntasEncuesta() {
-    if (this.servicioEncuesta.length != 0) {
-      //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
-      for (let i = 0; i < this.servicioEncuesta.length; i++) {
-        jsonServicio.push({
-          Sucursal: this.servicioEncuesta[i].sucursal,
-          'Código encuesta': this.servicioEncuesta[i].codigo_respuesta,
-          Encuesta: this.servicioEncuesta[i].nombre_encuesta,
-          Cajero: this.servicioEncuesta[i].nombre_usuario,
-          'Preguntas encuesta': this.servicioEncuesta[i].numero_preguntas,
-          "Respuestas Encuesta": this.servicioEncuesta[i].conteo_respuestas,
-        });
-      }
-      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(this.servicioEncuesta[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
-      for (var i = 0; i < header.length; i++) {
-        // CABECERAS AÑADIDAS CON ESPACIOS
-        wscols.push({ wpx: 150 });
-      }
-      ws["!cols"] = wscols;
+  GenerarExcelEntradas() {
+    let workbook = new ExcelJS.Workbook();
+    let worksheet = workbook.addWorksheet("Entradas Sistema");
+    this.imagen = workbook.addImage({
+      base64: this.urlImagen,
+      extension: "png",
+    });
+    worksheet.addImage(this.imagen, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 220, height: 105 },
+    });
+    let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
+    // COMBINAR CELDAS
+    worksheet.mergeCells("B1:E1");
+    worksheet.mergeCells("B2:E2");
+    worksheet.mergeCells("B3:E3");
+    worksheet.mergeCells("B4:E4");
+    worksheet.mergeCells("B5:E5");
 
-      XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
-      XLSX.writeFile(
-        wb,
-        "Preguntas resumen " + new Date().toLocaleString() + EXCEL_EXTENSION
-      );
-    }
-  }
-
-
-  validarHoras(hInicio, hFin) {
-    let diaCompleto: boolean = false;
-
-    if (hInicio == "-1" || hFin == "-1" || parseInt(hInicio) > parseInt(hFin)) {
-      diaCompleto = true;
-    }
-
-    if (diaCompleto) {
-      return {};
-    } else {
-      return {
-        style: "subtitulos",
-        text: "Hora desde " + hInicio + " hasta " + hFin,
+    // AGREGAR LOS VALORES A LAS CELDAS COMBINADAS
+    worksheet.getCell("B1").value = 'ENTRADAS AL SISTEMA'.toUpperCase();
+    worksheet.getCell("B2").value = nombreSucursal.toUpperCase();
+    var fechaDesde = this.fechaDesde.nativeElement.value
+      .toString()
+      .trim();
+    var fechaHasta = this.fechaHasta.nativeElement.value
+      .toString()
+      .trim();
+    worksheet.getCell("B3").value = "PERIODO DE " + fechaDesde + " HASTA " + fechaHasta;
+    // APLICAR ESTILO DE CENTRADO Y NEGRITA A LAS CELDAS COMBINADAS
+    ["B1", "B2", "B3"].forEach((cell) => {
+      worksheet.getCell(cell).alignment = {
+        horizontal: "center",
+        vertical: "middle",
       };
-    }
+      worksheet.getCell(cell).font = { bold: true, size: 14 };
+    });
+
+    // DEFINIR ENCABEZADOS DINAMICAMENTE
+    let headers = ["No."];
+    headers.push("SUCURSAL", "CAJERO", "FECHA", "HORA");
+
+    // AGREGAR ENCABEZADOS A LA HOJA
+    let headerRow = worksheet.addRow(headers);
+    headerRow.font = { bold: true };
+
+    // APLICAR BORDES A LOS ENCABEZADOS
+    headerRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    // AGREGAR DATOS DINAMICOS
+    this.entradas_salidas.forEach((res: any, index: number) => {
+      let row = [index + 1];
+      row.push(res.NOM_SUC, res.Usuario, res.fecha_, res.hora_);
+      // AGREGAR LA FILA A LA HOJA
+      let newRow = worksheet.addRow(row);
+      // APLICAR BORDES A CADA CELDA DE LA FILA
+      newRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+      // APLICAR ESTILO CEBRA (ALTERNANDO FONDO)
+      if (index % 2 === 0) {
+        newRow.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "F2F2F2" }, // COLOR GRIS CLARO PARA FILAS IMPARES
+          };
+        });
+      } else {
+        newRow.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFFFFF" }, // COLOR BLANCO PARA FILAS PARES
+          };
+        });
+      }
+    });
+
+    // AJUSTAR EL ANCHO DE LAS COLUMNAS AUTOMATICAMENTE
+    worksheet.columns.forEach(column => {
+      column.width = 30;
+    });
+
+    // ESTILOS DE ENCABEZADO
+    worksheet.getRow(6).eachCell((cell, colNumber) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "4F81BD" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.font = {
+        bold: true,
+        color: { argb: "FFFFFF" }, // COLOR BLANCO PARA EL TEXTO
+      };
+      // HABILITAR FILTRO EN LA CELDA
+      worksheet.autoFilter = {
+        from: { row: 6, column: 1 },  // INICIO DEL FILTRO (FILA 6, COLUMNA 1)
+        to: { row: 6, column: worksheet.columnCount } // FIN DEL FILTRO (ÚLTIMA COLUMNA)
+      };
+    });
+
+
+    // GENERAR ARCHIVO EXCEL Y DESCARGARLO
+    workbook.xlsx.writeBuffer().then(buffer => {
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      saveAs(blob, "EntradasSistema.xlsx");
+    });
   }
 
-  //----GENERACION DE PDF'S----
+  // GENERACION DE PDF'S 
   async generarPdfEntradasSistema(action = "open", pdf: number) {
-    //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
+    if (this.entradas_salidas.length != 0) {
+      // SETEO DE RANGO DE FECHAS DE LA CONSULTA PARA IMPRESION EN PDF
+      var fechaDesde = this.fechaDesde.nativeElement.value
+        .toString()
+        .trim();
+      var fechaHasta = this.fechaHasta.nativeElement.value
+        .toString()
+        .trim();
 
-    let horaInicio = this.horaInicioTF.nativeElement.value;
-    let horaFin = this.horaFinTF.nativeElement.value;
+      let horaInicio = this.horaInicio.nativeElement.value;
+      let horaFin = this.horaFin.nativeElement.value;
 
-    // var cod = this.codSucursal.nativeElement.value.toString().trim();
-    const pdfMake = await this.validar.ImportarPDF();
+      const pdfMake = await this.validar.ImportarPDF();
 
-    //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition;
-    if (pdf === 1) {
-      documentDefinition = this.getDocumentturnosfecha(
-        fechaDesde,
-        fechaHasta,
-        horaInicio,
-        horaFin
-      );
-    }
-    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-    switch (action) {
-      case "open":
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-      case "print":
-        pdfMake.createPdf(documentDefinition).print();
-        break;
-      case "download":
-        pdfMake.createPdf(documentDefinition).download();
-        break;
-      default:
-        pdfMake.createPdf(documentDefinition).open();
-        break;
+      let documentDefinition: any;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentturnosfecha(
+          fechaDesde,
+          fechaHasta,
+          horaInicio,
+          horaFin
+        );
+      }
+
+      // OPCIONES DE PDF DE LAS CUALES SE USARA LA DE OPEN, LA CUAL ABRE EN NUEVA PESTAÑA EL PDF CREADO
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
     }
   }
 
-  //Funcion delegada para seteo de información
+  // FUNCION DELEGADA PARA SETEO DE INFORMACION
   getDocumentturnosfecha(fechaDesde, fechaHasta, horaInicio, horaFin) {
-    //Se obtiene la fecha actual
+    // Se obtiene la fecha actual
     let f = new Date();
     f.setUTCHours(f.getHours());
     this.date = f.toJSON();
-    // let nombreSucursal = this.obtenerNombreSucursal(this.sucursalesSeleccionadas);
+    let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
 
     return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
+      // Seteo de marca de agua y encabezado con nombre de usuario logueado
       watermark: {
         text: this.marca,
         color: "blue",
@@ -1023,7 +612,7 @@ export class PreguntasComponent {
           style: "subtitulos",
           text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
         },
-        this.CampoDetalle(this.servicioTurnosFecha), //Definicion de funcion delegada para setear informacion de tabla del PDF
+        this.CampoDetalle(this.entradas_salidas), //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
         tableTotal: {
@@ -1058,7 +647,7 @@ export class PreguntasComponent {
     };
   }
 
-  //Funcion para llenar la tabla con la consulta realizada al backend
+  // Funcion para llenar la tabla con la consulta realizada al backend
   CampoDetalle(servicio: any[]) {
     return {
       style: "tableMargin",
@@ -1087,548 +676,4 @@ export class PreguntasComponent {
     };
   }
 
-  async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
-    //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
-      .toString()
-      .trim();
-
-    const pdfMake = await this.validar.ImportarPDF();
-
-    //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition;
-    if (pdf === 1) {
-      documentDefinition = this.getDocumentturnosTotalfecha(
-        fechaDesde,
-        fechaHasta
-      );
-    }
-    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-    switch (action) {
-      case "open":
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-      case "print":
-        pdfMake.createPdf(documentDefinition).print();
-        break;
-      case "download":
-        pdfMake.createPdf(documentDefinition).download();
-        break;
-
-      default:
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-    }
-  }
-
-  //Funcion delegada para seteo de información
-  getDocumentturnosTotalfecha(fechaDesde, fechaHasta) {
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
-
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage, pageCount, fecha) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "Reporte - Cajeros resumen ",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.CampoDetalleTotal(this.servicioTurnosTotalFecha),
-        {
-          style: "subtitulos",
-          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotalC,
-        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 16,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
-
-  //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleTotal(servicio: any[]) {
-    return {
-      style: "tableMargin",
-      table: {
-        headerRows: 1,
-        widths: ["auto", "auto", "*", 200, "auto", "auto"],
-
-        body: [
-          [
-            { text: "Cajero", style: "tableHeader" },
-            { text: "Encuesta", style: "tableHeader" },
-            { text: "Titulo", style: "tableHeader" },
-            { text: "Pregunta", style: "tableHeader" },
-            { text: "Respuesta", style: "tableHeader" },
-            { text: "Cantidad de respuestas", style: "tableHeader" },
-          ],
-          ...servicio.map((res) => {
-            return [
-              { style: "itemsTable", text: res.usuario },
-              { style: "itemsTable", text: res.encuesta },
-              { style: "itemsTable", text: res.titulo },
-              { style: "itemsTable", text: res.pregunta },
-              { style: "itemsTable", text: res.respuesta },
-              { style: "itemsTable", text: res.conteo_respuestas },
-            ];
-          }),
-        ],
-      },
-      layout: {
-        fillColor: function (rowIndex) {
-          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-        },
-      },
-    };
-  }
-
-  async generarPdfPreguntasResumen(action = "open", pdf: number) {
-    if (this.servicioResumen.length != 0) {
-      //Seteo de rango de fechas de la consulta para impresión en PDF
-      var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
-      var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
-
-      const pdfMake = await this.validar.ImportarPDF();
-
-      //Definicion de funcion delegada para setear estructura del PDF
-      let documentDefinition;
-      if (pdf === 1) {
-        documentDefinition = this.getDocumentResumen(fechaDesde, fechaHasta);
-      }
-      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-      switch (action) {
-        case "open":
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-        case "print":
-          pdfMake.createPdf(documentDefinition).print();
-          break;
-        case "download":
-          pdfMake.createPdf(documentDefinition).download();
-          break;
-
-        default:
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-      }
-    }
-  }
-
-  //Funcion delegada para seteo de información
-  getDocumentResumen(fechaDesde, fechaHasta) {
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
-
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "REPORTE DE RESUMEN DE PREGUNTAS",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.CampoDetalleResumen(this.servicioResumen),
-        {
-          style: "subtitulos",
-          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
-        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 14,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
-
-  //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleResumen(servicio: any[]) {
-    return {
-      style: "tableMargin",
-      table: {
-        headerRows: 1,
-        widths: ["auto", "auto", "auto", "*", "auto", "auto"],
-
-        body: [
-          [
-            { text: "SUCURSAL", style: "tableHeader" },
-            { text: "ENCUESTA", style: "tableHeader" },
-            { text: "TITULO", style: "tableHeader" },
-            { text: "PREGUNTA", style: "tableHeader" },
-            { text: "RESPUESTA", style: "tableHeader" },
-            { text: "TOTAL RESPUESTA", style: "tableHeader" },
-          ],
-          ...servicio.map((res) => {
-            return [
-              { style: "itemsTable", text: res.sucursal },
-              { style: "itemsTable", text: res.encuesta },
-              { style: "itemsTable", text: res.titulo },
-              { style: "itemsTable", text: res.pregunta },
-              { style: "itemsTable", text: res.respuesta },
-              { style: "itemsTable", text: res.conteo_respuestas },
-            ];
-          }),
-        ],
-      },
-      layout: {
-        fillColor: function (rowIndex) {
-          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-        },
-      },
-    };
-  }
-
-  async generarPdfPreguntasEncuesta(action = "open", pdf: number) {
-    if (this.servicioEncuesta.length != 0) {
-      //Seteo de rango de fechas de la consulta para impresión en PDF
-      var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
-      var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
-
-      const pdfMake = await this.validar.ImportarPDF();
-
-      //Definicion de funcion delegada para setear estructura del PDF
-      let documentDefinition;
-      if (pdf === 1) {
-        documentDefinition = this.getDocumentEncuesta(fechaDesde, fechaHasta);
-      }
-      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-      switch (action) {
-        case "open":
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-        case "print":
-          pdfMake.createPdf(documentDefinition).print();
-          break;
-        case "download":
-          pdfMake.createPdf(documentDefinition).download();
-          break;
-
-        default:
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-      }
-    }
-  }
-
-  //Funcion delegada para seteo de información
-  getDocumentEncuesta(fechaDesde, fechaHasta) {
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
-
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "REPORTE DE RESUMEN DE PREGUNTAS",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.CampoDetalleEncuesta(this.servicioEncuesta),
-        {
-          style: "subtitulos",
-          text: "TOTAL DE RESPUESTAS: " + this.respuestasTotal,
-        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 14,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
-
-  //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalleEncuesta(servicio: any[]) {
-    return {
-      style: "tableMargin",
-      table: {
-        headerRows: 1,
-        widths: ["auto", "auto", "auto", "*", "auto", "auto"],
-
-        body: [
-          [
-            { text: "SUCURSAL", style: "tableHeader" },
-            { text: "CODIGO ENCUESTA", style: "tableHeader" },
-            { text: "ENCUESTA", style: "tableHeader" },
-            { text: "CAJERO", style: "tableHeader" },
-            { text: "PREGUNTAS ENCUESTA", style: "tableHeader" },
-            { text: "RESPUESTAS ENCUESTA", style: "tableHeader" },
-          ],
-          ...servicio.map((res) => {
-            return [
-              { style: "itemsTable", text: res.sucursal },
-              { style: "itemsTable", text: res.codigo_respuesta },
-              { style: "itemsTable", text: res.nombre_encuesta },
-              { style: "itemsTable", text: res.nombre_usuario },
-              { style: "itemsTable", text: res.numero_preguntas },
-              { style: "itemsTable", text: res.conteo_respuestas },
-            ];
-          }),
-        ],
-      },
-      layout: {
-        fillColor: function (rowIndex) {
-          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-        },
-      },
-    };
-  }
 }

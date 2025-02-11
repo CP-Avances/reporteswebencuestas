@@ -6,7 +6,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BaseChartDirective } from 'ng2-charts';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { DpDatePickerModule } from 'ng2-date-picker'; //USANDO ESTA LIBRERIA
 
 // PAGINACION
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -38,7 +37,6 @@ import { TokenInterceptorService } from './services/token-interceptor.service';
     HttpClientModule,
     BaseChartDirective ,
     FormsModule,
-    DpDatePickerModule,
     PagesModule,
     AuthModule,
     ToastrModule.forRoot(),

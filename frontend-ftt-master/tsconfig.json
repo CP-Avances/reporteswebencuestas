@@ -26,6 +26,11 @@
     "noImplicitAny": false,
     "strictPropertyInitialization": false,
     "allowSyntheticDefaultImports": true,
+    "paths": {
+      "stream": ["node_modules/stream-browserify"]
+    },
+    "types": ["node"],
+    "skipLibCheck": true
   },
   "include": [
     "src",

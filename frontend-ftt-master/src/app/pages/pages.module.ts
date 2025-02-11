@@ -18,15 +18,16 @@ import { NgxPaginationModule } from 'ngx-pagination';
 import { ConfiguracionComponent } from './configuracion/configuracion.component';
 import { EncuestasComponent } from './encuestas/encuestas.component';
 import { PreguntasComponent } from './preguntas/preguntas.component';
+import { InformacionComponent } from './informacion/informacion.component';
 
 @NgModule({
   declarations: [
-
     UsuariosComponent,
     PagesComponent,
     ConfiguracionComponent,
     EncuestasComponent,
     PreguntasComponent,
+    InformacionComponent
   ],
   exports: [
 

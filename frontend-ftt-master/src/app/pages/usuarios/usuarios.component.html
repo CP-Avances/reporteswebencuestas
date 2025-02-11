@@ -94,61 +94,70 @@
                     <h3>RESPUESTAS</h3>
                     <hr>
                     <div class="table-responsive">
-                        <table class="table table-striped" id="contentTurnosTotalFecha" #contentTurnosTotalFecha
-                            #tableTurnosTotalFecha>
-                            <thead>
-                            </thead>
-                            <tbody *ngIf="!malRequestTTF">
-                                <ng-container *ngFor="let dato of preguntas_respuestas | paginate:configTTF">
-                                    <!-- Fila para CODIGO_RESPUESTA y NOM_US -->
-                                    <tr style="background-color:#0077b6; color:black;">
-                                        <td [attr.colspan]="3" style="text-align: left;"> <strong>SUCURSAL:</strong> {{
-                                            dato.sucursal }}</td>
-                                        <td [attr.colspan]="3" style="text-align: left;"> <strong>CAJERO:</strong> {{
-                                            dato.NOM_US }}</td>
+                        <table class="table table-striped">
+                            <ng-container *ngFor="let encuesta of listaPreguntas; let i = index">
+                                <!-- Cabecera de la encuesta -->
+                                <thead>
+                                    <tr style="background-color: #f4f4f4; font-weight: bold; text-align: center;">
+                                        <th colspan="2">Encuesta {{ encuesta.encuesta }}</th>
                                     </tr>
+                                    <tr style="background-color: #0077b6; color: white; font-weight: bold;">
+                                        <th>Código</th>
+                                        <th>Pregunta</th>
+                                    </tr>
+                                </thead>
 
-                                    <!-- Fila para ENCUESTA -->
-                                    <tr style="background-color:#0077b6; color:black;">
-                                        <td [attr.colspan]="3" style="text-align: left;"><strong>ENCUESTA:</strong> {{
-                                            dato.encuesta }}
-                                        </td>
-                                        <td [attr.colspan]="3" style="text-align: left;"><strong>N° PREGUNTAS:</strong>
-                                            {{ dato.informacion.length }}
-                                        </td>
+                                <!-- Preguntas en formato vertical -->
+                                <tbody>
+                                    <tr *ngFor="let pregunta of encuesta.preguntas">
+                                        <td>{{ pregunta.identificativo }}</td>
+                                        <td>{{ pregunta.pregunta }}</td>
                                     </tr>
-
-                                    <!-- Fila para cabecera de preguntas y respuestas -->
-                                    <tr style="background-color:#0096c7; color:black; font-weight: 500px;">
-                                        <td>N°</td>
-                                        <td>TÍTULO</td>
-                                        <td>PREGUNTAS</td>
-                                        <td>RESPUESTAS</td>
-                                        <td>FECHA</td>
-                                        <td>HORA</td>
-                                    </tr>
-
-                                    <!-- Filas para PREGUNTA y RESPUESTA -->
-                                    <tr *ngFor="let info of dato.informacion, let i = index">
-                                        <td style="font-weight: bold;">{{ i + 1 }}</td>
-                                        <td>{{ info.titulo }}</td>
-                                        <td style="text-align: left;">{{ info.pregunta }}</td>
-                                        <td>{{ info.respuesta }}</td>
-                                        <td>{{ info.fecha }}</td>
-                                        <td>{{ info.hora }}</td>
-                                    </tr>
-                                </ng-container>
-                            </tbody>
+                                </tbody>
+                            </ng-container>
                         </table>
-                        <pagination-controls *ngIf="!malRequestTTFPag" id="usuariosTTF"
-                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
-                            (pageChange)="pageChangedTTF($event)">
-                        </pagination-controls>
-                        <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotalC}}</h4>
                     </div>
+
+                    <div class="table-container" id="tableTurnosTotalFechaContainer">
+                        <table class="table table-striped" id="tableTurnosTotalFecha">
+                            <ng-container *ngFor="let encuesta of servicioTurnosTotalFecha">
+                                <!-- Fila con el título de la encuesta -->
+                                <thead>
+                                    <tr class="encuesta-title">
+                                        <th colspan="100%">
+                                            Encuesta: {{ encuesta.encuesta }}
+                                        </th>
+                                    </tr>
+                                    <tr class="header-row">
+                                        <th class="fixed-col">SUCURSAL</th>
+                                        <th class="fixed-col">FECHA</th>
+                                        <th class="fixed-col">CAJERO</th>
+                                        <ng-container *ngFor="let pregunta of encuesta.aplicadas[0]?.preguntas">
+                                            <th>{{ pregunta.identificador }}</th>
+                                        </ng-container>
+                                    </tr>
+                                </thead>
+
+                                <!-- Respuestas de los cajeros para esta encuesta -->
+                                <tbody>
+                                    <ng-container *ngFor="let aplicada of encuesta.aplicadas">
+                                        <tr>
+                                            <td class="fixed-col">{{ encuesta.sucursal }}</td>
+                                            <td class="fixed-col">{{ aplicada.fecha }}</td>
+                                            <td class="fixed-col">{{ aplicada.cajero }}</td>
+                                            <ng-container *ngFor="let pregunta of aplicada.preguntas">
+                                                <td>{{ pregunta.respuesta }}</td>
+                                            </ng-container>
+                                        </tr>
+                                    </ng-container>
+                                </tbody>
+                            </ng-container>
+                        </table>
+                    </div>
+
+
                     <br>
-                    <button type="button" class="btn btn-info mx-2"
-                        (click)="ExportTOExcelPreguntasRespuestas()">EXCEL</button>
+                    <button type="button" class="btn btn-info mx-2" (click)="ExportExcelEncuestas()">EXCEL</button>
                     <button type="button" class="btn btn-info"
                         (click)="generarPdfPreguntasRespuestas('hola', 1)">PDF</button>
                 </div>

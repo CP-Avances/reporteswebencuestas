@@ -4,6 +4,7 @@ import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import { Utils } from "../../utils/util";
 import { DateTime } from 'luxon';
+import ExcelJS from 'exceljs';
 
 import { AuthenticationService } from "../../services/authentication.service";
 import { ImagenesService } from "../../shared/imagenes.service";
@@ -128,6 +129,7 @@ export class UsuariosComponent implements OnInit {
   // IMAGEN LOGO
   urlImagen: string;
   nombreImagen: any[];
+  private imagen: any;
 
   //OPCIONES MULTIPLES
   allSelected: boolean = false;
@@ -211,6 +213,7 @@ export class UsuariosComponent implements OnInit {
   }
   // RESUMEN CAJEROS
   pageChangedTTF(event: any) {
+    console.log('evento ', event)
     this.configTTF.currentPage = event;
   }
   // RESUMEN PREGUNTAS
@@ -267,17 +270,19 @@ export class UsuariosComponent implements OnInit {
       case "todasEncuestasI":
         this.todasEncuestasI = !this.todasEncuestasI;
         this.todasEncuestasI
-          ? this.getPreguntas(this.encuestaSeleccionada)
+          ? this.ObtenerPreguntas(this.encuestaSeleccionada)
           : null;
         break;
       case "encuestasSeleccionadasI":
         this.seleccionMultipleI = this.encuestaSeleccionada.length > 1;
         this.encuestaSeleccionada.length > 0
-          ? this.getPreguntas(this.encuestaSeleccionada)
+          ? this.ObtenerPreguntas(this.encuestaSeleccionada)
           : null;
         break;
       case "todasSucursales":
         this.todasSucursalesTTF = !this.todasSucursalesTTF;
+        this.ObtenerPreguntas(this.encuestaSeleccionada);
+        this.ObtenerRespuestas(this.encuestaSeleccionada);
         break;
       case "sucursalesSeleccionadasE":
         this.seleccionMultiple = this.sucursalesSeleccionadas.length > 1;
@@ -291,7 +296,7 @@ export class UsuariosComponent implements OnInit {
       case "encuestasSeleccionadas":
         this.seleccionMultipleE = this.selectedEncuestas.length > 1;
         this.selectedEncuestas.length > 0
-          ? this.getPreguntas(this.selectedEncuestas)
+          ? this.ObtenerPreguntas(this.selectedEncuestas)
           : null;
         break;
       case "soloEncuestas":
@@ -370,22 +375,6 @@ export class UsuariosComponent implements OnInit {
         if (error.status == 400) {
           this.encuestasTotales = [];
           this.mostrarEncuestaTotal = false;
-        }
-      }
-    );
-  }
-
-  // CONSULTA DE DATOS DE PREGUNTAS
-  getPreguntas(sucursal: any) {
-    this.serviceService.getAllPreguntas(sucursal).subscribe(
-      (cajeros: any) => {
-        this.preguntas = cajeros.cajeros;
-        this.mostrarPreguntas = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.preguntas = [];
-          this.mostrarPreguntas = false;
         }
       }
     );
@@ -515,7 +504,46 @@ export class UsuariosComponent implements OnInit {
   /** ********************************************************************************************************** **
    ** **                                    PREGUNTAS Y RESPUESTAS                                             ** **
    ** ********************************************************************************************************** **/
+
+  // CONSULTA DE DATOS DE PREGUNTAS
+  ObtenerPreguntas(sucursal: any) {
+    this.serviceService.getAllPreguntas(sucursal).subscribe(
+      (res: any) => {
+        this.preguntas = res.preguntas;
+        console.log('ver preguntas ', this.preguntas)
+        this.mostrarPreguntas = true;
+      },
+      (error) => {
+        if (error.status == 400) {
+          this.preguntas = [];
+          this.mostrarPreguntas = false;
+        }
+      }
+    );
+  }
+
+  respuestas: any = [];
+  ObtenerRespuestas(sucursal: any) {
+    this.serviceService.getRespuestasEncuesta(sucursal).subscribe(
+      (res: any) => {
+        this.respuestas = res.respuestas;
+        console.log('ver respuestas ', this.respuestas)
+        //this.mostrarPreguntas = true;
+      },
+      (error) => {
+        if (error.status == 400) {
+          this.respuestas = [];
+          //this.mostrarPreguntas = false;
+        }
+      }
+    );
+  }
+
+  /** ******************************************************************************************** **
+   ** **                    CONSULTA DE ENCUESTAS - PREGUNTAS Y RESPUESTAS                      ** **
+   ** ******************************************************************************************** **/
   preguntas_respuestas: any = [];
+  listaPreguntas: any = [];
   buscarPreguntasRespuestas() {
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
@@ -530,7 +558,7 @@ export class UsuariosComponent implements OnInit {
 
     if (this.encuestaSeleccionada.length !== 0) {
       this.serviceService
-        .getListaPreguntasRespuestas(
+        .getCodigosRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
@@ -542,42 +570,144 @@ export class UsuariosComponent implements OnInit {
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosTotalFecha = servicio.resumen;
-            console.log(' datos ...', this.servicioTurnosTotalFecha)
-            let auxiliar = servicio.resumen;
-            let usuario_encuesta = auxiliar.filter(
-              (valor: any, indice: any, self: any) =>
-                self.findIndex((v: any) => v.CODIGO_RESPUESTA === valor.CODIGO_RESPUESTA) === indice
+            //console.log(' resultado ', servicio.resumen);
+            let listaSucursales: any = [];
+            let respuesta: any = [];
+            let procesar: any = [];
+            let listaEncuestas: any = [];
+
+            listaSucursales = servicio.resumen;
+            respuesta = servicio.resumen;
+
+            const listaSinDuplicados = listaSucursales.filter((value: any, index: any, self: any) =>
+              index === self.findIndex((t: any) => t.COD_EN === value.COD_EN) // COMPARAR POR 'ID' PARA ELIMINAR DUPLICADOS
             );
-            //console.log(' valores usuario ', usuario_encuesta)
-            this.preguntas_respuestas = usuario_encuesta;
-            this.preguntas_respuestas.forEach((usu: any) => {
-              let nuevo: any = [];
-              auxiliar.forEach((preg: any) => {
-                if (preg.CODIGO_RESPUESTA === usu.CODIGO_RESPUESTA) {
-                  const fecha = DateTime.fromISO(preg.fecha_hora, { zone: 'utc' });
-                  let data = {
-                    codigo_pregunta: preg.codigo_pregunta,
-                    titulo: preg.titulo,
-                    pregunta: preg.pregunta,
-                    respuesta: preg.respuesta,
-                    fecha_hora: preg.fecha_hora,
-                    fecha: fecha.toFormat('dd/MM/yyyy'),
-                    hora: fecha.toFormat('HH:mm:ss'),
-                  }
-                  nuevo.push(data);
+
+            listaSinDuplicados.forEach((encuesta: any) => {
+              procesar.push({
+                COD_EN: encuesta.COD_EN,
+                COD_SUC: encuesta.COD_SUC,
+                encuesta: encuesta.encuesta,
+                sucursal: encuesta.sucursal,
+              });
+            });
+
+            listaEncuestas = procesar;
+            console.log('ver respuesta ', respuesta)
+            // Asociar aplicadas (cajeros que respondieron la encuesta)
+            procesar.forEach((encuesta: any) => {
+              console.log('encuesta ', encuesta)
+              let auxiliar: any[] = [];
+              respuesta.forEach((aplicadas: any) => {
+                console.log('aplicada ', aplicadas)
+                if (encuesta.COD_EN === aplicadas.COD_EN) {
+                  auxiliar.push({
+                    CODIGO_RESPUESTA: aplicadas.CODIGO_RESPUESTA,
+                    cajero: aplicadas.NOM_US,
+                  });
                 }
-              })
-              nuevo.sort((a: any, b: any) => a.codigo_pregunta - b.codigo_pregunta);
-              usu.informacion = nuevo;
-            })
-            //console.log(' ver general ', this.preguntas_respuestas)
+              });
+              encuesta.aplicadas = auxiliar;
+            });
+
+            // ASOCIAR PREGUNTAS A CADA ENCUESTA
+            procesar.forEach((encuesta: any) => {
+              let auxiliar: any[] = [];
+              let contador: number = 1;
+              this.preguntas.forEach((pregunta: any) => {
+                if (encuesta.COD_EN === pregunta.COD_EN) {
+                  auxiliar.push({
+                    codigo_pregunta: pregunta.COD_PR,
+                    identificador: 'PREGUNTA ' + contador++,
+                    pregunta: pregunta.PREG_PR,
+                    respuesta: '',
+                    fecha: '',
+                    hora: ''
+                  });
+                }
+              });
+
+              // Ordenar preguntas por código
+              auxiliar.sort((a, b) => a.codigo_pregunta - b.codigo_pregunta);
+
+              // COPIA INDEPENDIENTE DE PREGUNTAS PARA CADA "APLICADA"**
+              encuesta.aplicadas.forEach((aplicadas: any) => {
+                aplicadas.preguntas = auxiliar.map(p => ({ ...p })); // SE HACE UNA COPIA DEL ARRAY
+              });
+            });
+
+            // ASOCIAR RESPUESTAS A PREGUNTAS
+            procesar.forEach((encuesta: any) => {
+              encuesta.aplicadas.forEach((aplicada: any) => {
+                this.respuestas.forEach((respuesta: any) => {
+                  if (aplicada.CODIGO_RESPUESTA === respuesta.CODIGO_RESPUESTA) {
+                    aplicada.preguntas.forEach((pregunta: any) => {
+                      if (pregunta.codigo_pregunta === respuesta.COD_PR) {
+                        pregunta.respuesta = respuesta.respuesta;
+                        pregunta.fecha = respuesta.fecha;
+                        pregunta.hora = `${String(respuesta.hora).padStart(2, '0')}:${String(respuesta.minutos).padStart(2, '0')}:${String(respuesta.segundos).padStart(2, '0')}`;
+                        aplicada.fecha = respuesta.fecha;
+                      }
+                    });
+                  }
+                });
+              });
+            });
+
+            console.log('datos original ...', procesar);
+
+            //this.servicioTurnosTotalFecha = procesar;
+
+            this.servicioTurnosTotalFecha = procesar.map(encuesta => {
+              // Ordenar las aplicaciones dentro de cada encuesta por la fecha de mayor a menor
+              encuesta.aplicadas.sort((a, b) => {
+                const fechaA = new Date(a.fecha);
+                const fechaB = new Date(b.fecha);
+                return fechaB.getTime() - fechaA.getTime(); // Ordenar de mayor a menor
+              });
+
+              return encuesta;
+            });
+
+            console.log('datos ...', this.servicioTurnosTotalFecha);
+
+
+
+            let preguntasUnicas: any[] = [];
+            listaEncuestas.forEach((encuesta: any) => {
+              let preguntasEncuesta = new Set(); // Para evitar preguntas duplicadas en cada encuesta
+              let preguntasFiltradas: any[] = [];
+              let contador: number = 1;
+              this.preguntas.forEach((pregunta: any) => {
+                if (encuesta.COD_EN === pregunta.COD_EN && !preguntasEncuesta.has(pregunta.COD_PR)) {
+                  preguntasEncuesta.add(pregunta.COD_PR);
+                  preguntasFiltradas.push({
+                    codigo_pregunta: pregunta.COD_PR,
+                    identificativo: 'PREGUNTA ' + contador++,
+                    pregunta: pregunta.PREG_PR
+                  });
+                }
+              });
+
+              preguntasUnicas.push({
+                COD_EN: encuesta.COD_EN,
+                sucursal: encuesta.sucursal,
+                preguntas: preguntasFiltradas
+              });
+            });
+
+            console.log("Preguntas únicas por encuesta:", preguntasUnicas);
+            this.listaPreguntas = preguntasUnicas;
+
             this.malRequestTTF = false;
             this.malRequestTTFPag = false;
+
             // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
+            console.log(' ver paginacion ', this.configTTF.currentPage)
             if (this.configTTF.currentPage > 1) {
               this.configTTF.currentPage = 1;
             }
+
             this.respuestasTotalC = this.preguntas_respuestas.length;
           },
           (error) => {
@@ -611,6 +741,300 @@ export class UsuariosComponent implements OnInit {
         );
     }
   }
+
+  ordenarClaves(a: any, b: any): number {
+    const numA = parseInt(a.key.split('_')[1], 10);
+    const numB = parseInt(b.key.split('_')[1], 10);
+    return numA - numB;
+  }
+
+  // GENERAR ARCHIVO DE EXCEL
+  ExportExcelEncuestas() {
+    let workbook = new ExcelJS.Workbook();
+    let imagen = workbook.addImage({
+      base64: this.urlImagen,  // URL de la imagen en base64
+      extension: 'png',
+    });
+
+    let contador: number = 1;
+    // Iterar sobre las encuestas para crear una hoja por cada una
+    this.servicioTurnosTotalFecha.forEach((encuesta: any) => {
+      // Crear hoja por cada encuesta
+      const sheet = workbook.addWorksheet('ENCUESTA ' + contador++);
+
+      // Agregar la imagen en cada hoja
+      sheet.addImage(imagen, {
+        tl: { col: 0, row: 0 },
+        ext: { width: 220, height: 105 },
+      });
+
+      // COMBINAR CELDAS
+      sheet.mergeCells("B1:H1");
+      sheet.mergeCells("B2:H2");
+      sheet.mergeCells("B3:H3");
+      sheet.mergeCells("B4:H4");
+      sheet.mergeCells("B5:H5");
+
+      // AGREGAR LOS VALORES A LAS CELDAS COMBINADAS
+      sheet.getCell("B1").value = (encuesta.sucursal).toUpperCase();
+      sheet.getCell("B2").value = (encuesta.encuesta).toUpperCase();
+      var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
+        .toString()
+        .trim();
+      var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
+        .toString()
+        .trim();
+      sheet.getCell("B3").value = "PERIODO DE " + fechaDesde + " HASTA " + fechaHasta;
+      // APLICAR ESTILO DE CENTRADO Y NEGRITA A LAS CELDAS COMBINADAS
+      ["B1", "B2", "B3"].forEach((cell) => {
+        sheet.getCell(cell).alignment = {
+          horizontal: "center",
+          vertical: "middle",
+        };
+        sheet.getCell(cell).font = { bold: true, size: 14 };
+      });
+
+      // Establecer las cabeceras de la tabla (SUCURSAL, CAJERO y preguntas)
+      const header = ['SUCURSAL', 'CAJERO', 'FECHA', ...encuesta.aplicadas[0]?.preguntas.map((pregunta: any) => pregunta.identificador)];
+      sheet.addRow(header);
+
+      // Agregar comentarios a las cabeceras en la fila 6 con el valor de la pregunta
+      header.forEach((headerItem, index) => {
+        const rowNumber = 6;  // Cambiar a fila 6
+        if (index === 0) {
+          sheet.getCell(`A${rowNumber}`).note = 'Nombre de la sucursal en la que se realizó la encuesta.';
+        } else if (index === 1) {
+          sheet.getCell(`B${rowNumber}`).note = 'Nombre del cajero que aplicó la encuesta.';
+        }
+        else if (index === 2) {
+          sheet.getCell(`C${rowNumber}`).note = 'Fecha en la que se aplicó la encuesta.';
+        }
+        else {
+          // PARA LAS PREGUNTAS, PONER EL VALOR DE PREGUNTA.PREGUNTA EN EL COMENTARIO
+          const pregunta = encuesta.aplicadas[0]?.preguntas[index - 3];  // AJUSTE PARA EL ÍNDICE DE LAS PREGUNTAS
+          if (pregunta) {
+            // AJUSTE PARA OBTENER LAS CELDAS CORRECTAMENTE, A PARTIR DE LA COLUMNA D
+            const columnLetter = String.fromCharCode(68 + index - 3); // COMIENZA DESDE 'D' PARA LAS PREGUNTAS
+            sheet.getCell(`${columnLetter}${rowNumber}`).note = `Pregunta: ${pregunta.pregunta}`;
+          }
+        }
+      });
+
+      // LLENAR LAS FILAS CON LAS RESPUESTAS DE LOS CAJEROS
+      encuesta.aplicadas.forEach((aplicada: any, index: number) => {
+        const fila = [
+          encuesta.sucursal,  // SUCURSAL
+          aplicada.cajero,    // CAJERO
+          aplicada.fecha,     // FECHA
+          ...aplicada.preguntas.map((pregunta: any) => pregunta.respuesta) // RESPUESTAS A LAS PREGUNTAS
+        ];
+        const row = sheet.addRow(fila);
+        // APLICAR BORDES A CADA CELDA DE LA FILA
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+          cell.alignment = {
+            horizontal: "center",
+            vertical: "middle",
+          };
+        });
+        // APLICAR ESTILO CEBRA A LAS FILAS
+        if (index % 2 === 0) {
+          row.eachCell((cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'F2F2F2' }, // COLOR GRIS CLARO PARA FILAS PARES
+            };
+          });
+        }
+      });
+
+      // ESTABLECER EL ANCHO DE LAS COLUMNAS DINÁMICAMENTE
+      sheet.columns = header.map(() => ({ width: 30 }));  // TODAS LAS COLUMNAS CON ANCHO 30
+
+      // ESTILOS DE ENCABEZADO
+      sheet.getRow(6).eachCell((cell, colNumber) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "4F81BD" },
+        };
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+        cell.font = {
+          bold: true,
+          color: { argb: "FFFFFF" }, // COLOR BLANCO PARA EL TEXTO
+        };
+        // HABILITAR FILTRO EN LA CELDA
+        sheet.autoFilter = {
+          from: { row: 6, column: 1 },  // INICIO DEL FILTRO (FILA 6, COLUMNA 1)
+          to: { row: 6, column: sheet.columnCount } // FIN DEL FILTRO (ULTIMA COLUMNA)
+        };
+      });
+
+      // CONGELAR LA FILA 6 Y LAS PRIMERAS 2 COLUMNAS (INCLUYENDO LA COLUMNA DE LA "FECHA")
+      sheet.views = [
+        {
+          state: 'frozen',
+          xSplit: 3,  // CONGELAR HASTA LA COLUMNA C (COLUMNA DE LA FECHA)
+          ySplit: 6,  // CONGELAR HASTA LA FILA 6
+          topLeftCell: 'D7',  // COMIENZA LA VISUALIZACIÓN DESDE LA CELDA D7
+        }
+      ];
+    });
+
+    // GENERAR EL ARCHIVO Y DESCARGARLO
+    workbook.xlsx.writeBuffer().then((buffer: any) => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Encuestas.xlsx';
+      link.click();
+    });
+  }
+
+  // FUNCION PARA CREAR EL PDF
+  async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
+    if (this.servicioTurnosTotalFecha.length != 0) {
+      // RANGO DE FECHAS DE LA CONSULTA PARA IMPRESION EN PDF
+      var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value.toString().trim();
+      var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value.toString().trim();
+      const pdfMake = await this.validar.ImportarPDF();
+      let documentDefinition: any;
+      if (pdf === 1) {
+        documentDefinition = this.getDocumentTurnosTotalFecha(fechaDesde, fechaHasta);
+      }
+      // OPCIONES DE PDF
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
+    }
+  }
+
+  // FUNCION DELEGADA PARA LA ESTRUCTURA DEL DOCUMENTO PDF
+  getDocumentTurnosTotalFecha(fechaDesde: any, fechaHasta: any) {
+    let f = new Date();
+    f.setUTCHours(f.getHours());
+    this.date = f.toJSON();
+
+    return {
+      pageSize: 'A4',
+      pageOrientation: 'landscape',
+      pageMargins: [40, 60, 40, 40],
+      watermark: { text: this.marca, color: 'blue', opacity: 0.1, bold: true, italics: false },
+      header: { text: 'Impreso por:  ' + this.userDisplayName, margin: 10, fontSize: 9, opacity: 0.3, alignment: 'right' },
+
+      footer: function (currentPage: any, pageCount: any, fecha: any, timer: any) {
+        fecha = f.toJSON().split("T")[0];
+        timer = f.toJSON().split("T")[1].slice(0, 5);
+        return {
+          margin: 10,
+          columns: [
+            { text: 'Fecha: ' + fecha + ' Hora: ' + timer, opacity: 0.3 },
+            {
+              text: [
+                {
+                  text: '© Pag ' + currentPage.toString() + ' de ' + pageCount,
+                  alignment: 'right', opacity: 0.3
+                }
+              ],
+            }
+          ],
+          fontSize: 10
+        }
+      },
+      content: [
+        { image: this.urlImagen, width: 100, margin: [10, -25, 0, 5] },
+        { text: `LISTA DE ENCUESTAS APLICADAS`, bold: true, fontSize: 14, alignment: 'center', margin: [0, -30, 0, 5] },
+        { text: `PERIODO DEL ${fechaDesde} HASTA ${fechaHasta}`, bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
+        this.EstructurarDatosPDF(this.servicioTurnosTotalFecha),
+      ],
+      styles: {
+        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color },
+        principal: { fontSize: 8, bold: true, alignment: 'center', fillColor: "#aafdc3" },
+        itemsTable: { fontSize: 8 },
+        tableMargin: { margin: [0, 0, 0, 0] },
+      },
+    };
+  }
+
+  EstructurarDatosPDF(data: any[]) {
+    const body: any[] = [];
+
+    data.forEach(encuesta => {
+      if (!encuesta.aplicadas || encuesta.aplicadas.length === 0) return;
+
+      encuesta.aplicadas.forEach((aplicada: any) => {
+        // ENCABEZADOS DE ENCUESTA Y SUCURSAL (PRIMERA FILA)
+        body.push([
+          { text: 'ENCUESTA', style: 'principal', alignment: 'center', colSpan: 2 }, {},
+          { text: 'SUCURSAL', style: 'principal', alignment: 'center', colSpan: 2 }, {}
+        ]);
+        body.push([
+          { text: encuesta.encuesta || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {},
+          { text: encuesta.sucursal || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {}
+        ]);
+
+        // ENCABEZADOS DE CAJERO Y FECHA (SEGUNDA FILA)
+        body.push([
+          { text: 'CAJERO(A)', style: 'tableHeader', alignment: 'center', colSpan: 2 }, {},
+          { text: 'FECHA', style: 'tableHeader', alignment: 'center', colSpan: 2 }, {}
+        ]);
+        body.push([
+          { text: aplicada.cajero || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {},
+          { text: aplicada.fecha || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {}
+        ]);
+
+        // CABECERA DE PREGUNTAS Y RESPUESTAS (UNA SOLA VEZ)
+        body.push([
+          { text: 'No.', style: 'tableHeader', alignment: 'center', width: '10%' },
+          { text: 'PREGUNTA', style: 'tableHeader', alignment: 'center', colSpan: 2, width: '55%' }, {},
+          { text: 'RESPUESTA', style: 'tableHeader', alignment: 'center', width: '35%' }
+        ]);
+
+        // SECCIÓN DE PREGUNTAS Y RESPUESTAS
+        aplicada.preguntas.forEach((pregunta: any, index: number) => {
+          body.push([
+            { text: pregunta.identificador, style: 'itemsTable', alignment: 'center' },
+            { text: pregunta.pregunta || 'Pregunta no disponible', style: 'itemsTable', colSpan: 2 }, {},
+            { text: pregunta.respuesta || '', style: 'itemsTable' }
+          ]);
+        });
+
+        // ESPACIADO ENTRE ENCUESTAS
+        body.push([{ text: '', colSpan: 4, border: [false, false, false, false], margin: [0, 5, 0, 5] }, {}, {}, {}]);
+      });
+    });
+
+    return {
+      style: 'tableMargin',
+      table: {
+        widths: ['10%', '45%', '10%', '35%'], // 4 columnas
+        body
+      },
+      layout: {
+        fillColor: (rowIndex: number) => (rowIndex % 2 === 0 ? '#E5E7E9' : null),
+      }
+    };
+  }
+
+
+
 
   /** ********************************************************************************************************** **
    ** **                                      RESUMEN DE PREGUNTAS                                            ** **
@@ -778,6 +1202,23 @@ export class UsuariosComponent implements OnInit {
    ** **                                          ENCUESTA INDIVIDUAL                                         ** **
    ** ********************************************************************************************************** **/
 
+  ObtenerNombreSucursal(sucursales: any) {
+    const listaSucursales = sucursales;
+    let nombreSucursal = "";
+    listaSucursales.forEach((elemento: any) => {
+      const cod = elemento;
+      if (cod == "-1") {
+        nombreSucursal = "GENERALES";
+        return;
+      }
+      const nombre = this.sucursales.find(
+        (sucursal) => sucursal.empr_codigo == cod
+      ).empr_nombre;
+      nombreSucursal += `${nombre} `;
+    });
+    return nombreSucursal;
+  }
+
 
   // en el controlador de Angular
   convertirObjetoACadena(objeto) {
@@ -787,7 +1228,7 @@ export class UsuariosComponent implements OnInit {
   ExportTOExcelEntradasSistema() {
     if (this.servicioTurnosFecha.length != 0) {
       //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
+      let jsonServicio: any = [];
       for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
         jsonServicio.push({
           Usuario: this.servicioTurnosFecha[i].Usuario,
@@ -801,7 +1242,7 @@ export class UsuariosComponent implements OnInit {
       const wb: XLSX.WorkBook = XLSX.utils.book_new();
       // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
       const header = Object.keys(this.servicioTurnosFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
+      var wscols: any = [];
       for (var i = 0; i < header.length; i++) {
         // CABECERAS AÑADIDAS CON ESPACIOS
         wscols.push({ wpx: 150 });
@@ -815,50 +1256,10 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
-  ExportTOExcelPreguntasRespuestas() {
-    if (this.preguntas_respuestas.length != 0) {
-      //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
-      let nuevo: Array<any> = [];
-      let c = 0;
-      this.preguntas_respuestas.forEach((preg) => {
-        preg.informacion.forEach((inf: any) => {
-          c = c + 1;
-          let ele = {
-            'N°': c,
-            Sucursal: preg.sucursal,
-            Cajero: preg.NOM_US,
-            Encuesta: preg.encuesta,
-            'Código encuesta': preg.CODIGO_RESPUESTA,
-            Titulo: inf.titulo,
-            pregunta: inf.pregunta,
-            respuesta: inf.respuesta,
-            fecha: inf.fecha,
-            hora: inf.hora,
-          };
-          nuevo.push(ele);
-        });
-      });
-      jsonServicio = nuevo;
-      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
-      for (var i = 0; i < header.length; i++) {
-        // CABECERAS AÑADIDAS CON ESPACIOS
-        wscols.push({ wpx: 150 });
-      }
-      ws["!cols"] = wscols;
 
-      XLSX.utils.book_append_sheet(wb, ws, "LISTA ENCUESTAS");
-      XLSX.writeFile(
-        wb,
-        "LISTA ENCUESTAS " + new Date().toLocaleString() + EXCEL_EXTENSION
-      );
-    }
-  }
+
+
+
 
   ExportTOExcelPreguntasResumen(opcion: any) {
     let resultados: any = [];
@@ -870,7 +1271,7 @@ export class UsuariosComponent implements OnInit {
     }
     if (resultados.length != 0) {
       //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
+      let jsonServicio: any = [];
       for (let i = 0; i < resultados.length; i++) {
         jsonServicio.push({
           Sucursal: resultados[i].nombre_sucursal,
@@ -884,7 +1285,7 @@ export class UsuariosComponent implements OnInit {
       const wb: XLSX.WorkBook = XLSX.utils.book_new();
       // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
       const header = Object.keys(resultados[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
+      var wscols: any = [];
       for (var i = 0; i < header.length; i++) {
         // CABECERAS AÑADIDAS CON ESPACIOS
         wscols.push({ wpx: 150 });
@@ -1099,154 +1500,39 @@ export class UsuariosComponent implements OnInit {
     };
   }
 
-  async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
-    if (this.preguntas_respuestas.length != 0) {
-      //Seteo de rango de fechas de la consulta para impresión en PDF
-      var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
-        .toString()
-        .trim();
-      var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
-        .toString()
-        .trim();
 
-      const pdfMake = await this.validar.ImportarPDF();
-      //Definicion de funcion delegada para setear estructura del PDF
-      let documentDefinition: any;
-      if (pdf === 1) {
-        documentDefinition = this.getDocumentturnosTotalfecha(
-          fechaDesde,
-          fechaHasta
-        );
-      }
-      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-      switch (action) {
-        case "open":
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-        case "print":
-          pdfMake.createPdf(documentDefinition).print();
-          break;
-        case "download":
-          pdfMake.createPdf(documentDefinition).download();
-          break;
 
-        default:
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-      }
-    }
-  }
 
-  //Funcion delegada para seteo de información
-  getDocumentturnosTotalfecha(fechaDesde: any, fechaHasta: any) {
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
 
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "LISTA DE ENCUESTAS",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Período de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.EstructurarDatosPDF(this.preguntas_respuestas),
-        {
-          style: "subtitulos",
-          text: "TOTAL DE ENCUESTAS: " + this.respuestasTotalC,
-        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: '#0096c7' },
-        centrado: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color, margin: [0, 7, 0, 0] },
-        itemsTable: { fontSize: 8 },
-        derecha: { fontSize: 10, margin: [0, 3, 0, 3], fillColor: this.p_color, alignment: 'rigth' },
-        itemsTableInfoEmpleado: { fontSize: 9, margin: [0, -1, 0, -2], fillColor: this.p_color },
-        itemsTableCentrado: { fontSize: 8, alignment: 'center' },
-        tableMargin: { margin: [0, 0, 0, 0] },
-        tableMarginCabecera: { margin: [0, 15, 0, 0] },
-        tableMarginCabeceraEmpleado: { margin: [0, 10, 0, 0] },
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        subtitulos: {
-          fontSize: 14,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   async generarPdfPreguntasResumen(action = "open", pdf: number, opcion: any) {
@@ -1442,85 +1728,6 @@ export class UsuariosComponent implements OnInit {
 
 
 
-  EstructurarDatosPDF(data: any[]): Array<any> {
-    console.log('ver pdf ', data)
-    let n: any = [];
-    data.forEach((selec: any) => {
-      //let reg = this.validar.SumarRegistros(arr_reg)
-      // PRESENTACION DE LA INFORMACION
-      n.push({
-        style: 'tableMarginCabeceraEmpleado',
-        table: {
-          widths: ['*', '*'],
-          headerRows: 2,
-          body: [
-            [
-              {
-                border: [true, true, false, false],
-                text: 'SUCURSAL: ' + selec.sucursal,
-                style: 'itemsTableInfoEmpleado'
-              },
-              {
-                border: [true, true, true, false],
-                text: 'ENCUESTA: ' + selec.encuesta,
-                style: 'itemsTableInfoEmpleado'
-              },
-            ],
-            [
-              {
-                border: [true, false, false, false],
-                text: 'CAJERO: ' + selec.NOM_US,
-                style: 'itemsTableInfoEmpleado',
-              },
-              {
-                border: [true, false, true, false],
-                text: 'N° Preguntas: ' + selec.informacion.length,
-                style: 'itemsTableInfoEmpleado',
-              },
 
-            ],
-          ],
-        },
-      });
-      n.push({
-        style: 'tableMargin',
-        table: {
-          widths: ['auto', 'auto', '*', 'auto', 'auto', 'auto'],
-          headerRows: 1,
-          body: [
-            [
-              { text: 'N°', style: 'tableHeader' },
-              { text: 'TÍTULO', style: 'tableHeader' },
-              { text: 'PREGUNTA', style: 'tableHeader' },
-              { text: 'RESPUESTA', style: 'tableHeader' },
-              { text: 'FECHA', style: 'tableHeader' },
-              { text: 'HORA', style: 'tableHeader' },
-            ],
-            ...selec.informacion.map((inf: any) => {
-              const fecha = DateTime.fromISO(inf.fecha_hora, { zone: 'utc' });
-              return [
-                {
-                  style: 'itemsTableCentrado',
-                  text: selec.informacion.indexOf(inf) + 1,
-                },
-                { style: 'itemsTableCentrado', text: inf.titulo },
-                { style: 'itemsTable', text: inf.pregunta },
-                { style: 'itemsTableCentrado', text: inf.respuesta },
-                { style: 'itemsTableCentrado', text: fecha.toFormat('dd/MM/yyyy') },
-                { style: 'itemsTableCentrado', text: fecha.toFormat('HH:mm:ss') },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex: any) {
-            // #E5E7E9
-            return rowIndex % 2 === 0 ? '#caf0f8' : null;
-          },
-        },
-      });
-    });
-    return n;
-  }
 
 }
