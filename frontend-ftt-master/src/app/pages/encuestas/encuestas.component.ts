@@ -1,20 +1,18 @@
 import { Component, ViewChild, ElementRef, EventEmitter, Output } from "@angular/core";
-import { DateTime } from 'luxon';
 import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import { Utils } from "../../utils/util";
+import ExcelJS from 'exceljs';
 
 import { AuthenticationService } from "../../services/authentication.service";
 import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
 
-
 // COMPLEMENTOS PARA PDF Y EXCEL
-import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import * as XLSX from "xlsx";
 import moment from "moment";
-import { Chart, Title } from "chart.js/auto";
+import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 
 const EXCEL_EXTENSION = ".xlsx";
 
@@ -30,61 +28,31 @@ export class EncuestasComponent {
   toDate: any;
 
   // CAPTURA DE ELEMENTOS DE LA INTERFAZ VISUAL PARA TRATARLOS Y CAPTURAR DATOS
-  @ViewChild("content") element: ElementRef;
-  @ViewChild("fromDateTurnosFecha") fromDateTurnosFecha: ElementRef;
-  @ViewChild("toDateTurnosFecha") toDateTurnosFecha: ElementRef;
-  @ViewChild("fromDateTurnosTotalFecha") fromDateTurnosTotalFecha: ElementRef;
-  @ViewChild("toDateTurnosTotalFecha") toDateTurnosTotalFecha: ElementRef;
-  @ViewChild("fromDateResumen") fromDateResumen: ElementRef;
-  @ViewChild("toDateResumen") toDateResumen: ElementRef;
-  @ViewChild("fromDateEncuesta") fromDateEncuesta: ElementRef;
-  @ViewChild("toDateEncuesta") toDateEncuesta: ElementRef;
-
-
-  @ViewChild("fromDatePromAtencion") fromDatePromAtencion: ElementRef;
-  @ViewChild("toDatePromAtencion") toDatePromAtencion: ElementRef;
-  @ViewChild("fromDateTiempoAtencion") fromDateTiempoAtencion: ElementRef;
-  @ViewChild("toDateTiempoAtencion") toDateTiempoAtencion: ElementRef;
-  @ViewChild("fromDateAtencionUsua") fromDateAtencionUsua: ElementRef;
-  @ViewChild("toDateAtencionUsua") toDateAtencionUsua: ElementRef;
-  @ViewChild("fromDateUES") fromDateUES: ElementRef;
-  @ViewChild("toDateUES") toDateUES: ElementRef;
-
-  @ViewChild("horaInicioTF") horaInicioTF: ElementRef;
-  @ViewChild("horaFinTF") horaFinTF: ElementRef;
-  @ViewChild("horaInicioTTF") horaInicioTTF: ElementRef;
-  @ViewChild("horaFinTTF") horaFinTTF: ElementRef;
-  @ViewChild("horaInicioR") horaInicioR: ElementRef;
-  @ViewChild("horaFinR") horaFinR: ElementRef;
+  @ViewChild("fechaDesde") fechaDesde: ElementRef;
+  @ViewChild("fechaHasta") fechaHasta: ElementRef;
   @ViewChild("horaInicioE") horaInicioE: ElementRef;
   @ViewChild("horaFinE") horaFinE: ElementRef;
 
-
-
-  @ViewChild("horaInicioTPA") horaInicioTPA: ElementRef;
-  @ViewChild("horaFinTPA") horaFinTPA: ElementRef;
-  @ViewChild("horaInicioTA") horaInicioTA: ElementRef;
-  @ViewChild("horaFinTA") horaFinTA: ElementRef;
-  @ViewChild("horaInicioAU") horaInicioAU: ElementRef;
-  @ViewChild("horaFinAU") horaFinAU: ElementRef;
-  @ViewChild("horaInicioES") horaInicioES: ElementRef;
-  @ViewChild("horaFinES") horaFinES: ElementRef;
+  @ViewChild("fromDateResumen") fromDateResumen: ElementRef;
+  @ViewChild("toDateResumen") toDateResumen: ElementRef;
+  @ViewChild("horaInicioR") horaInicioR: ElementRef;
+  @ViewChild("horaFinR") horaFinR: ElementRef;
 
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
   sucursales: any[];
   cajerosUsuarios: any = [];
   encuestas: any = [];
   preguntas: any = [];
-  servicioTurnosFecha: any = [];
-  servicioTurnosTotalFecha: any = [];
+  preguntas_respuestas: any = [];
   servicioResumen: any = [];
   servicioEncuesta: any = [];
 
   // BANDERAS PARA MOSTRAR LA TABLA CORRESPONDIENTE A LAS CONSULTAS
+  todasSucursales: boolean = false;
+
   todasSucursalesTPA: boolean = false;
   todasSucursalesTA: boolean = false;
   todasSucursalesTF: boolean = false;
-  todasSucursalesTTF: boolean = false;
   todasSucursalesTM: boolean = false;
   todasSucursalesES: boolean = false;
   todasSucursalesAU: boolean = false;
@@ -94,23 +62,17 @@ export class EncuestasComponent {
   soloEncuestas: boolean = false;
 
   // BANDERAS PARA QUE NO SE QUEDE EN PANTALLA CONSULTAS ANTERIORES
-  malRequestTF: boolean = false;
   malRequestTTF: boolean = false;
   malRequestR: boolean = false;
-  malRequestE: boolean = false;
-  malRequestTFPag: boolean = false;
   malRequestTTFPag: boolean = false;
   malRequestRPag: boolean = false;
-  malRequestEPag: boolean = false;
 
   // USUARIO QUE INGRESO AL SISTEMA
   userDisplayName: any;
 
   // CONTROL PAGINACION
-  configTF: any;
   configTTF: any;
   configR: any;
-  configE: any;
 
   // FECHA CAPTURADA DEL SERVIDOR
   date: any;
@@ -130,6 +92,7 @@ export class EncuestasComponent {
   // IMAGEN LOGO
   urlImagen: string;
   nombreImagen: any[];
+  private imagen: any;
 
   //OPCIONES MULTIPLES
   allSelected: boolean = false;
@@ -138,7 +101,6 @@ export class EncuestasComponent {
   selectedPreguntas: string[] = [];
   selectedFechas: string[] = [];
   sucursalesSeleccionadas: string[] = [];
-  encuestasTodas: string[] = [];
   usuariosSeleccionados: string[] = [];
   seleccionMultiple: boolean = false;
   seleccionMultipleE: boolean = false;
@@ -152,43 +114,31 @@ export class EncuestasComponent {
   mostrarPreguntas: boolean = false;
   mostrarFechas: boolean = false;
 
-  //Variables de informacion
-  valor: number;
-  marca: string = "FullTime Tickets";
+  // VARIABLES DE INFORMACION
+  marca: string = "";
   horas: number[] = [];
 
   //Totales
   respuestasTotal: number;
-  respuestasTotalC: number;
-
-  //GRAFICO
-  chart: any;
 
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
 
   constructor(
+    private imagenesService: ImagenesService,
     private serviceService: ServiceService,
     private toastr: ToastrService,
     private router: Router,
     private auth: AuthenticationService,
     public datePipe: DatePipe,
-    private imagenesService: ImagenesService,
     public validar: ValidacionesService
   ) {
     // SETEO DE ITEM DE PAGINACION CUANTOS ITEMS POR PAGINA, DESDE QUE PAGINA EMPIEZA, EL TOTAL DE ITEMS RESPECTIVAMENTE
-    // ENTRADAS AL SISTEMA
-    this.configTF = {
-      id: "usuariosTF",
-      itemsPerPage: this.MAX_PAGS,
-      currentPage: 1,
-      totalItems: this.servicioTurnosFecha.length,
-    };
     // RESUMEN CAJEROS
     this.configTTF = {
       id: "usuariosTTF",
       itemsPerPage: this.MAX_PAGS,
       currentPage: 1,
-      totalItems: this.servicioTurnosTotalFecha.length,
+      totalItems: this.preguntas_respuestas.length,
     };
     // RESUMEN PREGUNTAS
     this.configR = {
@@ -197,56 +147,34 @@ export class EncuestasComponent {
       currentPage: 1,
       totalItems: this.servicioResumen.length,
     };
-    // RESUMEN ENCUESTAS REALIZADAS
-    this.configE = {
-      id: "usuariosE",
-      itemsPerPage: this.MAX_PAGS,
-      currentPage: 1,
-      totalItems: this.servicioEncuesta.length,
-    };
     for (let i = 0; i <= 24; i++) {
       this.horas.push(i);
     }
   }
 
   // EVENTOS PARA AVANZAR O RETROCEDER EN LA PAGINACION
-  // ENTRADAS Y SALIDAS
-  pageChangedTF(event: any) {
-    this.configTF.currentPage = event;
-  }
   // RESUMEN CAJEROS
   pageChangedTTF(event: any) {
+    console.log('evento ', event)
     this.configTTF.currentPage = event;
   }
   // RESUMEN PREGUNTAS
   pageChangedR(event: any) {
     this.configR.currentPage = event;
   }
-  // RESUMEN ENCUESTAS
-  pageChangedE(event: any) {
-    this.configE.currentPage = event;
-  }
 
   ngOnInit(): void {
     var f = moment();
     this.date = f.format("YYYY-MM-DD");
-
     // CARGAMOS COMPONENTES SELECTS HTML
     this.getMarca();
     this.getlastday();
-    this.getCajeros();
     this.getSucursales();
-    this.getEncuestasTotales();
-
     // CARGAMOS NOMBRE DE USUARIO LOGUEADO
     this.userDisplayName = sessionStorage.getItem("loggedUser");
-
     // SETEO DE BANDERAS CUANDO EL RESULTADO DE LA PETICION HTTP NO ES 200 OK
-    this.malRequestTFPag = true;
     this.malRequestTTFPag = true;
     this.malRequestRPag = true;
-    this.malRequestEPag = true;
-
     // CARGAR LOGO PARA LOS REPORTES
     this.imagenesService
       .cargarImagen()
@@ -258,58 +186,7 @@ export class EncuestasComponent {
           (result) => (this.urlImagen = result)
         );
       });
-  }
-
-  // OPCIONES DE SELECCION DE DATOS
-  selectAll(opcion: string) {
-    switch (opcion) {
-      case "allSelected":
-        this.allSelected = !this.allSelected;
-        break;
-      case "todosLosCajeros":
-        this.todosLosCajeros = !this.todosLosCajeros;
-        this.todosLosCajeros ? this.getEncuestas("-1") : null;
-        break;
-      case "todasEncuestasI":
-        this.todasEncuestasI = !this.todasEncuestasI;
-        this.todasEncuestasI
-          ? this.getPreguntas(this.encuestaSeleccionada)
-          : null;
-        break;
-      case "encuestasSeleccionadasI":
-        this.seleccionMultipleI = this.encuestaSeleccionada.length > 1;
-        this.encuestaSeleccionada.length > 0
-          ? this.getPreguntas(this.encuestaSeleccionada)
-          : null;
-        break;
-      case "todasSucursales":
-        this.todasSucursalesTTF = !this.todasSucursalesTTF;
-        break;
-      case "sucursalesSeleccionadasE":
-        this.seleccionMultiple = this.sucursalesSeleccionadas.length > 1;
-        this.sucursalesSeleccionadas.length > 0
-          ? this.getEncuestas(this.sucursalesSeleccionadas)
-          : null;
-        break;
-      case "todasEncuestas":
-        this.todasEncuestas = !this.todasEncuestas;
-        this.todasEncuestas ? this.getPreguntas(this.selectedEncuestas) : null;
-        break;
-      case "encuestasSeleccionadas":
-        this.seleccionMultipleE = this.selectedEncuestas.length > 1;
-        this.selectedEncuestas.length > 0
-          ? this.getPreguntas(this.selectedEncuestas)
-          : null;
-        break;
-      case "soloEncuestas":
-        this.soloEncuestas = !this.soloEncuestas;
-        break;
-      case "cajerosSeleccionados":
-        this.getEncuestas("-1");
-        break;
-      default:
-        break;
-    }
+    console.log('preguntas ', this.listaPreguntas)
   }
 
   // CONSULTA DE MARCA DE AGUA PARA REPORTES
@@ -327,9 +204,16 @@ export class EncuestasComponent {
     this.fromDate = this.datePipe.transform(firstDay, "yyyy-MM-dd");
   }
 
+  // CONSULATA PARA LLENAR LA LISTA DE SURCURSALES.
+  getSucursales() {
+    this.serviceService.getAllSucursales().subscribe((empresas: any) => {
+      this.sucursales = empresas.empresas;
+    });
+  }
+
   // CONSULTA DE LISTA DE CAJEROS
-  getCajeros() {
-    this.serviceService.getAllCajerosS().subscribe(
+  getCajeros(sucursal: any) {
+    this.serviceService.getCajerosEstado(sucursal, this.estadoCajero).subscribe(
       (cajeros: any) => {
         this.cajerosUsuarios = cajeros.cajeros;
         this.mostrarCajeros = true;
@@ -352,7 +236,6 @@ export class EncuestasComponent {
           (valor: any, indice: any, self: any) =>
             self.findIndex((v: any) => v.COD_EN === valor.COD_EN) === indice
         );
-        //console.log(' encuestas ', this.encuestas)
         this.mostrarEncuestas = true;
       },
       (error) => {
@@ -364,46 +247,126 @@ export class EncuestasComponent {
     );
   }
 
-  // CONSULTA DE DATOS DE TODAS LAS ENCUESTAS
-  encuestasTotales: any = [];
-  mostrarEncuestaTotal: boolean = false;
-  getEncuestasTotales() {
-    this.serviceService.getEncuestasTotales().subscribe(
-      (res: any) => {
-        this.encuestasTotales = res.encuestasT;
-        this.mostrarEncuestaTotal = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.encuestasTotales = [];
-          this.mostrarEncuestaTotal = false;
-        }
+  ObtenerNombreSucursal(sucursales: any) {
+    const listaSucursales = sucursales;
+    let nombreSucursal = "";
+    listaSucursales.forEach((elemento: any) => {
+      const cod = elemento;
+      if (cod == "-1") {
+        nombreSucursal = "GENERALES";
+        return;
       }
-    );
-  }
-
-  // CONSULTA DE DATOS DE PREGUNTAS
-  getPreguntas(sucursal: any) {
-    this.serviceService.getAllPreguntas(sucursal).subscribe(
-      (cajeros: any) => {
-        this.preguntas = cajeros.cajeros;
-        this.mostrarPreguntas = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.preguntas = [];
-          this.mostrarPreguntas = false;
-        }
-      }
-    );
-  }
-
-  // CONSULATA PARA LLENAR LA LISTA DE SURCURSALES.
-  getSucursales() {
-    this.serviceService.getAllSucursales().subscribe((empresas: any) => {
-      this.sucursales = empresas.empresas;
+      const nombre = this.sucursales.find(
+        (sucursal) => sucursal.COD_SUC == cod
+      ).NOM_SUC;
+      nombreSucursal += `${nombre} `;
     });
+    return nombreSucursal;
   }
+
+  // OPCIONES DE SELECCION DE DATOS
+  selectAll(opcion: string) {
+    switch (opcion) {
+      case "todasSucursales":
+        this.todasSucursales = !this.todasSucursales;
+        if (this.todasSucursales) {
+          this.getCajeros(this.sucursalesSeleccionadas);
+          this.getEncuestas(this.sucursalesSeleccionadas);
+        } else {
+          if (this.sucursalesSeleccionadas.length != 0) {
+            this.getCajeros(this.sucursalesSeleccionadas);
+            this.getEncuestas(this.sucursalesSeleccionadas);
+          }
+          // LIMPIAR FORMULARIO
+          this.encuestaSeleccionada = [];
+          this.usuariosSeleccionados = [];
+          this.cajerosUsuarios = [];
+          this.encuestas = [];
+          this.preguntas = [];
+          this.respuestas = [];
+          this.mostrarCajeros = false;
+          this.todosLosCajeros = false;
+          this.todasEncuestas = false;
+          this.mostrarEncuestas = false;
+        }
+        break;
+
+      case 'sucursalesSeleccionadas':
+        if (this.sucursalesSeleccionadas.length > 0) {
+          this.getCajeros(this.sucursalesSeleccionadas);
+          this.getEncuestas(this.sucursalesSeleccionadas);
+        } else {
+          // LIMPIAR FORMULARIO
+          this.encuestaSeleccionada = [];
+          this.usuariosSeleccionados = [];
+          this.cajerosUsuarios = [];
+          this.respuestas = [];
+          this.encuestas = [];
+          this.preguntas = [];
+          this.mostrarCajeros = false;
+          this.todosLosCajeros = false;
+          this.todasEncuestas = false;
+          this.mostrarEncuestas = false;
+        }
+        break;
+
+      case 'todosCajeros':
+        this.todosLosCajeros = !this.todosLosCajeros;
+        //this.verCajero = this.todosCajeros || this.cajerosSeleccionados.length > 0;
+        if (!this.todosLosCajeros) {
+          this.usuariosSeleccionados = [];
+        }
+        //this.resumenEvaluacion = [];
+        break;
+
+      case 'cajerosSeleccionados':
+        //this.verCajero = this.cajerosSeleccionados.length > 0;
+        //this.resumenEvaluacion = [];
+        break;
+
+      case "todasEncuestas":
+        this.todasEncuestas = !this.todasEncuestas;
+        if (!this.todasEncuestas) {
+          this.encuestaSeleccionada = [];
+          this.preguntas = [];
+          this.respuestas = [];
+        }
+        else {
+          this.ObtenerPreguntas(this.encuestaSeleccionada);
+          this.ObtenerRespuestas(this.encuestaSeleccionada);
+        }
+        break;
+
+      case "encuestasSeleccionadas":
+        if (this.encuestaSeleccionada.length != 0) {
+          this.ObtenerPreguntas(this.encuestaSeleccionada);
+          this.ObtenerRespuestas(this.encuestaSeleccionada);
+        }
+        else {
+          this.preguntas = [];
+          this.respuestas = [];
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  // METODO PARA SELECCIONAR ESTADO DE USUARIOS
+  estadoCajero: number = 2;
+  CambiarEstado(estado: number) {
+    this.estadoCajero = estado;
+    this.limpiar();
+  }
+
+  LimpiarFormularios() {
+    this.limpiar();
+    this.estadoCajero = 2;
+    const activo = document.getElementById('activo') as HTMLInputElement;
+    activo.checked = true;
+  }
+
 
   // METODO PARA LLAMAR CONSULTA DE DATOS
   limpiar() {
@@ -412,7 +375,7 @@ export class EncuestasComponent {
     this.todasSucursalesTPA = false;
     this.todasSucursalesTA = false;
     this.todasSucursalesTF = false;
-    this.todasSucursalesTTF = false;
+    this.todasSucursales = false;
     this.todosLosCajeros = false;
     this.todasEncuestas = false;
     this.todasEncuestasI = false;
@@ -434,15 +397,13 @@ export class EncuestasComponent {
     this.servicioResumen = [];
     this.servicioEncuesta = [];
     this.respuestasTotal = 0;
-    this.respuestasTotalC = 0;
-    this.encuestasTodas = [];
     this.soloEncuestas = false;
-    this.preguntas_respuestas = [];
-  }
 
-  // COMPRUEBA SI SE REALIZO UNA BUSQUEDA POR SUCURSALES
-  comprobarBusquedaSucursales(cod: string) {
-    return cod == "-1" ? true : false;
+    this.cajerosUsuarios = [];
+    this.mostrarCajeros = false;
+    this.preguntas = [];
+    this.respuestas = [];
+    this.preguntas_respuestas = [];
   }
 
   // SE DESLOGUEA DE LA APLICACION
@@ -452,155 +413,211 @@ export class EncuestasComponent {
   }
 
   /** ********************************************************************************************************** **
-   ** **                                     ENTRADAS AL SISTEMA                                              ** **
-   ** ********************************************************************************************************** **/
-
-  buscarEntradas() {
-    // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
-
-    let horaInicio = this.horaInicioTF.nativeElement.value;
-    let horaFin = this.horaFinTF.nativeElement.value;
-
-    if (this.selectedItems.length !== 0) {
-      this.serviceService
-        .getEntradasSalidas(
-          fechaDesde,
-          fechaHasta,
-          horaInicio,
-          horaFin,
-          this.selectedItems
-        )
-        .subscribe(
-          (servicio: any) => {
-            // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosFecha = servicio.turnos;
-            this.malRequestTF = false;
-            this.malRequestTFPag = false;
-
-            // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
-            if (this.configTF.currentPage > 1) {
-              this.configTF.currentPage = 1;
-            }
-          },
-          (error) => {
-            if (error.status == 400) {
-              // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioTurnosFecha = null;
-              this.malRequestTF = true;
-              this.malRequestTFPag = true;
-
-              // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
-              // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioTurnosFecha == null) {
-                this.configTF.totalItems = 0;
-              } else {
-                this.configTF.totalItems = this.servicioTurnosFecha.length;
-              }
-
-              // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
-              this.configTF = {
-                itemsPerPage: this.MAX_PAGS,
-                currentPage: 1,
-              };
-
-              // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
-              this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
-                timeOut: 6000,
-              });
-            }
-          }
-        );
-    }
-  }
-
-  /** ********************************************************************************************************** **
    ** **                                    PREGUNTAS Y RESPUESTAS                                             ** **
    ** ********************************************************************************************************** **/
-  preguntas_respuestas: any = [];
-  buscarPreguntasRespuestas() {
+
+  // CONSULTA DE DATOS DE PREGUNTAS
+  ObtenerPreguntas(sucursal: any) {
+    this.serviceService.getAllPreguntas(sucursal).subscribe(
+      (res: any) => {
+        this.preguntas = res.preguntas;
+      },
+      (error) => {
+        if (error.status == 400) {
+          this.preguntas = [];
+        }
+      }
+    );
+  }
+
+  respuestas: any = [];
+  ObtenerRespuestas(sucursal: any) {
+    this.serviceService.getRespuestasEncuesta(sucursal).subscribe(
+      (res: any) => {
+        this.respuestas = res.respuestas;
+      },
+      (error) => {
+        if (error.status == 400) {
+          this.respuestas = [];
+        }
+      }
+    );
+  }
+
+  /** ******************************************************************************************** **
+   ** **                    CONSULTA DE ENCUESTAS - PREGUNTAS Y RESPUESTAS                      ** **
+   ** ******************************************************************************************** **/
+
+  listaPreguntas: any = [];
+  BuscarPreguntasRespuestas() {
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
+    var fechaDesde = this.fechaDesde.nativeElement.value
       .toString()
       .trim();
-    var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
+    var fechaHasta = this.fechaHasta.nativeElement.value
       .toString()
       .trim();
 
-    let horaInicio = this.horaInicioTTF.nativeElement.value;
-    let horaFin = this.horaFinTTF.nativeElement.value;
+    let horaInicio = this.horaInicioE.nativeElement.value;
+    let horaFin = this.horaFinE.nativeElement.value;
 
-    if (this.encuestaSeleccionada.length !== 0) {
+    if (this.encuestaSeleccionada.length != 0 &&
+      this.usuariosSeleccionados.length != 0 &&
+      this.encuestaSeleccionada.length != 0) {
       this.serviceService
-        .getListaPreguntasRespuestas(
+        .getCodigosRespuestas(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
           this.encuestaSeleccionada,
           this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
-          '-2'
+          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
         )
         .subscribe(
           (servicio: any) => {
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioTurnosTotalFecha = servicio.resumen;
-            console.log(' datos ...', this.servicioTurnosTotalFecha)
-            let auxiliar = servicio.resumen;
-            let usuario_encuesta = auxiliar.filter(
-              (valor: any, indice: any, self: any) =>
-                self.findIndex((v: any) => v.CODIGO_RESPUESTA === valor.CODIGO_RESPUESTA) === indice
+            let listaSucursales: any = [];
+            let respuesta: any = [];
+            let procesar: any = [];
+            let listaEncuestas: any = [];
+
+            listaSucursales = servicio.resumen;
+            respuesta = servicio.resumen;
+
+            const listaSinDuplicados = listaSucursales.filter((value: any, index: any, self: any) =>
+              index === self.findIndex((t: any) => t.COD_EN === value.COD_EN) // COMPARAR POR 'ID' PARA ELIMINAR DUPLICADOS
             );
-            //console.log(' valores usuario ', usuario_encuesta)
-            this.preguntas_respuestas = usuario_encuesta;
-            this.preguntas_respuestas.forEach((usu: any) => {
-              let nuevo: any = [];
-              auxiliar.forEach((preg: any) => {
-                if (preg.CODIGO_RESPUESTA === usu.CODIGO_RESPUESTA) {
-                  const fecha = DateTime.fromISO(preg.fecha_hora, { zone: 'utc' });
-                  let data = {
-                    codigo_pregunta: preg.codigo_pregunta,
-                    titulo: preg.titulo,
-                    pregunta: preg.pregunta,
-                    respuesta: preg.respuesta,
-                    fecha_hora: preg.fecha_hora,
-                    fecha: fecha.toFormat('dd/MM/yyyy'),
-                    hora: fecha.toFormat('HH:mm:ss'),
-                  }
-                  nuevo.push(data);
+
+            listaSinDuplicados.forEach((encuesta: any) => {
+              procesar.push({
+                COD_EN: encuesta.COD_EN,
+                COD_SUC: encuesta.COD_SUC,
+                encuesta: encuesta.encuesta,
+                sucursal: encuesta.sucursal,
+              });
+            });
+
+            listaEncuestas = procesar;
+
+            // ASOCIAR APLICADAS (CAJEROS QUE RESPONDIERON LA ENCUESTA)
+            procesar.forEach((encuesta: any) => {
+              let auxiliar: any[] = [];
+              respuesta.forEach((aplicadas: any) => {
+                if (encuesta.COD_EN === aplicadas.COD_EN) {
+                  auxiliar.push({
+                    CODIGO_RESPUESTA: aplicadas.CODIGO_RESPUESTA,
+                    cajero: aplicadas.NOM_US,
+                  });
                 }
-              })
-              nuevo.sort((a: any, b: any) => a.codigo_pregunta - b.codigo_pregunta);
-              usu.informacion = nuevo;
-            })
-            //console.log(' ver general ', this.preguntas_respuestas)
+              });
+              encuesta.aplicadas = auxiliar;
+            });
+
+            // ASOCIAR PREGUNTAS A CADA ENCUESTA
+            procesar.forEach((encuesta: any) => {
+              let auxiliar: any[] = [];
+              let contador: number = 1;
+              this.preguntas.forEach((pregunta: any) => {
+                if (encuesta.COD_EN === pregunta.COD_EN) {
+                  auxiliar.push({
+                    codigo_pregunta: pregunta.COD_PR,
+                    identificador: 'PREGUNTA ' + contador++,
+                    pregunta: pregunta.PREG_PR,
+                    respuesta: '',
+                    fecha: '',
+                    hora: ''
+                  });
+                }
+              });
+
+              // ORDENAR PREGUNTAS POR CODIGO
+              auxiliar.sort((a, b) => a.codigo_pregunta - b.codigo_pregunta);
+
+              // COPIA INDEPENDIENTE DE PREGUNTAS PARA CADA "APLICADA"**
+              encuesta.aplicadas.forEach((aplicadas: any) => {
+                aplicadas.preguntas = auxiliar.map(p => ({ ...p })); // SE HACE UNA COPIA DEL ARRAY
+              });
+            });
+
+            // ASOCIAR RESPUESTAS A PREGUNTAS
+            procesar.forEach((encuesta: any) => {
+              encuesta.aplicadas.forEach((aplicada: any) => {
+                this.respuestas.forEach((respuesta: any) => {
+                  if (aplicada.CODIGO_RESPUESTA === respuesta.CODIGO_RESPUESTA) {
+                    aplicada.preguntas.forEach((pregunta: any) => {
+                      if (pregunta.codigo_pregunta === respuesta.COD_PR) {
+                        pregunta.respuesta = respuesta.respuesta;
+                        pregunta.fecha = respuesta.fecha;
+                        pregunta.hora = `${String(respuesta.hora).padStart(2, '0')}:${String(respuesta.minutos).padStart(2, '0')}:${String(respuesta.segundos).padStart(2, '0')}`;
+                        aplicada.fecha = respuesta.fecha;
+                      }
+                    });
+                  }
+                });
+              });
+            });
+
+            this.preguntas_respuestas = procesar.map(encuesta => {
+              // ORDENAR LAS APLICACIONES DENTRO DE CADA ENCUESTA POR LA FECHA DE MAYOR A MENOR
+              encuesta.aplicadas.sort((a: any, b: any) => {
+                const fechaA = new Date(a.fecha);
+                const fechaB = new Date(b.fecha);
+                return fechaB.getTime() - fechaA.getTime(); // ORDENAR DE MAYOR A MENOR
+              });
+              return encuesta;
+            });
+
+            console.log('datos ...', this.preguntas_respuestas);
+
+            // LISTA DE PREGUNTAS DE LAS ENCUESTAS
+            let preguntasUnicas: any[] = [];
+            listaEncuestas.forEach((encuesta: any) => {
+              let preguntasEncuesta = new Set(); // PARA EVITAR PREGUNTAS DUPLICADAS EN CADA ENCUESTA
+              let preguntasFiltradas: any[] = [];
+              let contador: number = 1;
+              this.preguntas.forEach((pregunta: any) => {
+                if (encuesta.COD_EN === pregunta.COD_EN && !preguntasEncuesta.has(pregunta.COD_PR)) {
+                  preguntasEncuesta.add(pregunta.COD_PR);
+                  preguntasFiltradas.push({
+                    codigo_pregunta: pregunta.COD_PR,
+                    identificativo: 'PREGUNTA ' + contador++,
+                    pregunta: pregunta.PREG_PR
+                  });
+                }
+              });
+
+              preguntasUnicas.push({
+                encuesta: encuesta.encuesta,
+                COD_EN: encuesta.COD_EN,
+                sucursal: encuesta.sucursal,
+                preguntas: preguntasFiltradas
+              });
+            });
+
+            this.listaPreguntas = preguntasUnicas;
+
             this.malRequestTTF = false;
             this.malRequestTTFPag = false;
             // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
             if (this.configTTF.currentPage > 1) {
               this.configTTF.currentPage = 1;
             }
-            this.respuestasTotalC = this.preguntas_respuestas.length;
           },
           (error) => {
             if (error.status == 400) {
               // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioTurnosTotalFecha = null;
+              this.preguntas_respuestas = null;
               this.malRequestTTF = true;
               this.malRequestTTFPag = true;
 
               // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
               // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioTurnosTotalFecha == null) {
+              if (this.preguntas_respuestas == null) {
                 this.configTTF.totalItems = 0;
               } else {
                 this.configTTF.totalItems =
-                  this.servicioTurnosTotalFecha.length;
+                  this.preguntas_respuestas.length;
               }
 
               // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
@@ -617,7 +634,319 @@ export class EncuestasComponent {
           }
         );
     }
+    else {
+      this.toastr.info("No ha seleccionado datos.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
   }
+
+
+  // GENERAR ARCHIVO DE EXCEL
+  ExportExcelEncuestas() {
+    if (this.preguntas_respuestas.length != 0) {
+
+      let workbook = new ExcelJS.Workbook();
+      let imagen = workbook.addImage({
+        base64: this.urlImagen,
+        extension: 'png',
+      });
+
+      let contador: number = 1;
+      // ITERAR SOBRE LAS ENCUESTAS PARA CREAR UNA HOJA POR CADA UNA
+      this.preguntas_respuestas.forEach((encuesta: any) => {
+        // CREAR HOJA POR CADA ENCUESTA
+        const sheet = workbook.addWorksheet('ENCUESTA ' + contador++);
+
+        // AGREGAR LA IMAGEN EN CADA HOJA
+        sheet.addImage(imagen, {
+          tl: { col: 0, row: 0 },
+          ext: { width: 220, height: 105 },
+        });
+
+        // COMBINAR CELDAS
+        sheet.mergeCells("B1:H1");
+        sheet.mergeCells("B2:H2");
+        sheet.mergeCells("B3:H3");
+        sheet.mergeCells("B4:H4");
+        sheet.mergeCells("B5:H5");
+
+        // AGREGAR LOS VALORES A LAS CELDAS COMBINADAS
+        sheet.getCell("B1").value = (encuesta.sucursal).toUpperCase();
+        sheet.getCell("B2").value = (encuesta.encuesta).toUpperCase();
+        var fechaDesde = this.fechaDesde.nativeElement.value
+          .toString()
+          .trim();
+        var fechaHasta = this.fechaHasta.nativeElement.value
+          .toString()
+          .trim();
+        sheet.getCell("B3").value = "PERIODO DE " + fechaDesde + " HASTA " + fechaHasta;
+        // APLICAR ESTILO DE CENTRADO Y NEGRITA A LAS CELDAS COMBINADAS
+        ["B1", "B2", "B3"].forEach((cell) => {
+          sheet.getCell(cell).alignment = {
+            horizontal: "center",
+            vertical: "middle",
+          };
+          sheet.getCell(cell).font = { bold: true, size: 14 };
+        });
+
+        // ESTABLECER LAS CABECERAS DE LA TABLA (SUCURSAL, CAJERO, FECHA Y PREGUNTAS)
+        const header = ['SUCURSAL', 'CAJERO', 'FECHA', ...encuesta.aplicadas[0]?.preguntas.map((pregunta: any) => pregunta.identificador)];
+        sheet.addRow(header);
+
+        // AGREGAR COMENTARIOS A LAS CABECERAS EN LA FILA 6 CON EL VALOR DE LA PREGUNTA
+        header.forEach((headerItem, index) => {
+          const rowNumber = 6;  // CAMBIAR A FILA 6
+          if (index === 0) {
+            sheet.getCell(`A${rowNumber}`).note = 'Nombre de la sucursal en la que se realizó la encuesta.';
+          } else if (index === 1) {
+            sheet.getCell(`B${rowNumber}`).note = 'Nombre del cajero que aplicó la encuesta.';
+          }
+          else if (index === 2) {
+            sheet.getCell(`C${rowNumber}`).note = 'Fecha en la que se aplicó la encuesta.';
+          }
+          else {
+            // PARA LAS PREGUNTAS, PONER EL VALOR DE PREGUNTA.PREGUNTA EN EL COMENTARIO
+            const pregunta = encuesta.aplicadas[0]?.preguntas[index - 3];  // AJUSTE PARA EL ÍNDICE DE LAS PREGUNTAS
+            if (pregunta) {
+              // AJUSTE PARA OBTENER LAS CELDAS CORRECTAMENTE, A PARTIR DE LA COLUMNA D
+              const columnLetter = String.fromCharCode(68 + index - 3); // COMIENZA DESDE 'D' PARA LAS PREGUNTAS
+              sheet.getCell(`${columnLetter}${rowNumber}`).note = `Pregunta: ${pregunta.pregunta}`;
+            }
+          }
+        });
+
+        // LLENAR LAS FILAS CON LAS RESPUESTAS DE LOS CAJEROS
+        encuesta.aplicadas.forEach((aplicada: any, index: number) => {
+          const fila = [
+            encuesta.sucursal,  // SUCURSAL
+            aplicada.cajero,    // CAJERO
+            aplicada.fecha,     // FECHA
+            ...aplicada.preguntas.map((pregunta: any) => pregunta.respuesta) // RESPUESTAS A LAS PREGUNTAS
+          ];
+          const row = sheet.addRow(fila);
+          // APLICAR BORDES A CADA CELDA DE LA FILA
+          row.eachCell((cell) => {
+            cell.border = {
+              top: { style: "thin" },
+              left: { style: "thin" },
+              bottom: { style: "thin" },
+              right: { style: "thin" },
+            };
+            cell.alignment = {
+              horizontal: "center",
+              vertical: "middle",
+            };
+          });
+          // APLICAR ESTILO CEBRA A LAS FILAS
+          if (index % 2 === 0) {
+            row.eachCell((cell) => {
+              cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'F2F2F2' }, // COLOR GRIS CLARO PARA FILAS PARES
+              };
+            });
+          }
+        });
+
+        // ESTABLECER EL ANCHO DE LAS COLUMNAS DINÁMICAMENTE
+        sheet.columns = header.map(() => ({ width: 30 }));  // TODAS LAS COLUMNAS CON ANCHO 30
+
+        // ESTILOS DE ENCABEZADO
+        sheet.getRow(6).eachCell((cell, colNumber) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "4F81BD" },
+          };
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+          cell.font = {
+            bold: true,
+            color: { argb: "FFFFFF" }, // COLOR BLANCO PARA EL TEXTO
+          };
+          // HABILITAR FILTRO EN LA CELDA
+          sheet.autoFilter = {
+            from: { row: 6, column: 1 },  // INICIO DEL FILTRO (FILA 6, COLUMNA 1)
+            to: { row: 6, column: sheet.columnCount } // FIN DEL FILTRO (ULTIMA COLUMNA)
+          };
+        });
+
+        // CONGELAR LA FILA 6 Y LAS PRIMERAS 2 COLUMNAS (INCLUYENDO LA COLUMNA DE LA "FECHA")
+        sheet.views = [
+          {
+            state: 'frozen',
+            xSplit: 3,  // CONGELAR HASTA LA COLUMNA C (COLUMNA DE LA FECHA)
+            ySplit: 6,  // CONGELAR HASTA LA FILA 6
+            topLeftCell: 'D7',  // COMIENZA LA VISUALIZACIÓN DESDE LA CELDA D7
+          }
+        ];
+      });
+
+      // GENERAR EL ARCHIVO Y DESCARGARLO
+      workbook.xlsx.writeBuffer().then((buffer: any) => {
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Encuestas.xlsx';
+        link.click();
+      });
+    }
+    else {
+      this.toastr.info("No ha seleccionado datos.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
+  }
+
+  // FUNCION PARA CREAR EL PDF
+  async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
+    if (this.preguntas_respuestas.length != 0) {
+      // RANGO DE FECHAS DE LA CONSULTA PARA IMPRESION EN PDF
+      var fechaDesde = this.fechaDesde.nativeElement.value.toString().trim();
+      var fechaHasta = this.fechaHasta.nativeElement.value.toString().trim();
+      const pdfMake = await this.validar.ImportarPDF();
+      let documentDefinition: any;
+      if (pdf === 1) {
+        documentDefinition = this.DocumentarPreguntasRespuestas(fechaDesde, fechaHasta);
+      }
+      // OPCIONES DE PDF
+      switch (action) {
+        case "open":
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+        case "print":
+          pdfMake.createPdf(documentDefinition).print();
+          break;
+        case "download":
+          pdfMake.createPdf(documentDefinition).download();
+          break;
+        default:
+          pdfMake.createPdf(documentDefinition).open();
+          break;
+      }
+    }
+    else {
+      this.toastr.info("No ha seleccionado datos.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
+  }
+
+  // FUNCION DELEGADA PARA LA ESTRUCTURA DEL DOCUMENTO PDF
+  DocumentarPreguntasRespuestas(fechaDesde: any, fechaHasta: any) {
+    let f = new Date();
+    f.setUTCHours(f.getHours());
+    this.date = f.toJSON();
+    let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
+    return {
+      pageSize: 'A4',
+      pageOrientation: 'landscape',
+      pageMargins: [40, 60, 40, 40],
+      watermark: { text: this.marca, color: 'blue', opacity: 0.1, bold: true, italics: false },
+      header: { text: 'Impreso por:  ' + this.userDisplayName, margin: 10, fontSize: 9, opacity: 0.3, alignment: 'right' },
+
+      footer: function (currentPage: any, pageCount: any, fecha: any, timer: any) {
+        fecha = f.toJSON().split("T")[0];
+        timer = f.toJSON().split("T")[1].slice(0, 5);
+        return {
+          margin: 10,
+          columns: [
+            { text: 'Fecha: ' + fecha + ' Hora: ' + timer, opacity: 0.3 },
+            {
+              text: [
+                {
+                  text: '© Pag ' + currentPage.toString() + ' de ' + pageCount,
+                  alignment: 'right', opacity: 0.3
+                }
+              ],
+            }
+          ],
+          fontSize: 10
+        }
+      },
+      content: [
+        { image: this.urlImagen, width: 100, margin: [10, -25, 0, 5] },
+        { text: `LISTA DE ENCUESTAS APLICADAS`, bold: true, fontSize: 14, alignment: 'center', margin: [0, -30, 0, 5] },
+        { text: nombreSucursal?.toUpperCase(), bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
+        { text: `PERIODO DEL ${fechaDesde} HASTA ${fechaHasta}`, bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
+        this.EstructurarDatosPDF(this.preguntas_respuestas),
+      ],
+      styles: {
+        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color },
+        principal: { fontSize: 8, bold: true, alignment: 'center', fillColor: "#aafdc3" },
+        itemsTable: { fontSize: 8 },
+        tableMargin: { margin: [0, 0, 0, 0] },
+      },
+    };
+  }
+
+  EstructurarDatosPDF(data: any[]) {
+    const body: any[] = [];
+    data.forEach(encuesta => {
+      if (!encuesta.aplicadas || encuesta.aplicadas.length === 0) return;
+
+      encuesta.aplicadas.forEach((aplicada: any) => {
+        // ENCABEZADOS DE ENCUESTA Y SUCURSAL (PRIMERA FILA)
+        body.push([
+          { text: 'ENCUESTA', style: 'principal', alignment: 'center', colSpan: 2 }, {},
+          { text: 'SUCURSAL', style: 'principal', alignment: 'center', colSpan: 2 }, {}
+        ]);
+        body.push([
+          { text: encuesta.encuesta || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {},
+          { text: encuesta.sucursal || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {}
+        ]);
+
+        // ENCABEZADOS DE CAJERO Y FECHA (SEGUNDA FILA)
+        body.push([
+          { text: 'CAJERO(A)', style: 'tableHeader', alignment: 'center', colSpan: 2 }, {},
+          { text: 'FECHA', style: 'tableHeader', alignment: 'center', colSpan: 2 }, {}
+        ]);
+        body.push([
+          { text: aplicada.cajero || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {},
+          { text: aplicada.fecha || 'N/A', style: 'itemsTable', alignment: 'center', colSpan: 2 }, {}
+        ]);
+
+        // CABECERA DE PREGUNTAS Y RESPUESTAS (UNA SOLA VEZ)
+        body.push([
+          { text: 'No.', style: 'tableHeader', alignment: 'center', width: '10%' },
+          { text: 'PREGUNTA', style: 'tableHeader', alignment: 'center', colSpan: 2, width: '55%' }, {},
+          { text: 'RESPUESTA', style: 'tableHeader', alignment: 'center', width: '35%' }
+        ]);
+
+        // SECCION DE PREGUNTAS Y RESPUESTAS
+        aplicada.preguntas.forEach((pregunta: any, index: number) => {
+          body.push([
+            { text: pregunta.identificador, style: 'itemsTable', alignment: 'center' },
+            { text: pregunta.pregunta || 'Pregunta no disponible', style: 'itemsTable', colSpan: 2 }, {},
+            { text: pregunta.respuesta || '', style: 'itemsTable' }
+          ]);
+        });
+
+        // ESPACIADO ENTRE ENCUESTAS
+        body.push([{ text: '', colSpan: 4, border: [false, false, false, false], margin: [0, 5, 0, 5] }, {}, {}, {}]);
+      });
+    });
+
+    return {
+      style: 'tableMargin',
+      table: {
+        widths: ['10%', '45%', '10%', '35%'], // 4 columnas
+        body
+      },
+      layout: {
+        fillColor: (rowIndex: number) => (rowIndex % 2 === 0 ? '#E5E7E9' : null),
+      }
+    };
+  }
+
+
+
+
+
+
+
+
 
   /** ********************************************************************************************************** **
    ** **                                      RESUMEN DE PREGUNTAS                                            ** **
@@ -633,19 +962,20 @@ export class EncuestasComponent {
 
     if (this.selectedEncuestas.length !== 0) {
       this.serviceService
-        .getResumenEncuesta(
+        .getEncuestasCajero(
           fechaDesde,
           fechaHasta,
           horaInicio,
           horaFin,
-          this.selectedEncuestas,
           this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
+          this.selectedEncuestas,
+          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
         )
         .subscribe(
           (servicio: any) => {
-            console.log('EncuestasSucursales: ', servicio );
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             this.servicioResumen = servicio.resumen;
+            console.log('resumen ', this.servicioResumen)
             this.malRequestR = false;
             this.malRequestRPag = false;
 
@@ -655,89 +985,13 @@ export class EncuestasComponent {
             }
 
             let totalR = this.servicioResumen.map(
-              (res) => res.total_encuestas
+              (res: any) => res.encuestas_realizadas
             );
             let total = 0;
             for (let i = 0; i < totalR.length; i++) {
               total += totalR[i];
             }
             this.respuestasTotal = total;
-
-            //GENERACION DE GRAFICO  
-            let nombresSucursales = Array.from(new Set(this.servicioResumen.map((res) => res.NOM_SUC)));
-            let nombresEncuestas = Array.from(new Set(this.servicioResumen.map((res) => res.NOM_EN)));
-
-            var i: number;
-            var valores: any = [];
-            for (i = 0; i < nombresSucursales.length; i++) {
-              const sucursal = nombresSucursales[i];
-              const data = nombresEncuestas.map((encuesta) => {
-                // Encontrar el total_encuestas para la sucursal y la encuesta actual
-                const encuestaSucursal = this.servicioResumen.find(
-                  (res) => res.NOM_SUC === sucursal && res.NOM_EN === encuesta
-                );
-                return encuestaSucursal ? encuestaSucursal.total_encuestas : 0; // Si no hay datos, asigna 0
-              });
-
-              valores.push(
-                {
-                  label: (nombresSucursales[i] as string),
-                  data: data,
-                  backgroundColor: this.generarColorAleatorio()
-                }
-              );
-            }
-
-            //TOTALES POR CADA SUCURSAL
-            let totalPorSucursal = nombresSucursales.map((sucursal) =>
-              this.servicioResumen
-                .filter((res) => res.NOM_SUC === sucursal) // Filtrar por sucursal
-                .reduce((sum, res) => sum + res.total_encuestas, 0) // Sumar los valores de total_encuestas
-            );
-
-            console.log('Totales: ', totalPorSucursal);
-
-            var totalesData = {
-              type: "scatter",
-              label: "Totales",
-              data: totalPorSucursal,
-              backgroundColor: this.generarColorAleatorio(),
-            };
-
-            valores.push(totalesData);
-
-            var graficoData = {
-              labels: nombresEncuestas,
-              datasets: valores,
-            };
-
-            if (this.chart != undefined || this.chart != null) {
-              this.chart.destroy();
-            }
-
-            this.chart = new Chart("canvaResumenEncuestas", {
-              type: "bar",
-              data: graficoData,
-              options: {
-                plugins: {
-                  datalabels: {
-                    color: "black",
-                    labels: {
-                      title: {
-                        font: {
-                          weight: "bold",
-                        },
-                      },
-                    },
-                  },
-                },
-                scales: {},
-                responsive: true,
-              }
-            }
-            );
-            
-
           },
           (error) => {
             if (error.status == 400) {
@@ -770,176 +1024,6 @@ export class EncuestasComponent {
     }
   }
 
-  /** ********************************************************************************************************** **
-   ** **                                        LISTA DE ENCUESTAS                                            ** **
-   ** ********************************************************************************************************** **/
-
-  buscarListaEncuestas() {
-    // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
-    var fechaDesde = this.fromDateEncuesta.nativeElement.value.toString().trim();
-    var fechaHasta = this.toDateEncuesta.nativeElement.value.toString().trim();
-
-    let horaInicio = this.horaInicioE.nativeElement.value;
-    let horaFin = this.horaFinE.nativeElement.value;
-
-    if (this.encuestasTodas.length !== 0) {
-      this.serviceService
-        .getResumenEncuesta(
-          fechaDesde,
-          fechaHasta,
-          horaInicio,
-          horaFin,
-          this.encuestasTodas,
-          '-1'
-        )
-        .subscribe(
-          (servicio: any) => {
-            console.log(' servicio encuesta ', servicio)
-            // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
-            this.servicioEncuesta = servicio.resumen;
-            this.malRequestE = false;
-            this.malRequestEPag = false;
-
-            // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
-            if (this.configE.currentPage > 1) {
-              this.configE.currentPage = 1;
-            }
-
-            let totalE = this.servicioEncuesta.map(
-              (res) => res.total_encuestas
-            );
-            let total = 0;
-            for (let i = 0; i < totalE.length; i++) {
-              total += totalE[i];
-            }
-            this.respuestasTotal = total;
-          },
-          (error) => {
-            if (error.status == 400) {
-              // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.servicioEncuesta = null;
-              this.malRequestE = true;
-              this.malRequestEPag = true;
-
-              // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
-              // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.servicioEncuesta == null) {
-                this.configE.totalItems = 0;
-              } else {
-                this.configE.totalItems = this.servicioEncuesta.length;
-              }
-
-              // POR ERROR 400 SE SETEA ELEMENTOS DE PAGINACION
-              this.configE = {
-                itemsPerPage: this.MAX_PAGS,
-                currentPage: 1,
-              };
-
-              // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
-              this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
-                timeOut: 6000,
-              });
-            }
-          }
-        );
-    }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-  /** ********************************************************************************************************** **
-   ** **                                          ENCUESTA INDIVIDUAL                                         ** **
-   ** ********************************************************************************************************** **/
-
-
-  // en el controlador de Angular
-  convertirObjetoACadena(objeto) {
-    return objeto.toString();
-  }
-
-  ExportTOExcelEntradasSistema() {
-    //Mapeo de información de consulta a formato JSON para exportar a Excel
-    let jsonServicio:any = [];
-    for (let i = 0; i < this.servicioTurnosFecha.length; i++) {
-      jsonServicio.push({
-        Usuario: this.servicioTurnosFecha[i].Usuario,
-        Fecha: new Date(this.servicioTurnosFecha[i].fecha_),
-        Hora: this.servicioTurnosFecha[i].hora_,
-      });
-    }
-
-    //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-    const header = Object.keys(this.servicioTurnosFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-    var wscols:any = [];
-    for (var i = 0; i < header.length; i++) {
-      // CABECERAS AÑADIDAS CON ESPACIOS
-      wscols.push({ wpx: 150 });
-    }
-    ws["!cols"] = wscols;
-    XLSX.utils.book_append_sheet(wb, ws, "Entradas");
-    XLSX.writeFile(
-      wb,
-      "Entradas al sistema " + new Date().toLocaleString() + EXCEL_EXTENSION
-    );
-  }
-
-  ExportTOExcelPreguntasRespuestas() {
-    if (this.preguntas_respuestas.length != 0) {
-      //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
-      let nuevo: Array<any> = [];
-      let c = 0;
-      this.preguntas_respuestas.forEach((preg) => {
-        preg.informacion.forEach((inf: any) => {
-          c = c + 1;
-          let ele = {
-            'N°': c,
-            Sucursal: preg.sucursal,
-            Cajero: preg.NOM_US,
-            Encuesta: preg.encuesta,
-            'Código encuesta': preg.CODIGO_RESPUESTA,
-            Titulo: inf.titulo,
-            pregunta: inf.pregunta,
-            respuesta: inf.respuesta,
-            fecha: inf.fecha,
-            hora: inf.hora,
-          };
-          nuevo.push(ele);
-        });
-      });
-      jsonServicio = nuevo;
-      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(this.servicioTurnosTotalFecha[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
-      for (var i = 0; i < header.length; i++) {
-        // CABECERAS AÑADIDAS CON ESPACIOS
-        wscols.push({ wpx: 150 });
-      }
-      ws["!cols"] = wscols;
-
-      XLSX.utils.book_append_sheet(wb, ws, "LISTA ENCUESTAS");
-      XLSX.writeFile(
-        wb,
-        "LISTA ENCUESTAS " + new Date().toLocaleString() + EXCEL_EXTENSION
-      );
-    }
-  }
-
   ExportTOExcelPreguntasResumen(opcion: any) {
     let resultados: any = [];
     if (opcion === 1) {
@@ -950,12 +1034,13 @@ export class EncuestasComponent {
     }
     if (resultados.length != 0) {
       //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio:any = [];
+      let jsonServicio: any = [];
       for (let i = 0; i < resultados.length; i++) {
         jsonServicio.push({
-          Sucursal: resultados[i].NOM_SUC,
-          Encuesta: resultados[i].NOM_EN,
-          "Encuestas realizadas": resultados[i].total_encuestas,
+          Sucursal: resultados[i].nombre_sucursal,
+          Encuesta: resultados[i].nombre_encuesta,
+          Uusario: resultados[i].nombre_usuario,
+          "Encuestas realizadas": resultados[i].encuestas_realizadas,
         });
       }
       //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
@@ -963,7 +1048,7 @@ export class EncuestasComponent {
       const wb: XLSX.WorkBook = XLSX.utils.book_new();
       // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
       const header = Object.keys(resultados[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols:any = [];
+      var wscols: any = [];
       for (var i = 0; i < header.length; i++) {
         // CABECERAS AÑADIDAS CON ESPACIOS
         wscols.push({ wpx: 150 });
@@ -973,7 +1058,7 @@ export class EncuestasComponent {
       XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
       XLSX.writeFile(
         wb,
-        "Resumen Encuestas " + new Date().toLocaleString() + EXCEL_EXTENSION
+        "Resumen Encuestas Usuarios" + new Date().toLocaleString() + EXCEL_EXTENSION
       );
     }
   }
@@ -996,334 +1081,6 @@ export class EncuestasComponent {
     }
   }
 
-  //----GENERACION DE PDF'S----
-  async generarPdfEntradasSistema(action = "open", pdf: number) {
-    //Seteo de rango de fechas de la consulta para impresión en PDF
-    var fechaDesde = this.fromDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.toDateTurnosFecha.nativeElement.value
-      .toString()
-      .trim();
-
-    let horaInicio = this.horaInicioTF.nativeElement.value;
-    let horaFin = this.horaFinTF.nativeElement.value;
-
-    // var cod = this.codSucursal.nativeElement.value.toString().trim();
-    const pdfMake = await this.validar.ImportarPDF();
-    //Definicion de funcion delegada para setear estructura del PDF
-    let documentDefinition: any;
-    if (pdf === 1) {
-      documentDefinition = this.getDocumentturnosfecha(
-        fechaDesde,
-        fechaHasta,
-        horaInicio,
-        horaFin
-      );
-    }
-    //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-    switch (action) {
-      case "open":
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-      case "print":
-        pdfMake.createPdf(documentDefinition).print();
-        break;
-      case "download":
-        pdfMake.createPdf(documentDefinition).download();
-        break;
-      default:
-        pdfMake.createPdf(documentDefinition).open();
-        break;
-    }
-  }
-
-  //Funcion delegada para seteo de información
-  getDocumentturnosfecha(fechaDesde, fechaHasta, horaInicio, horaFin) {
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
-    // let nombreSucursal = this.obtenerNombreSucursal(this.sucursalesSeleccionadas);
-
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage, pageCount, fecha) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "Reporte - Entradas al sistema ",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.CampoDetalle(this.servicioTurnosFecha), //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 16,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
-
-  //Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalle(servicio: any[]) {
-    return {
-      style: "tableMargin",
-      table: {
-        headerRows: 1,
-        widths: ["*", "*"],
-
-        body: [
-          [
-            { text: "Usuario", style: "tableHeader" },
-            { text: "Fecha", style: "tableHeader" },
-          ],
-          ...servicio.map((res) => {
-            return [
-              { style: "itemsTable", text: res.Usuario },
-              { style: "itemsTable", text: res.Fecha },
-            ];
-          }),
-        ],
-      },
-      layout: {
-        fillColor: function (rowIndex) {
-          return rowIndex % 2 === 0 ? "#E5E7E9" : null;
-        },
-      },
-    };
-  }
-
-  async generarPdfPreguntasRespuestas(action = "open", pdf: number) {
-    if (this.preguntas_respuestas.length != 0) {
-      //Seteo de rango de fechas de la consulta para impresión en PDF
-      var fechaDesde = this.fromDateTurnosTotalFecha.nativeElement.value
-        .toString()
-        .trim();
-      var fechaHasta = this.toDateTurnosTotalFecha.nativeElement.value
-        .toString()
-        .trim();
-
-      const pdfMake = await this.validar.ImportarPDF();
-      //Definicion de funcion delegada para setear estructura del PDF
-      let documentDefinition: any;
-      if (pdf === 1) {
-        documentDefinition = this.getDocumentturnosTotalfecha(
-          fechaDesde,
-          fechaHasta
-        );
-      }
-      //Opciones de PDF de las cuales se usara la de open, la cual abre en nueva pestaña el PDF creado
-      switch (action) {
-        case "open":
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-        case "print":
-          pdfMake.createPdf(documentDefinition).print();
-          break;
-        case "download":
-          pdfMake.createPdf(documentDefinition).download();
-          break;
-
-        default:
-          pdfMake.createPdf(documentDefinition).open();
-          break;
-      }
-    }
-  }
-
-  //Funcion delegada para seteo de información
-  getDocumentturnosTotalfecha(fechaDesde: any, fechaHasta: any) {
-    //Se obtiene la fecha actual
-    let f = new Date();
-    f.setUTCHours(f.getHours());
-    this.date = f.toJSON();
-
-    return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
-        fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
-          columns: [
-            {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "LISTA DE ENCUESTAS",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
-          ],
-        },
-        {
-          style: "subtitulos",
-          text: "Período de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.EstructurarDatosPDF(this.preguntas_respuestas),
-        {
-          style: "subtitulos",
-          text: "TOTAL DE ENCUESTAS: " + this.respuestasTotalC,
-        }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-      ],
-      styles: {
-        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: '#0096c7' },
-        centrado: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color, margin: [0, 7, 0, 0] },
-        itemsTable: { fontSize: 8 },
-        derecha: { fontSize: 10, margin: [0, 3, 0, 3], fillColor: this.p_color, alignment: 'rigth' },
-        itemsTableInfoEmpleado: { fontSize: 9, margin: [0, -1, 0, -2], fillColor: this.p_color },
-        itemsTableCentrado: { fontSize: 8, alignment: 'center' },
-        tableMargin: { margin: [0, 0, 0, 0] },
-        tableMarginCabecera: { margin: [0, 15, 0, 0] },
-        tableMarginCabeceraEmpleado: { margin: [0, 10, 0, 0] },
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        subtitulos: {
-          fontSize: 14,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
-    };
-  }
-
 
   async generarPdfPreguntasResumen(action = "open", pdf: number, opcion: any) {
     if (this.servicioResumen.length != 0) {
@@ -1332,7 +1089,6 @@ export class EncuestasComponent {
       var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
 
       const pdfMake = await this.validar.ImportarPDF();
-
       //Definicion de funcion delegada para setear estructura del PDF
       let documentDefinition: any;
       if (pdf === 1) {
@@ -1359,9 +1115,6 @@ export class EncuestasComponent {
 
   //Funcion delegada para seteo de información
   getDocumentResumen(fechaDesde: any, fechaHasta: any, opcion: any) {
-    var canvasPdf = document.querySelector("#canvaResumenEncuestas") as HTMLCanvasElement;
-    var canvasPdfImg = canvasPdf.toDataURL("image/png");
-    
     //Se obtiene la fecha actual
     let f = new Date();
     f.setUTCHours(f.getHours());
@@ -1438,7 +1191,6 @@ export class EncuestasComponent {
           style: "subtitulos",
           text: "TOTAL DE ENCUESTAS REALIZADAS: " + this.respuestasTotal,
         }, //Definicion de funcion delegada para setear informacion de tabla del PDF
-        this.graficoImagen(canvasPdfImg),
       ],
       styles: {
         tableTotal: {
@@ -1473,24 +1225,6 @@ export class EncuestasComponent {
     };
   }
 
-  //TRASPASO DE GRAFICO A ESTRUCTURA PARA PDF
-  graficoImagen(imagen: any) {
-    const marginLeftRight = 50;
-    const marginTopBottom = 50;
-
-    // Tamaño disponible en puntos
-    const maxWidth = 595.28 - marginLeftRight * 2; // Ancho disponible
-    const maxHeight = 841.89 - marginTopBottom * 2; // Alto disponible
-
-    return {
-      image: imagen,
-      fit: [maxWidth, maxHeight],
-      margin: [0, 50, 0, 10],
-      alignment: "center",
-      //pageBreak: "after",//PARAMETRO PARA DEJAR EN LA MISMA HOJA
-    }
-  }
-
   //Funcion para llenar la tabla con la consulta realizada al backend
   CampoDetalleResumen(opcion: any) {
     let servicio: any = [];
@@ -1509,18 +1243,20 @@ export class EncuestasComponent {
             style: "tableMargin",
             table: {
               headerRows: 1,
-              widths: ["auto", "*", "auto"],
+              widths: ["auto", "*", "auto", "auto"],
               body: [
                 [
                   { text: "Sucursal", style: "tableHeader" },
                   { text: "Encuesta", style: "tableHeader" },
+                  { text: "Cajero", style: "tableHeader" },
                   { text: "Encuestas realizadas", style: "tableHeader" },
                 ],
-                ...servicio.map((res) => {
+                ...servicio.map((res: any) => {
                   return [
-                    { style: "itemsTable", text: res.NOM_SUC },
-                    { style: "itemsTable", text: res.NOM_EN },
-                    { style: "itemsTable", text: res.total_encuestas },
+                    { style: "itemsTable", text: res.nombre_sucursal },
+                    { style: "itemsTable", text: res.nombre_encuesta },
+                    { style: "itemsTable", text: res.nombre_usuario },
+                    { style: "itemsTable", text: res.encuestas_realizadas },
                   ];
                 }),
               ],
@@ -1535,97 +1271,6 @@ export class EncuestasComponent {
         ]
       };
     }
-  }
-
-
-
-  EstructurarDatosPDF(data: any[]): Array<any> {
-    console.log('ver pdf ', data)
-    let n: any = [];
-    data.forEach((selec: any) => {
-      //let reg = this.validar.SumarRegistros(arr_reg)
-      // PRESENTACION DE LA INFORMACION
-      n.push({
-        style: 'tableMarginCabeceraEmpleado',
-        table: {
-          widths: ['*', '*'],
-          headerRows: 2,
-          body: [
-            [
-              {
-                border: [true, true, false, false],
-                text: 'SUCURSAL: ' + selec.sucursal,
-                style: 'itemsTableInfoEmpleado'
-              },
-              {
-                border: [true, true, true, false],
-                text: 'ENCUESTA: ' + selec.encuesta,
-                style: 'itemsTableInfoEmpleado'
-              },
-            ],
-            [
-              {
-                border: [true, false, false, false],
-                text: 'CAJERO: ' + selec.NOM_US,
-                style: 'itemsTableInfoEmpleado',
-              },
-              {
-                border: [true, false, true, false],
-                text: 'N° Preguntas: ' + selec.informacion.length,
-                style: 'itemsTableInfoEmpleado',
-              },
-
-            ],
-          ],
-        },
-      });
-      n.push({
-        style: 'tableMargin',
-        table: {
-          widths: ['auto', 'auto', '*', 'auto', 'auto', 'auto'],
-          headerRows: 1,
-          body: [
-            [
-              { text: 'N°', style: 'tableHeader' },
-              { text: 'TÍTULO', style: 'tableHeader' },
-              { text: 'PREGUNTA', style: 'tableHeader' },
-              { text: 'RESPUESTA', style: 'tableHeader' },
-              { text: 'FECHA', style: 'tableHeader' },
-              { text: 'HORA', style: 'tableHeader' },
-            ],
-            ...selec.informacion.map((inf: any) => {
-              const fecha = DateTime.fromISO(inf.fecha_hora, { zone: 'utc' });
-              return [
-                {
-                  style: 'itemsTableCentrado',
-                  text: selec.informacion.indexOf(inf) + 1,
-                },
-                { style: 'itemsTableCentrado', text: inf.titulo },
-                { style: 'itemsTable', text: inf.pregunta },
-                { style: 'itemsTableCentrado', text: inf.respuesta },
-                { style: 'itemsTableCentrado', text: fecha.toFormat('dd/MM/yyyy') },
-                { style: 'itemsTableCentrado', text: fecha.toFormat('HH:mm:ss') },
-              ];
-            }),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex: any) {
-            // #E5E7E9
-            return rowIndex % 2 === 0 ? '#caf0f8' : null;
-          },
-        },
-      });
-    });
-    return n;
-  }
-
-  generarColorAleatorio(): string {
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
-    const a = (Math.random() * 0.5 + 0.5).toFixed(2); // Transparencia entre 0.5 y 1
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
   }
 
 }
