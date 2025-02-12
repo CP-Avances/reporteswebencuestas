@@ -106,15 +106,15 @@
                     <br>
                     <h3>RESPUESTAS</h3>
                     <hr>
-                    <div class="table-responsive">
+                    <div class="table-responsive" *ngIf="listaPreguntas.length != 0">
                         <table class="table table-striped">
                             <ng-container *ngFor="let encuesta of listaPreguntas; let i = index">
                                 <!-- CABECERA DE LA ENCUESTA -->
                                 <thead>
                                     <tr style="background-color: #f4f4f4; font-weight: bold; text-align: center;">
-                                        <th colspan="2">Encuesta {{ encuesta.encuesta }}</th>
+                                        <th colspan="2">Encuesta: {{ encuesta.encuesta }}</th>
                                     </tr>
-                                    <tr style="background-color: #0077b6; color: white; font-weight: bold;">
+                                    <tr style="background-color: #95e6f8; color: white; font-weight: bold;">
                                         <th>Código</th>
                                         <th>Pregunta</th>
                                     </tr>
@@ -129,7 +129,7 @@
                             </ng-container>
                         </table>
                     </div>
-                    <div class="table-container" id="tableTurnosTotalFechaContainer">
+                    <div class="table-container" id="tableTurnosTotalFechaContainer" *ngIf="preguntas_respuestas.length != 0">
                         <table class="table table-striped" id="tableTurnosTotalFecha">
                             <ng-container *ngFor="let encuesta of preguntas_respuestas">
                                 <!-- FILA CON EL TITULO DE LA ENCUESTA -->

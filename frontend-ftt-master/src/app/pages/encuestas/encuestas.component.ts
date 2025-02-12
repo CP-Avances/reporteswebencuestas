@@ -186,6 +186,7 @@ export class EncuestasComponent {
           (result) => (this.urlImagen = result)
         );
       });
+    console.log('preguntas ', this.listaPreguntas)
   }
 
   // CONSULTA DE MARCA DE AGUA PARA REPORTES
@@ -397,6 +398,12 @@ export class EncuestasComponent {
     this.servicioEncuesta = [];
     this.respuestasTotal = 0;
     this.soloEncuestas = false;
+
+    this.cajerosUsuarios = [];
+    this.mostrarCajeros = false;
+    this.preguntas = [];
+    this.respuestas = [];
+    this.preguntas_respuestas = [];
   }
 
   // SE DESLOGUEA DE LA APLICACION
@@ -553,7 +560,7 @@ export class EncuestasComponent {
 
             this.preguntas_respuestas = procesar.map(encuesta => {
               // ORDENAR LAS APLICACIONES DENTRO DE CADA ENCUESTA POR LA FECHA DE MAYOR A MENOR
-              encuesta.aplicadas.sort((a, b) => {
+              encuesta.aplicadas.sort((a: any, b: any) => {
                 const fechaA = new Date(a.fecha);
                 const fechaB = new Date(b.fecha);
                 return fechaB.getTime() - fechaA.getTime(); // ORDENAR DE MAYOR A MENOR
@@ -581,6 +588,7 @@ export class EncuestasComponent {
               });
 
               preguntasUnicas.push({
+                encuesta: encuesta.encuesta,
                 COD_EN: encuesta.COD_EN,
                 sucursal: encuesta.sucursal,
                 preguntas: preguntasFiltradas

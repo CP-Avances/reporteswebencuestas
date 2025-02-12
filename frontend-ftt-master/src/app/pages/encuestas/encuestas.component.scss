@@ -1,85 +1,153 @@
 .card {
-    text-align: center;
+  text-align: center;
 }
 
 form {
-    align-items: center;
+  align-items: center;
 }
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-form.example input[type=text] {
-    padding: 10px;
-    font-size: 17px;
-    border: 1px solid grey;
-    float: left;
-    width: 80%;
-    background: #f1f1f1;
+form.example input[type="text"] {
+  padding: 10px;
+  font-size: 17px;
+  border: 1px solid grey;
+  float: left;
+  width: 80%;
+  background: #f1f1f1;
 }
 
 form.example button {
-    float: left;
-    width: 20%;
-    padding: 10px;
-    background: #2196F3;
-    color: white;
-    font-size: 17px;
-    border: 1px solid grey;
-    border-left: none;
-    cursor: pointer;
+  float: left;
+  width: 20%;
+  padding: 10px;
+  background: #2196f3;
+  color: white;
+  font-size: 17px;
+  border: 1px solid grey;
+  border-left: none;
+  cursor: pointer;
 }
 
 form.example button:hover {
-    background: #0b7dda;
+  background: #0b7dda;
 }
 
 form.example::after {
-    content: "";
-    clear: both;
-    display: table;
+  content: "";
+  clear: both;
+  display: table;
 }
 
 .example-container {
-    display: flex;
-    flex-direction: column;
-    min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
 }
 
 .example-header {
-    min-height: 64px;
-    padding: 8px 24px 0;
+  min-height: 64px;
+  padding: 8px 24px 0;
 }
 
 .mat-form-field {
-    font-size: 14px;
-    width: 100%;
+  font-size: 14px;
+  width: 100%;
 }
 
 table {
-    font-size: 14px;
+  font-size: 14px;
 }
 
-.contenedor-horas, .contenedor-fechas {
-    display: flex;
-    flex-direction: row;
-  }
+.contenedor-horas,
+.contenedor-fechas {
+  display: flex;
+  flex-direction: row;
+}
 
-.contenedor-fechas{
-    justify-content: space-around;
-    flex-wrap: wrap;
+.contenedor-fechas {
+  justify-content: space-around;
+  flex-wrap: wrap;
 }
 
 .fixed-column {
-    width: 400px;
+  width: 400px;
 }
 
-input[type="radio"], label {
-    margin: 10px; /* Espacio entre los elementos */
-  }
-  
-
 ::ng-deep .card.mat-option.mat-selected .mat-pseudo-checkbox {
-    background-color: #398bf7 !important;
-  }
+  background-color: #398bf7 !important;
+}
+
+/* Contenedor de la tabla */
+#tableTurnosTotalFechaContainer {
+  max-height: 500px; /* Ajusta la altura máxima */
+  width: 100%;
+  overflow-x: auto; /* Scroll horizontal */
+  overflow-y: auto; /* Scroll vertical */
+  border: 1px solid #ccc;
+  display: block; /* Asegura que el scroll funcione */
+}
+
+/* Tabla */
+#tableTurnosTotalFecha {
+  width: max-content; /* Permite que la tabla tenga el ancho necesario */
+  min-width: 100%; /* Asegura que se expanda si es necesario */
+  max-width: 100%; /* Evita que la tabla se expanda demasiado */
+  border-collapse: collapse;
+}
+
+/* Fijar la cabecera */
+#tableTurnosTotalFecha thead {
+  position: sticky;
+  top: 0;
+  background: #0077b6;
+  color: white;
+  z-index: 20; /* Asegura que la cabecera esté por encima del contenido */
+}
+
+/* Fijar columnas de Sucursal, Fecha y Cajero */
+#tableTurnosTotalFecha thead th.fixed-col,
+#tableTurnosTotalFecha tbody td.fixed-col {
+  position: sticky;
+  left: 0;
+  background-color: #ffffff;
+  z-index: 15; /* Mantener por encima del contenido */
+  min-width: 150px; /* Ajusta según el ancho necesario */
+  max-width: 150px;
+  text-align: left;
+}
+
+/* Ajustar el fondo de la cabecera fija */
+#tableTurnosTotalFecha thead th.fixed-col {
+  background-color: #0077b6;
+  color: white;
+  z-index: 20;
+}
+
+/* Ajustar las celdas fijas del cuerpo */
+#tableTurnosTotalFecha tbody td.fixed-col {
+  background-color: #ffffff; /* Fondo blanco para las celdas fijas */
+  z-index: 5;
+}
+
+/* Sombra para separar columnas fijas */
+#tableTurnosTotalFecha th.fixed-col,
+#tableTurnosTotalFecha td.fixed-col {
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo general para las celdas */
+#tableTurnosTotalFecha td,
+#tableTurnosTotalFecha th {
+  white-space: nowrap;
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Alternar color de filas para mejor visualización */
+#tableTurnosTotalFecha tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
