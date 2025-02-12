@@ -80,7 +80,7 @@ router.get("/getallcajeros/:sucursales/:estado", TokenValidation, (req: Request,
 
   const query =
     `
-    SELECT U.COD_US, u.CI_US, u.NOM_US, u.TIPO_US, u.ESTADO_US 
+    SELECT U.COD_US, u.CI_US, u.NOM_US, u.TIPO_US, u.ESTADO_US, sc.NOM_SUC 
     FROM
       usuario u
     JOIN puestotrabajo pt ON pt.COD_US = u.COD_US
@@ -92,6 +92,41 @@ router.get("/getallcajeros/:sucursales/:estado", TokenValidation, (req: Request,
     `;
 
   console.log('query usuario ', query)
+  MySQL.ejecutarQuery(query, (err: any, cajeros: Object[]) => {
+    if (err) {
+      res.status(400).json({
+        ok: false,
+        error: err,
+      });
+      console.log(err);
+    } else {
+      res.json({
+        ok: true,
+        cajeros,
+      });
+    }
+  });
+});
+
+
+/** ************************************************************************************************************ **
+ ** **                               ACTUALIZAR ESTADO                                                        ** **
+ ** ************************************************************************************************************ **/
+ router.get("/cambiarestadocajeros/:sucursales", TokenValidation, (req: Request, res: Response) => {
+
+  const listaSucursales = req.params.sucursales;
+  const query = `
+  UPDATE  usuario u
+  SET 
+  
+    u.ESTADO_US = CASE 
+                    WHEN u.ESTADO_US = 2 THEN 1
+                    WHEN u.ESTADO_US = 1 THEN 2
+                    ELSE u.ESTADO_US
+                    END
+  WHERE U.COD_US IN (${listaSucursales});
+`;
+
   MySQL.ejecutarQuery(query, (err: any, cajeros: Object[]) => {
     if (err) {
       res.status(400).json({

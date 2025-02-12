@@ -12,7 +12,7 @@ import { cajero } from '../models/cajero';
 
 export class ServiceService {
 
-  private URL = "http://192.168.0.145:3006";
+  private URL = "http://10.1.0.21:3006";
 
   constructor(
     private http: HttpClient
@@ -81,6 +81,12 @@ export class ServiceService {
 
   getCajerosEstado(sucursales: any, estado: any): Observable<cajero[]> {
     return this.http.get<cajero[]>(this.URL + "/getallcajeros/" + sucursales + "/" + estado);
+  }
+
+
+   // METODO PARA BUSCAR CAJEROS SEGUN SUCURSALES Y ESTADO
+   actualizarEstadoCajerosSucursalEstado(sucursales: any): Observable<cajero[]> {
+    return this.http.get<cajero[]>(this.URL + "/cambiarestadocajeros/" + sucursales);
   }
 
 
