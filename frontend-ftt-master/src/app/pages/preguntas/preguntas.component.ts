@@ -11,11 +11,8 @@ import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
 
 // COMPLEMENTOS PARA PDF Y EXCEL
-import * as XLSX from "xlsx";
 import moment from "moment";
 import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
-
-const EXCEL_EXTENSION = ".xlsx";
 
 @Component({
   selector: 'app-preguntas',
@@ -69,20 +66,14 @@ export class PreguntasComponent {
   private imagen: any;
 
   //OPCIONES MULTIPLES
-  allSelected: boolean = false;
   selectedItems: string[] = [];
-  selectedFechas: string[] = [];
   sucursalesSeleccionadas: string[] = [];
-  usuariosSeleccionados: string[] = [];
-  cajeroSeleccionado: any;
 
   // MOSTRAR CAJEROS
   mostrarCajeros: boolean = false;
-  mostrarFechas: boolean = false;
 
   // VARIABLES DE INFORMACION
-  valor: number;
-  marca: string = "FullTime Tickets";
+  marca: string = "";
   horas: number[] = [];
 
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
@@ -156,8 +147,11 @@ export class PreguntasComponent {
           }
         }
         // LIMPIAR FORMULARIO
+        this.entradas_salidas = [];
         this.cajerosUsuarios = [];
+        this.selectedItems = [];
         this.mostrarCajeros = false;
+        this.todosLosCajeros = false;
         break;
 
       case "sucursalesSeleccionadas":
@@ -165,19 +159,24 @@ export class PreguntasComponent {
           this.getCajeros(this.sucursalesSeleccionadas);
         } else {
           // LIMPIAR FORMULARIO
+          this.entradas_salidas = [];
           this.cajerosUsuarios = [];
+          this.selectedItems = [];
           this.mostrarCajeros = false;
+          this.todosLosCajeros = false;
         }
         break;
 
       case "todosCajeros":
         this.todosLosCajeros = !this.todosLosCajeros;
         if (!this.todosLosCajeros) {
+          this.entradas_salidas = [];
           this.selectedItems = [];
         }
         break;
 
       case "cajerosSeleccionados":
+        this.entradas_salidas = [];
         break;
       default:
         break;
@@ -204,7 +203,6 @@ export class PreguntasComponent {
     this.serviceService.getCajerosEstado(sucursal, this.estadoCajero).subscribe(
       (cajeros: any) => {
         this.cajerosUsuarios = cajeros.cajeros;
-        console.log('ver cajeros ', this.cajerosUsuarios)
         this.mostrarCajeros = true;
       },
       (error) => {
@@ -234,14 +232,10 @@ export class PreguntasComponent {
   // METODO PARA LLAMAR CONSULTA DE DATOS
   limpiar() {
     this.selectedItems = [];
-    this.allSelected = false;
     this.todasSucursales = false;
     this.todosLosCajeros = false;
     this.mostrarCajeros = false;
     this.sucursalesSeleccionadas = [];
-    this.usuariosSeleccionados = [];
-    this.selectedFechas = [];
-    this.cajeroSeleccionado = null;
     this.cajerosUsuarios = [];
   }
 
@@ -322,6 +316,12 @@ export class PreguntasComponent {
           }
         );
     }
+    else {
+      // NO SE HA SELECCIONADO DATOS
+      this.toastr.info("Seleccione los datos de búsqueda.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
   }
 
   ObtenerNombreSucursal(sucursales: any) {
@@ -334,108 +334,62 @@ export class PreguntasComponent {
         return;
       }
       const nombre = this.sucursales.find(
-        (sucursal) => sucursal.empr_codigo == cod
-      ).empr_nombre;
+        (sucursal) => sucursal.COD_SUC == cod
+      ).NOM_SUC;
       nombreSucursal += `${nombre} `;
     });
     return nombreSucursal;
   }
 
-  ExportTOExcelEntradasSistema() {
-    if (this.entradas_salidas.length != 0) {
-      // Mapeo de informacion de consulta a formato JSON para exportar a Excel
-      let jsonServicio: any = [];
-      for (let i = 0; i < this.entradas_salidas.length; i++) {
-        jsonServicio.push({
-          Usuario: this.entradas_salidas[i].Usuario,
-          Fecha: new Date(this.entradas_salidas[i].fecha_),
-          Hora: this.entradas_salidas[i].hora_,
-        });
-      }
-
-      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(this.entradas_salidas[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols: any = [];
-      for (var i = 0; i < header.length; i++) {
-        // CABECERAS AÑADIDAS CON ESPACIOS
-        wscols.push({ wpx: 150 });
-      }
-      ws["!cols"] = wscols;
-      XLSX.utils.book_append_sheet(wb, ws, "Entradas");
-      XLSX.writeFile(
-        wb,
-        "Entradas al sistema " + new Date().toLocaleString() + EXCEL_EXTENSION
-      );
-    }
-  }
-
   GenerarExcelEntradas() {
-    let workbook = new ExcelJS.Workbook();
-    let worksheet = workbook.addWorksheet("Entradas Sistema");
-    this.imagen = workbook.addImage({
-      base64: this.urlImagen,
-      extension: "png",
-    });
-    worksheet.addImage(this.imagen, {
-      tl: { col: 0, row: 0 },
-      ext: { width: 220, height: 105 },
-    });
-    let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
-    // COMBINAR CELDAS
-    worksheet.mergeCells("B1:E1");
-    worksheet.mergeCells("B2:E2");
-    worksheet.mergeCells("B3:E3");
-    worksheet.mergeCells("B4:E4");
-    worksheet.mergeCells("B5:E5");
+    if (this.entradas_salidas.length != 0) {
+      let workbook = new ExcelJS.Workbook();
+      let worksheet = workbook.addWorksheet("Entradas Sistema");
+      this.imagen = workbook.addImage({
+        base64: this.urlImagen,
+        extension: "png",
+      });
+      worksheet.addImage(this.imagen, {
+        tl: { col: 0, row: 0 },
+        ext: { width: 220, height: 105 },
+      });
+      let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
+      // COMBINAR CELDAS
+      worksheet.mergeCells("B1:E1");
+      worksheet.mergeCells("B2:E2");
+      worksheet.mergeCells("B3:E3");
+      worksheet.mergeCells("B4:E4");
+      worksheet.mergeCells("B5:E5");
 
-    // AGREGAR LOS VALORES A LAS CELDAS COMBINADAS
-    worksheet.getCell("B1").value = 'ENTRADAS AL SISTEMA'.toUpperCase();
-    worksheet.getCell("B2").value = nombreSucursal.toUpperCase();
-    var fechaDesde = this.fechaDesde.nativeElement.value
-      .toString()
-      .trim();
-    var fechaHasta = this.fechaHasta.nativeElement.value
-      .toString()
-      .trim();
-    worksheet.getCell("B3").value = "PERIODO DE " + fechaDesde + " HASTA " + fechaHasta;
-    // APLICAR ESTILO DE CENTRADO Y NEGRITA A LAS CELDAS COMBINADAS
-    ["B1", "B2", "B3"].forEach((cell) => {
-      worksheet.getCell(cell).alignment = {
-        horizontal: "center",
-        vertical: "middle",
-      };
-      worksheet.getCell(cell).font = { bold: true, size: 14 };
-    });
+      // AGREGAR LOS VALORES A LAS CELDAS COMBINADAS
+      worksheet.getCell("B1").value = 'ENTRADAS AL SISTEMA'.toUpperCase();
+      worksheet.getCell("B2").value = nombreSucursal.toUpperCase();
+      var fechaDesde = this.fechaDesde.nativeElement.value
+        .toString()
+        .trim();
+      var fechaHasta = this.fechaHasta.nativeElement.value
+        .toString()
+        .trim();
+      worksheet.getCell("B3").value = "PERIODO DE " + fechaDesde + " HASTA " + fechaHasta;
+      // APLICAR ESTILO DE CENTRADO Y NEGRITA A LAS CELDAS COMBINADAS
+      ["B1", "B2", "B3"].forEach((cell) => {
+        worksheet.getCell(cell).alignment = {
+          horizontal: "center",
+          vertical: "middle",
+        };
+        worksheet.getCell(cell).font = { bold: true, size: 14 };
+      });
 
-    // DEFINIR ENCABEZADOS DINAMICAMENTE
-    let headers = ["No."];
-    headers.push("SUCURSAL", "CAJERO", "FECHA", "HORA");
+      // DEFINIR ENCABEZADOS DINAMICAMENTE
+      let headers = ["No."];
+      headers.push("SUCURSAL", "CAJERO", "FECHA", "HORA");
 
-    // AGREGAR ENCABEZADOS A LA HOJA
-    let headerRow = worksheet.addRow(headers);
-    headerRow.font = { bold: true };
+      // AGREGAR ENCABEZADOS A LA HOJA
+      let headerRow = worksheet.addRow(headers);
+      headerRow.font = { bold: true };
 
-    // APLICAR BORDES A LOS ENCABEZADOS
-    headerRow.eachCell((cell) => {
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
-      };
-    });
-
-    // AGREGAR DATOS DINAMICOS
-    this.entradas_salidas.forEach((res: any, index: number) => {
-      let row = [index + 1];
-      row.push(res.NOM_SUC, res.Usuario, res.fecha_, res.hora_);
-      // AGREGAR LA FILA A LA HOJA
-      let newRow = worksheet.addRow(row);
-      // APLICAR BORDES A CADA CELDA DE LA FILA
-      newRow.eachCell((cell) => {
+      // APLICAR BORDES A LOS ENCABEZADOS
+      headerRow.eachCell((cell) => {
         cell.border = {
           top: { style: "thin" },
           left: { style: "thin" },
@@ -443,56 +397,80 @@ export class PreguntasComponent {
           right: { style: "thin" },
         };
       });
-      // APLICAR ESTILO CEBRA (ALTERNANDO FONDO)
-      if (index % 2 === 0) {
+
+      // AGREGAR DATOS DINAMICOS
+      this.entradas_salidas.forEach((res: any, index: number) => {
+        let row = [index + 1];
+        row.push(res.NOM_SUC, res.Usuario, res.fecha_, res.hora_);
+        // AGREGAR LA FILA A LA HOJA
+        let newRow = worksheet.addRow(row);
+        // APLICAR BORDES A CADA CELDA DE LA FILA
         newRow.eachCell((cell) => {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "F2F2F2" }, // COLOR GRIS CLARO PARA FILAS IMPARES
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
           };
         });
-      } else {
-        newRow.eachCell((cell) => {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "FFFFFF" }, // COLOR BLANCO PARA FILAS PARES
-          };
-        });
-      }
-    });
+        // APLICAR ESTILO CEBRA (ALTERNANDO FONDO)
+        if (index % 2 === 0) {
+          newRow.eachCell((cell) => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "F2F2F2" }, // COLOR GRIS CLARO PARA FILAS IMPARES
+            };
+          });
+        } else {
+          newRow.eachCell((cell) => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFFFFF" }, // COLOR BLANCO PARA FILAS PARES
+            };
+          });
+        }
+      });
 
-    // AJUSTAR EL ANCHO DE LAS COLUMNAS AUTOMATICAMENTE
-    worksheet.columns.forEach(column => {
-      column.width = 30;
-    });
+      // AJUSTAR EL ANCHO DE LAS COLUMNAS AUTOMATICAMENTE
+      worksheet.columns.forEach(column => {
+        column.width = 30;
+      });
 
-    // ESTILOS DE ENCABEZADO
-    worksheet.getRow(6).eachCell((cell, colNumber) => {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "4F81BD" },
-      };
-      cell.alignment = { vertical: "middle", horizontal: "center" };
-      cell.font = {
-        bold: true,
-        color: { argb: "FFFFFF" }, // COLOR BLANCO PARA EL TEXTO
-      };
-      // HABILITAR FILTRO EN LA CELDA
-      worksheet.autoFilter = {
-        from: { row: 6, column: 1 },  // INICIO DEL FILTRO (FILA 6, COLUMNA 1)
-        to: { row: 6, column: worksheet.columnCount } // FIN DEL FILTRO (ÚLTIMA COLUMNA)
-      };
-    });
+      // ESTILOS DE ENCABEZADO
+      worksheet.getRow(6).eachCell((cell, colNumber) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "4F81BD" },
+        };
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+        cell.font = {
+          bold: true,
+          color: { argb: "FFFFFF" }, // COLOR BLANCO PARA EL TEXTO
+        };
+        // HABILITAR FILTRO EN LA CELDA
+        worksheet.autoFilter = {
+          from: { row: 6, column: 1 },  // INICIO DEL FILTRO (FILA 6, COLUMNA 1)
+          to: { row: 6, column: worksheet.columnCount } // FIN DEL FILTRO (ÚLTIMA COLUMNA)
+        };
+      });
 
 
-    // GENERAR ARCHIVO EXCEL Y DESCARGARLO
-    workbook.xlsx.writeBuffer().then(buffer => {
-      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      saveAs(blob, "EntradasSistema.xlsx");
-    });
+      // GENERAR ARCHIVO EXCEL Y DESCARGARLO
+      workbook.xlsx.writeBuffer().then(buffer => {
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        saveAs(blob, "EntradasSistema.xlsx");
+      });
+
+    }
+    else {
+      // NO SE HA SELECCIONADO DATOS
+      this.toastr.info("Seleccione los datos de búsqueda.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
   }
 
   // GENERACION DE PDF'S 
@@ -537,133 +515,81 @@ export class PreguntasComponent {
           break;
       }
     }
+    else {
+      // NO SE HA SELECCIONADO DATOS
+      this.toastr.info("Seleccione los datos de búsqueda.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
   }
 
   // FUNCION DELEGADA PARA SETEO DE INFORMACION
   getDocumentturnosfecha(fechaDesde, fechaHasta, horaInicio, horaFin) {
-    // Se obtiene la fecha actual
+    // SE OBTIENE LA FECHA ACTUAL
     let f = new Date();
     f.setUTCHours(f.getHours());
     this.date = f.toJSON();
     let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
-
     return {
-      // Seteo de marca de agua y encabezado con nombre de usuario logueado
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage, pageCount, fecha) {
+      pageSize: 'A4',
+      pageMargins: [40, 60, 40, 40],
+      watermark: { text: this.marca, color: 'blue', opacity: 0.1, bold: true, italics: false },
+      header: { text: 'Impreso por:  ' + this.userDisplayName, margin: 10, fontSize: 9, opacity: 0.3, alignment: 'right' },
+
+      footer: function (currentPage: any, pageCount: any, fecha: any, timer: any) {
         fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
+        timer = f.toJSON().split("T")[1].slice(0, 5);
+        return {
+          margin: 10,
           columns: [
+            { text: 'Fecha: ' + fecha + ' Hora: ' + timer, opacity: 0.3 },
             {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "Reporte - Entradas al sistema ",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
+              text: [
+                {
+                  text: '© Pag ' + currentPage.toString() + ' de ' + pageCount,
+                  alignment: 'right', opacity: 0.3
+                }
+              ],
+            }
           ],
-        },
-        {
-          style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
-        },
-        this.CampoDetalle(this.entradas_salidas), //Definicion de funcion delegada para setear informacion de tabla del PDF
+          fontSize: 10
+        }
+      },
+      content: [
+        { image: this.urlImagen, width: 100, margin: [10, -25, 0, 5] },
+        { text: `ENTRADAS Y SALIDAS DEL SISTEMA`, bold: true, fontSize: 14, alignment: 'center', margin: [0, -30, 0, 5] },
+        { text: nombreSucursal?.toUpperCase(), bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
+        { text: `PERIODO DEL ${fechaDesde} HASTA ${fechaHasta}`, bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
+        this.TratamientoInformacionEntradas(this.entradas_salidas),
       ],
       styles: {
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 16,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
-      },
+        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color },
+        itemsTable: { fontSize: 8, alignment: 'center' },
+      }
     };
   }
 
-  // Funcion para llenar la tabla con la consulta realizada al backend
-  CampoDetalle(servicio: any[]) {
+  // FUNCION PARA LLENAR LA TABLA CON LA CONSULTA REALIZADA AL BACKEND
+  TratamientoInformacionEntradas(servicio: any[]) {
     return {
       style: "tableMargin",
       table: {
         headerRows: 1,
-        widths: ["*", "*"],
+        widths: ["*", "*", "*", "*"],
 
         body: [
           [
-            { text: "Usuario", style: "tableHeader" },
+            { text: "Sucursal", style: "tableHeader" },
+            { text: "Cajero", style: "tableHeader" },
             { text: "Fecha", style: "tableHeader" },
+            { text: "Hora", style: "tableHeader" },
           ],
           ...servicio.map((res) => {
             return [
+              { style: "itemsTable", text: res.NOM_SUC },
               { style: "itemsTable", text: res.Usuario },
-              { style: "itemsTable", text: res.Fecha },
+              { style: "itemsTable", text: res.fecha_ },
+              { style: "itemsTable", text: res.hora_ },
             ];
           }),
         ],

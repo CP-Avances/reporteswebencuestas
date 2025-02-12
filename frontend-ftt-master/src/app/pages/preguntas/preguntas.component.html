@@ -1,5 +1,5 @@
 <div class="card">
-    <h2>CAJEROS</h2>
+    <h2>CONTROL DE ACCESO AL SISTEMA</h2>
     <div class="card-body">
         <form>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -80,7 +80,7 @@
                                             Todos los cajeros
                                         </mat-option>
                                         <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
-                                            [disabled]="todosLosCajeros">
+                                            [disabled]="todosLosCajeros" (click)="selectAll('cajerosSeleccionados')">
                                             {{option.NOM_US}}
                                         </mat-option>
                                     </mat-select>

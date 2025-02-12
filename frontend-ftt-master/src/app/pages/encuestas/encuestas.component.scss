@@ -75,6 +75,9 @@ table {
     width: 400px;
 }
 
+input[type="radio"], label {
+    margin: 10px; /* Espacio entre los elementos */
+  }
   
 
 ::ng-deep .card.mat-option.mat-selected .mat-pseudo-checkbox {

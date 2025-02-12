@@ -43,7 +43,8 @@
               "core-js/modules/es.string.split.js",
               "core-js/modules/es.string.starts-with.js",
               "core-js/modules/es.string.trim.js",
-              "core-js/modules/web.dom-collections.iterator.js"
+              "core-js/modules/web.dom-collections.iterator.js",
+              "exceljs"
             ],
             "outputPath": "dist/frontend-ftt-master",
             "index": "src/index.html",
@@ -86,10 +87,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "frontend-ftt-master:build:production"
+              "buildTarget": "frontend-ftt-master:build:production"
             },
             "development": {
-              "browserTarget": "frontend-ftt-master:build:development"
+              "buildTarget": "frontend-ftt-master:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -97,7 +98,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "frontend-ftt-master:build"
+            "buildTarget": "frontend-ftt-master:build"
           }
         },
         "test": {
