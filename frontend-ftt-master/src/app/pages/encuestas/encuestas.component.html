@@ -104,32 +104,49 @@
                         </div>
                     </div>
                     <br>
+                    <div class="table-responsive" *ngIf="listaPreguntas.length != 0">
+                        <mat-accordion>
+                            <mat-expansion-panel (opened)="expansion = true" (closed)="expansion = false">
+                                <mat-expansion-panel-header style="background: rgb(8, 170, 121); font-size: 14px;">
+                                    <mat-panel-title style="color: white;">
+                                        <span style="margin-left: 15px;">
+                                            DETALLES DE LAS PREGUNTAS
+                                        </span>
+                                    </mat-panel-title>
+                                </mat-expansion-panel-header>
+                                <br>
+                                <table class="table table-striped">
+                                    <ng-container *ngFor="let encuesta of listaPreguntas; let i = index">
+                                        <!-- CABECERA DE LA ENCUESTA -->
+                                        <thead>
+                                            <tr style="background-color: #0077b6; color: white; font-weight: bold; text-align: center; border: 1px solid white; ">
+                                                <th style="text-align: center; " colspan="2">ENCUESTA: {{ encuesta.encuesta.toUpperCase() }}</th>
+                                            </tr>
+
+                                            <tr style="background-color: #0077b6; color: white; font-weight: bold;">
+                                                <th style="text-align: center;">Código</th>
+                                                <th style="text-align: center;">Pregunta</th>
+                                            </tr>
+                                        </thead>
+                                        <!-- PREGUNTAS EN FORMATO VERTICAL -->
+                                        <tbody>
+                                            <tr *ngFor="let pregunta of encuesta.preguntas">
+                                                <td style="text-align: center;">{{ pregunta.identificativo }}</td>
+                                                <td style="text-align: left;">{{ pregunta.pregunta }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </ng-container>
+                                </table>
+                            </mat-expansion-panel>
+                         
+                        </mat-accordion>
+                    </div>
+                    <br>
                     <h3>RESPUESTAS</h3>
                     <hr>
-                    <div class="table-responsive" *ngIf="listaPreguntas.length != 0">
-                        <table class="table table-striped">
-                            <ng-container *ngFor="let encuesta of listaPreguntas; let i = index">
-                                <!-- CABECERA DE LA ENCUESTA -->
-                                <thead>
-                                    <tr style="background-color: #f4f4f4; font-weight: bold; text-align: center;">
-                                        <th colspan="2">Encuesta: {{ encuesta.encuesta }}</th>
-                                    </tr>
-                                    <tr style="background-color: #95e6f8; color: white; font-weight: bold;">
-                                        <th>Código</th>
-                                        <th>Pregunta</th>
-                                    </tr>
-                                </thead>
-                                <!-- PREGUNTAS EN FORMATO VERTICAL -->
-                                <tbody>
-                                    <tr *ngFor="let pregunta of encuesta.preguntas">
-                                        <td>{{ pregunta.identificativo }}</td>
-                                        <td>{{ pregunta.pregunta }}</td>
-                                    </tr>
-                                </tbody>
-                            </ng-container>
-                        </table>
-                    </div>
-                    <div class="table-container" id="tableTurnosTotalFechaContainer" *ngIf="preguntas_respuestas.length != 0">
+
+                    <div class="table-container" id="tableTurnosTotalFechaContainer"
+                        *ngIf="preguntas_respuestas.length != 0">
                         <table class="table table-striped" id="tableTurnosTotalFecha">
                             <ng-container *ngFor="let encuesta of preguntas_respuestas">
                                 <!-- FILA CON EL TITULO DE LA ENCUESTA -->

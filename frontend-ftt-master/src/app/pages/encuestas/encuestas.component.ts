@@ -26,6 +26,7 @@ export class EncuestasComponent {
   // SETEO DE FECHAS PRIMER DIA DEL MES ACTUAL Y DIA ACTUAL
   fromDate: any;
   toDate: any;
+  expansion: boolean = false;
 
   // CAPTURA DE ELEMENTOS DE LA INTERFAZ VISUAL PARA TRATARLOS Y CAPTURAR DATOS
   @ViewChild("fechaDesde") fechaDesde: ElementRef;

@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 
 import { NgxPaginationModule } from 'ngx-pagination';
@@ -49,7 +50,8 @@ import { InformacionComponent } from './informacion/informacion.component';
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
-    MatIconModule
+    MatIconModule,
+    MatExpansionModule
   ]
 })
 export class PagesModule { }

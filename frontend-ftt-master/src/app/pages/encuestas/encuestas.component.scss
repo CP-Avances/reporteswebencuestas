@@ -151,3 +151,7 @@ table {
 #tableTurnosTotalFecha tbody tr:nth-child(even) {
   background-color: #f9f9f9;
 }
+
+::ng-deep .mat-expansion-indicator::after {
+  border-color: white !important; /* Cambia la flecha a color blanco */
+}
