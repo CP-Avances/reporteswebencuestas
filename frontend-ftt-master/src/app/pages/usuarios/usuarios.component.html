@@ -115,6 +115,7 @@
                         </table>
                         <pagination-controls *ngIf="!malRequestC" id="usuariosR"
                             [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
+                            [currentPage]="configC.currentPage" 
                             (pageChange)="pageChangedC($event)">
                         </pagination-controls>
                     </div>

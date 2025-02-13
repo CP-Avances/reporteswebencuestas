@@ -119,8 +119,10 @@
                                     <ng-container *ngFor="let encuesta of listaPreguntas; let i = index">
                                         <!-- CABECERA DE LA ENCUESTA -->
                                         <thead>
-                                            <tr style="background-color: #0077b6; color: white; font-weight: bold; text-align: center; border: 1px solid white; ">
-                                                <th style="text-align: center; " colspan="2">ENCUESTA: {{ encuesta.encuesta.toUpperCase() }}</th>
+                                            <tr
+                                                style="background-color: #0077b6; color: white; font-weight: bold; text-align: center; border: 1px solid white; ">
+                                                <th style="text-align: center; " colspan="2">ENCUESTA: {{
+                                                    encuesta.encuesta.toUpperCase() }}</th>
                                             </tr>
 
                                             <tr style="background-color: #0077b6; color: white; font-weight: bold;">
@@ -138,7 +140,7 @@
                                     </ng-container>
                                 </table>
                             </mat-expansion-panel>
-                         
+
                         </mat-accordion>
                     </div>
                     <br>
@@ -188,18 +190,6 @@
                 </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
                 <!-- *********************************** LISTA DE ENCUESTAS POR SUCURSAL *************************************** -->
                 <div class="tab-pane fade" id="resumen" role="tabpanel" aria-labelledby="resumen-tab">
                     <br><br>
@@ -210,28 +200,58 @@
                                     <div>
                                         <label for="fromDateResumen">Fecha desde: &nbsp;</label>
                                         <input type="date" id="fromDateResumen" value="{{fromDate}}" [max]="toDate"
-                                            name="fromDateResumen" #fromDateResumen><br><br>
+                                            name="fromDateResumen" #fromDateResumen (change)="mostrar_resultado = false"><br><br>
                                     </div>
                                     <div>
                                         <label for="toDateResumen">Fecha hasta: &nbsp;</label>
                                         <input type="date" id="toDateResumen" value="{{toDate}}" [max]="toDate"
-                                            name="toDateResumen" #toDateResumen>
+                                            name="toDateResumen" #toDateResumen (change)="mostrar_resultado = false">
                                     </div>
                                 </div>
                                 <div class="contenedor-horas">
-                                    <select class="form-control" name="selectmake" #horaInicioR>
+                                    <select class="form-control" name="selectmake" #horaInicioR (change)="mostrar_resultado = false">
                                         <option value="-1" selected>Hora Inicio</option>
                                         <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
                                         </option>
                                     </select>
-                                    <select class="form-control ml-2" name="selectmake" #horaFinR>
+                                    <select class="form-control ml-2" name="selectmake" #horaFinR (change)="mostrar_resultado = false">
                                         <option value="-1" selected>Hora Fin</option>
                                         <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
                                         </option>
                                     </select>
                                 </div>
+
+                                <br>
+                                <fieldset>
+                                    <div>
+                                        <input type="radio" id="fecha" class="radio-col-light-blue" name="verfecha"
+                                            [value]="'1'" (click)="CambiarFecha('1')" checked>
+                                        <label for="fecha">Presentar Fecha</label>
+
+                                        <input type="radio" id="rango" class="radio-col-light-blue" name="verfecha"
+                                            [value]="'2'" (click)="CambiarFecha('2')">
+                                        <label for="rango">Rango de fechas</label>
+                                    </div>
+                                </fieldset>
                             </div>
                             <div class="col-6">
+                                <fieldset>
+                                    <label>Estado de los usuarios</label>
+                                    <div>
+                                        <input type="radio" id="activo2" class="radio-col-light-blue" name="estado2"
+                                            [value]="2" (click)="CambiarEstado(2)" checked>
+                                        <label for="activo2">Activos</label>
+
+                                        <input type="radio" id="inactivo2" class="radio-col-light-blue" name="estado2"
+                                            [value]="1" (click)="CambiarEstado(1)">
+                                        <label for="inactivo2">Inactivos</label>
+
+                                        <input type="radio" id="todos2" class="radio-col-light-blue" name="estado2"
+                                            [value]="3" (click)="CambiarEstado(3)">
+                                        <label for="todos2">Todos</label>
+                                    </div>
+                                </fieldset>
+                                <br>
                                 <mat-select multiple class="form-control" name="selectmake"
                                     [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
                                     <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
@@ -244,7 +264,7 @@
                                 </mat-select>
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="usuariosSeleccionados" placeholder="Cajeros">
+                                    [(value)]="usuariosSeleccionados" placeholder="Cajeros" (selectionChange)="mostrar_resultado = false">
                                     <mat-option [value]="-2" (click)="selectAll('todosLosCajeros')">
                                         Todos los cajeros
                                     </mat-option>
@@ -255,7 +275,7 @@
                                 </mat-select>
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="selectedEncuestas" placeholder="Encuestas">
+                                    [(value)]="selectedEncuestas" placeholder="Encuestas" (selectionChange)="mostrar_resultado = false">
                                     <mat-option *ngIf="mostrarEncuestas" [value]="-2"
                                         (click)="selectAll('todasEncuestas')">
                                         Todas las encuestas
@@ -275,13 +295,14 @@
                     <br>
                     <h3>RESPUESTAS</h3>
                     <hr>
-                    <div class="table-responsive">
+                    <div class="table-responsive" *ngIf="mostrar_resultado">
                         <table class="table table-striped" id="contentResumen" #contentResumen #tableResumen>
                             <thead>
                                 <tr>
                                     <th class="text-center">Sucursal</th>
                                     <th class="text-center">Encuesta</th>
-                                    <th class="text-center">Cajero</th>
+                                    <th class="text-center" *ngIf="usuariosSeleccionados.length>0">Cajero</th>
+                                    <th class="text-center" *ngIf="verFecha == '1'">Fecha</th>
                                     <th class="text-center">Encuestas realizadas</th>
                                 </tr>
                             </thead>
@@ -289,22 +310,26 @@
                                 <tr *ngFor="let servicioResumen of servicioResumen | paginate:configR">
                                     <td> {{servicioResumen.nombre_sucursal}}</td>
                                     <td> {{servicioResumen.nombre_encuesta}}</td>
-                                    <td> {{servicioResumen.nombre_usuario}}</td>
+                                    <td *ngIf="usuariosSeleccionados.length>0"> {{servicioResumen.nombre_usuario}}</td>
+                                    <td *ngIf="verFecha == '1'"> {{servicioResumen.Fecha}}</td>
+
                                     <td> {{servicioResumen.encuestas_realizadas}} </td>
                                 </tr>
                             </tbody>
                         </table>
                         <pagination-controls *ngIf="!malRequestRPag" id="usuariosR"
-                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
+                            [previousLabel]="labels.previousLabel" 
+                            [currentPage]="configR.currentPage" 
+                            [nextLabel]="labels.nextLabel"
                             (pageChange)="pageChangedR($event)">
                         </pagination-controls>
                         <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotal}}</h4>
                     </div>
                     <br>
                     <button type="button" class="btn btn-info mx-2"
-                        (click)="ExportTOExcelPreguntasResumen(2)">EXCEL</button>
+                        (click)="ExportTOExcelPreguntasResumen()" *ngIf="mostrar_resultado">EXCEL</button>
                     <button type="button" class="btn btn-info"
-                        (click)="generarPdfPreguntasResumen('hola', 1, 2)">PDF</button>
+                        (click)="generarPdfPreguntasResumen('hola', 1, 2)" *ngIf="mostrar_resultado">PDF</button>
                 </div>
 
             </div>

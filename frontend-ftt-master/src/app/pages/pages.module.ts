@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PagesComponent } from './pages.component';
@@ -53,5 +53,7 @@ import { InformacionComponent } from './informacion/informacion.component';
     MatIconModule,
     MatExpansionModule
   ]
+  ,
+  schemas: [ CUSTOM_ELEMENTS_SCHEMA ]
 })
 export class PagesModule { }

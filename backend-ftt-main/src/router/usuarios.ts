@@ -112,7 +112,7 @@ router.get("/getallcajeros/:sucursales/:estado", TokenValidation, (req: Request,
 /** ************************************************************************************************************ **
  ** **                               ACTUALIZAR ESTADO                                                        ** **
  ** ************************************************************************************************************ **/
- router.get("/cambiarestadocajeros/:sucursales", TokenValidation, (req: Request, res: Response) => {
+router.get("/cambiarestadocajeros/:sucursales", TokenValidation, (req: Request, res: Response) => {
 
   const listaSucursales = req.params.sucursales;
   const query = `
@@ -839,7 +839,7 @@ router.get(
 
 
 router.get(
-  "/encuestascajeros/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:usuarios", TokenValidation,
+  "/encuestascajeros/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:usuarios/:fecha/:estado", TokenValidation,
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
@@ -856,7 +856,11 @@ router.get(
     const encuestasArray = listaEncuestas.split(",");
     const listaUsuarios = req.params.usuarios;
     const usuariossArray = listaUsuarios.split(",");
+    const fecha = req.params.fecha;
+    const estado = req.params.estado;
 
+
+    let verFecha = true;
     let todasSucursales = false;
     let todasEncuestas = false;
     let todasUsuarios = false;
@@ -875,6 +879,18 @@ router.get(
       todasUsuarios = true
     }
 
+    // VALIDACION DE FECHAS
+    if (fecha === "2") {
+      verFecha = false;
+    }
+
+    let comprobarestado = ''
+    if (estado == '3') {
+      comprobarestado = `usuario.ESTADO_US != 0`
+    } else {
+      comprobarestado = `usuario.ESTADO_US = ${estado}`
+    }
+
     if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
       diaCompleto = true;
     } else {
@@ -886,25 +902,44 @@ router.get(
       SELECT 
         encuesta.COD_EN AS codigo_encuesta,
         encuesta.NOM_EN AS nombre_encuesta,
-        usuario.COD_US AS codigo_usuario,
-        usuario.NOM_US AS nombre_usuario,
+
+        ${listaUsuarios != '0N' ?
+        `usuario.COD_US AS codigo_usuario,
+        usuario.NOM_US AS nombre_usuario,`
+        :
+        ''
+      }   
+
+       
         sucursal.NOM_SUC AS nombre_sucursal,
+        ${verFecha ? `DATE_FORMAT(evaluacion.FECH_EV, '%Y-%m-%d') AS Fecha,` : ''}
         COUNT(DISTINCT evaluacion.CODIGO_RESPUESTA) AS encuestas_realizadas
       FROM 
         evaluacion
         JOIN pregunta ON evaluacion.COD_PR = pregunta.COD_PR
         JOIN encuesta ON pregunta.COD_EN = encuesta.COD_EN
-        JOIN usuario ON usuario.COD_US = evaluacion.COD_US
+        ${listaUsuarios != '0N' ?' JOIN usuario ON usuario.COD_US = evaluacion.COD_US': ''}
+       
         JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
       WHERE 
         STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
         ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-        ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios})` : ''}
+        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` : ''}   
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
       GROUP BY 
-        encuesta.COD_EN, encuesta.NOM_EN, usuario.COD_US, usuario.NOM_US, sucursal.NOM_SUC;
-    `;
+        ${verFecha ? `` : ``}
+       ${listaUsuarios != '0N' ?
+        `encuesta.COD_EN, encuesta.NOM_EN, usuario.COD_US, usuario.NOM_US
+        ${verFecha ? `,DATE_FORMAT(evaluacion.FECH_EV, '%Y-%m-%d')` : ``}
+        ,sucursal.NOM_SUC; `
+        :
+        `encuesta.COD_EN, encuesta.NOM_EN
+        ${verFecha ? `,DATE_FORMAT(evaluacion.FECH_EV, '%Y-%m-%d')` : ``}
+        , sucursal.NOM_SUC; `}   
+        
+      `
+    console.log("ver el query", query)
     MySQL.ejecutarQuery(query, (err: any, resumen: Object[]) => {
       if (err) {
         res.status(400).json({

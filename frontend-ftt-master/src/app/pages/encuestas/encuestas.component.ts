@@ -10,9 +10,9 @@ import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
 
 // COMPLEMENTOS PARA PDF Y EXCEL
-import * as XLSX from "xlsx";
 import moment from "moment";
 import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
+import * as FileSaver from 'file-saver';
 
 const EXCEL_EXTENSION = ".xlsx";
 
@@ -23,6 +23,11 @@ const EXCEL_EXTENSION = ".xlsx";
 })
 
 export class EncuestasComponent {
+
+
+  private bordeCompleto!: Partial<ExcelJS.Borders>;
+  private fontTitulo!: Partial<ExcelJS.Font>;
+
   // SETEO DE FECHAS PRIMER DIA DEL MES ACTUAL Y DIA ACTUAL
   fromDate: any;
   toDate: any;
@@ -188,6 +193,15 @@ export class EncuestasComponent {
         );
       });
     console.log('preguntas ', this.listaPreguntas)
+
+    this.bordeCompleto = {
+      top: { style: "thin" as ExcelJS.BorderStyle },
+      left: { style: "thin" as ExcelJS.BorderStyle },
+      bottom: { style: "thin" as ExcelJS.BorderStyle },
+      right: { style: "thin" as ExcelJS.BorderStyle },
+    };
+    this.fontTitulo = { bold: true, size: 12, color: { argb: "FFFFFF" } };
+
   }
 
   // CONSULTA DE MARCA DE AGUA PARA REPORTES
@@ -356,7 +370,10 @@ export class EncuestasComponent {
 
   // METODO PARA SELECCIONAR ESTADO DE USUARIOS
   estadoCajero: number = 2;
+
   CambiarEstado(estado: number) {
+    this.mostrar_resultado = false
+
     this.estadoCajero = estado;
     this.limpiar();
   }
@@ -961,6 +978,13 @@ export class EncuestasComponent {
     let horaInicio = this.horaInicioR.nativeElement.value;
     let horaFin = this.horaFinR.nativeElement.value;
 
+    var datoCajero: any = '0N';
+    console.log("ver cajeros seleccionados: ", this.usuariosSeleccionados)
+    if (this.usuariosSeleccionados.length != 0) {
+      datoCajero = this.usuariosSeleccionados;
+    }
+
+    console.log("ver datoCajero: ", datoCajero)
     if (this.selectedEncuestas.length !== 0) {
       this.serviceService
         .getEncuestasCajero(
@@ -970,10 +994,14 @@ export class EncuestasComponent {
           horaFin,
           this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
           this.selectedEncuestas,
-          this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
+          datoCajero,
+          this.verFecha,
+          this.estadoCajero
         )
         .subscribe(
           (servicio: any) => {
+            this.mostrar_resultado = true;
+
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             this.servicioResumen = servicio.resumen;
             console.log('resumen ', this.servicioResumen)
@@ -996,6 +1024,7 @@ export class EncuestasComponent {
           },
           (error) => {
             if (error.status == 400) {
+              /*
               // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
               this.servicioResumen = null;
               this.malRequestR = true;
@@ -1014,6 +1043,7 @@ export class EncuestasComponent {
                 itemsPerPage: this.MAX_PAGS,
                 currentPage: 1,
               };
+              */
 
               // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
               this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
@@ -1025,42 +1055,198 @@ export class EncuestasComponent {
     }
   }
 
-  ExportTOExcelPreguntasResumen(opcion: any) {
-    let resultados: any = [];
-    if (opcion === 1) {
-      resultados = this.servicioEncuesta;
-    }
-    else {
-      resultados = this.servicioResumen;
-    }
-    if (resultados.length != 0) {
-      //Mapeo de información de consulta a formato JSON para exportar a Excel
-      let jsonServicio: any = [];
-      for (let i = 0; i < resultados.length; i++) {
-        jsonServicio.push({
-          Sucursal: resultados[i].nombre_sucursal,
-          Encuesta: resultados[i].nombre_encuesta,
-          Uusario: resultados[i].nombre_usuario,
-          "Encuestas realizadas": resultados[i].encuestas_realizadas,
-        });
-      }
-      //Instrucción para generar excel a partir de JSON, y nombre del archivo con fecha actual
-      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(jsonServicio);
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      // METODO PARA DEFINIR TAMAÑO DE LAS COLUMNAS DEL REPORTE
-      const header = Object.keys(resultados[0]); // NOMBRE DE CABECERAS DE COLUMNAS
-      var wscols: any = [];
-      for (var i = 0; i < header.length; i++) {
-        // CABECERAS AÑADIDAS CON ESPACIOS
-        wscols.push({ wpx: 150 });
-      }
-      ws["!cols"] = wscols;
+  async ExportTOExcelPreguntasResumen() {
 
-      XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
-      XLSX.writeFile(
-        wb,
-        "Resumen Encuestas Usuarios" + new Date().toLocaleString() + EXCEL_EXTENSION
-      );
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Resumen Encuestas");
+    this.imagen = workbook.addImage({
+      base64: this.urlImagen,
+      extension: "png",
+    });
+
+    worksheet.addImage(this.imagen, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 220, height: 105 },
+    });
+    let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
+    // COMBINAR CELDAS
+    worksheet.mergeCells("B1:H1");
+    worksheet.mergeCells("B2:H2");
+    worksheet.mergeCells("B3:H3");
+    worksheet.mergeCells("B4:H4");
+    worksheet.mergeCells("B5:H5");
+
+    // AGREGAR LOS VALORES A LAS CELDAS COMBINADAS
+    worksheet.getCell("B1").value = 'REPORTE - ENCUESTAS REALIZADAS'.toUpperCase();
+    worksheet.getCell("B2").value = nombreSucursal.toUpperCase();
+
+    var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
+    var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
+    worksheet.getCell("B3").value = "Periodo de " + fechaDesde + " hasta " + fechaHasta;
+    // APLICAR ESTILO DE CENTRADO Y NEGRITA A LAS CELDAS COMBINADAS
+    ["B1", "B2", "B3"].forEach((cell) => {
+      worksheet.getCell(cell).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      worksheet.getCell(cell).font = { bold: true, size: 14 };
+    });
+
+    let incluirCajero = this.usuariosSeleccionados.length != 0
+    console.log("ver incluirCajero ", incluirCajero)
+    // MAPEO DE INFORMACIÓN DE CONSULTA A FORMATO JSON PARA EXPORTAR A EXCEL
+    let jsonServicio: any = [];
+
+
+    let resultados: any = [];
+    resultados = this.servicioResumen;
+
+    if (resultados.length != 0) {
+      let columnas: any = []
+
+      if (this.verFecha == '1') {
+        for (let i = 0; i < resultados.length; i++) {
+          let fila = [
+            resultados[i].nombre_sucursal,
+            resultados[i].nombre_usuario,
+            resultados[i].Fecha,
+            resultados[i].encuestas_realizadas,
+          ]
+
+          if (incluirCajero) {
+            fila.splice(1, 0, resultados[i].nombre_encuesta); // Insertar "CAJERO" en la segunda posición
+          }
+          jsonServicio.push(fila);
+
+        }
+
+
+        if (incluirCajero) {
+          worksheet.columns = [
+            { key: "sucursal", width: 50 },
+            { key: "encuesta", width: 50 },
+            { key: "usuario", width: 50 },
+            { key: "fecha", width: 50 },
+            { key: "total", width: 50 },
+          ]
+        } else {
+          worksheet.columns = [
+            { key: "sucursal", width: 50 },
+            { key: "encuesta", width: 20 },
+            { key: "fecha", width: 50 },
+            { key: "total", width: 50 },
+          ]
+        }
+
+        columnas = [
+          { name: "SUCURSAL", totalsRowLabel: "Total:", filterButton: false },
+          { name: "ENCUESTA", totalsRowLabel: "", filterButton: true },
+          { name: "FECHA", totalsRowLabel: "", filterButton: true },
+          { name: "ENCUESTAS REALIZADAS", totalsRowLabel: "", filterButton: true },
+        ]
+
+        if (incluirCajero) {
+          columnas.splice(1, 0, { name: "CAJERO", totalsRowLabel: "Total:", filterButton: true }); // Insertar "CAJERO" en la segunda posición
+        }
+
+      } else {
+        for (let i = 0; i < resultados.length; i++) {
+          let fila = [
+            resultados[i].nombre_sucursal,
+            resultados[i].nombre_usuario,
+            resultados[i].encuestas_realizadas,
+          ]
+
+          if (incluirCajero) {
+            fila.splice(1, 0, resultados[i].nombre_encuesta); // Insertar "CAJERO" en la segunda posición
+          }
+          jsonServicio.push(fila);
+
+        }
+
+
+        if (incluirCajero) {
+          worksheet.columns = [
+            { key: "sucursal", width: 50 },
+            { key: "encuesta", width: 20 },
+            { key: "usuario", width: 50 },
+            { key: "total", width: 50 },
+          ]
+        } else {
+          worksheet.columns = [
+            { key: "sucursal", width: 50 },
+            { key: "encuesta", width: 20 },
+            { key: "total", width: 50 },
+          ]
+        }
+
+        columnas = [
+          { name: "SUCURSAL", totalsRowLabel: "Total:", filterButton: false },
+          { name: "ENCUESTA", totalsRowLabel: "", filterButton: true },
+          { name: "ENCUESTAS REALIZADAS", totalsRowLabel: "", filterButton: true },
+        ]
+
+        if (incluirCajero) {
+          columnas.splice(1, 0, { name: "CAJERO", totalsRowLabel: "Total:", filterButton: true }); // Insertar "CAJERO" en la segunda posición
+        }
+
+      }
+
+      worksheet.addTable({
+        name: "turnostotales",
+        ref: "A6",
+        headerRow: true,
+        totalsRow: false,
+        style: {
+          theme: "TableStyleMedium16",
+          showRowStripes: true,
+        },
+        columns: columnas,
+        rows: jsonServicio,
+      });
+
+
+      const numeroFilas = jsonServicio.length;
+      let tamanioC = 0;
+      for (let i = 0; i <= numeroFilas; i++) {
+        if (this.verFecha == '1') {
+          incluirCajero ? tamanioC = 5 : tamanioC = 4
+        } else {
+          incluirCajero ? tamanioC = 4 : tamanioC = 3
+        }
+        for (let j = 1; j <= tamanioC; j++) {
+          const cell = worksheet.getRow(i + 6).getCell(j);
+          if (i === 0) {
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+          } else {
+            cell.alignment = {
+              vertical: "middle",
+              horizontal: this.obtenerAlineacionHorizontal(j),
+            };
+          }
+          cell.border = this.bordeCompleto;
+        }
+      }
+      worksheet.getRow(6).font = this.fontTitulo;
+
+      try {
+        const buffer = await workbook.xlsx.writeBuffer();
+  
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        FileSaver.saveAs(blob,  "Resumen Encuestas Usuarios" + new Date().toLocaleString() + EXCEL_EXTENSION);
+      } catch (error) {
+        console.error("Error al generar el archivo Excel:", error);
+      }
+    }
+  }
+
+  private obtenerAlineacionHorizontal(
+    j: number
+  ): "left" | "center" | "right" {
+    if (j === 1 || j === 9 || j === 10 || j === 11) {
+      return "center";
+    } else {
+      return "left";
     }
   }
 
@@ -1228,6 +1414,8 @@ export class EncuestasComponent {
 
   //Funcion para llenar la tabla con la consulta realizada al backend
   CampoDetalleResumen(opcion: any) {
+    let incluirCajero = this.usuariosSeleccionados.length != 0
+
     let servicio: any = [];
     if (opcion === 1) {
       servicio = this.servicioEncuesta;
@@ -1236,42 +1424,172 @@ export class EncuestasComponent {
       servicio = this.servicioResumen;
     }
     if (servicio.length != 0) {
-      return {
-        columns: [
-          { width: '*', text: '' },
-          {
-            width: 'auto',
-            style: "tableMargin",
-            table: {
-              headerRows: 1,
-              widths: ["auto", "*", "auto", "auto"],
-              body: [
-                [
-                  { text: "Sucursal", style: "tableHeader" },
-                  { text: "Encuesta", style: "tableHeader" },
-                  { text: "Cajero", style: "tableHeader" },
-                  { text: "Encuestas realizadas", style: "tableHeader" },
-                ],
-                ...servicio.map((res: any) => {
-                  return [
-                    { style: "itemsTable", text: res.nombre_sucursal },
-                    { style: "itemsTable", text: res.nombre_encuesta },
-                    { style: "itemsTable", text: res.nombre_usuario },
-                    { style: "itemsTable", text: res.encuestas_realizadas },
-                  ];
-                }),
-              ],
-            },
-            layout: {
-              fillColor: function (rowIndex: any) {
-                return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+      if (this.verFecha == '1') {
+        if (incluirCajero) {
+          return {
+            columns: [
+              { width: '*', text: '' },
+              {
+                width: 'auto',
+                style: "tableMargin",
+                table: {
+                  headerRows: 1,
+                  widths: ["auto", "*", "auto", "auto", "auto"],
+                  body: [
+                    [
+                      { text: "Sucursal", style: "tableHeader" },
+                      { text: "Encuesta", style: "tableHeader" },
+                      { text: "Cajero", style: "tableHeader" },
+                      { text: "Fecha", style: "tableHeader" },
+                      { text: "Encuestas realizadas", style: "tableHeader" },
+                    ],
+                    ...servicio.map((res: any) => {
+                      return [
+                        { style: "itemsTable", text: res.nombre_sucursal },
+                        { style: "itemsTable", text: res.nombre_encuesta },
+                        { style: "itemsTable", text: res.nombre_usuario },
+                        { style: "itemsTable", text: res.Fecha },
+                        { style: "itemsTable", text: res.encuestas_realizadas },
+                      ];
+                    }),
+                  ],
+                },
+                layout: {
+                  fillColor: function (rowIndex: any) {
+                    return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+                  },
+                },
               },
-            },
-          },
-          { width: '*', text: '' },
-        ]
-      };
+              { width: '*', text: '' },
+            ]
+          };
+
+        }else{
+          return {
+            columns: [
+              { width: '*', text: '' },
+              {
+                width: 'auto',
+                style: "tableMargin",
+                table: {
+                  headerRows: 1,
+                  widths: ["auto", "*",  "auto", "auto"],
+                  body: [
+                    [
+                      { text: "Sucursal", style: "tableHeader" },
+                      { text: "Encuesta", style: "tableHeader" },
+                      { text: "Fecha", style: "tableHeader" },
+                      { text: "Encuestas realizadas", style: "tableHeader" },
+                    ],
+                    ...servicio.map((res: any) => {
+                      return [
+                        { style: "itemsTable", text: res.nombre_sucursal },
+                        { style: "itemsTable", text: res.nombre_encuesta },
+                        { style: "itemsTable", text: res.Fecha },
+                        { style: "itemsTable", text: res.encuestas_realizadas },
+                      ];
+                    }),
+                  ],
+                },
+                layout: {
+                  fillColor: function (rowIndex: any) {
+                    return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+                  },
+                },
+              },
+              { width: '*', text: '' },
+            ]
+          };
+
+        }
+      }else{
+        if (incluirCajero) {
+          return {
+            columns: [
+              { width: '*', text: '' },
+              {
+                width: 'auto',
+                style: "tableMargin",
+                table: {
+                  headerRows: 1,
+                  widths: ["auto", "*", "auto", "auto"],
+                  body: [
+                    [
+                      { text: "Sucursal", style: "tableHeader" },
+                      { text: "Encuesta", style: "tableHeader" },
+                      { text: "Cajero", style: "tableHeader" },
+                      { text: "Encuestas realizadas", style: "tableHeader" },
+                    ],
+                    ...servicio.map((res: any) => {
+                      return [
+                        { style: "itemsTable", text: res.nombre_sucursal },
+                        { style: "itemsTable", text: res.nombre_encuesta },
+                        { style: "itemsTable", text: res.nombre_usuario },
+                        { style: "itemsTable", text: res.encuestas_realizadas },
+                      ];
+                    }),
+                  ],
+                },
+                layout: {
+                  fillColor: function (rowIndex: any) {
+                    return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+                  },
+                },
+              },
+              { width: '*', text: '' },
+            ]
+          };
+
+        }else{
+          return {
+            columns: [
+              { width: '*', text: '' },
+              {
+                width: 'auto',
+                style: "tableMargin",
+                table: {
+                  headerRows: 1,
+                  widths: ["auto", "*", "auto"],
+                  body: [
+                    [
+                      { text: "Sucursal", style: "tableHeader" },
+                      { text: "Encuesta", style: "tableHeader" },
+                      { text: "Encuestas realizadas", style: "tableHeader" },
+                    ],
+                    ...servicio.map((res: any) => {
+                      return [
+                        { style: "itemsTable", text: res.nombre_sucursal },
+                        { style: "itemsTable", text: res.nombre_encuesta },
+                        { style: "itemsTable", text: res.encuestas_realizadas },
+                      ];
+                    }),
+                  ],
+                },
+                layout: {
+                  fillColor: function (rowIndex: any) {
+                    return rowIndex % 2 === 0 ? "#E5E7E9" : null;
+                  },
+                },
+              },
+              { width: '*', text: '' },
+            ]
+          };
+
+        }
+
+      }
+      
     }
   }
+
+
+  verFecha: string = '1';
+  mostrar_resultado = false;
+
+  CambiarFecha(opcion: string) {
+    this.verFecha = opcion;
+    this.mostrar_resultado = false
+  }
+
 
 }
