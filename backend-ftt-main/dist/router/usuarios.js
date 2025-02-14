@@ -819,14 +819,13 @@ router.get("/encuestascajeros/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucu
         evaluacion
         JOIN pregunta ON evaluacion.COD_PR = pregunta.COD_PR
         JOIN encuesta ON pregunta.COD_EN = encuesta.COD_EN
-        ${listaUsuarios != '0N' ? ' JOIN usuario ON usuario.COD_US = evaluacion.COD_US' : ''}
-       
+       JOIN usuario ON usuario.COD_US = evaluacion.COD_US
         JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
       WHERE 
         STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
         ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` : ''}   
+        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` : ` AND ${comprobarestado}`}   
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
       GROUP BY 
         ${verFecha ? `` : ``}
