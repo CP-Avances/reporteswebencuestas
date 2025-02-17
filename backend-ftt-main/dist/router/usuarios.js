@@ -702,7 +702,7 @@ router.get("/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encu
     });
 });
 // RESPUESTAS DE ENCUESTAS
-router.get("/respuestasEncuestas/:sucursales", (req, res) => {
+router.get("/respuestasEncuestas/:sucursales", verifivarToken_1.TokenValidation, (req, res) => {
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     let todasSucursales = false;

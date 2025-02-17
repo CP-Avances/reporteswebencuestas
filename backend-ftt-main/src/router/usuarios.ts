@@ -783,7 +783,7 @@ router.get(
 
 // RESPUESTAS DE ENCUESTAS
 router.get(
-  "/respuestasEncuestas/:sucursales",
+  "/respuestasEncuestas/:sucursales", TokenValidation,
   (req: Request, res: Response) => {
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
@@ -924,7 +924,7 @@ router.get(
         STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
         ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` :` AND ${comprobarestado}`}   
+        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` : ` AND ${comprobarestado}`}   
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
       GROUP BY 
         ${verFecha ? `` : ``}

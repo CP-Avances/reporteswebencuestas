@@ -422,6 +422,7 @@ export class EncuestasComponent {
     this.preguntas = [];
     this.respuestas = [];
     this.preguntas_respuestas = [];
+    this.listaPreguntas = [];
   }
 
   // SE DESLOGUEA DE LA APLICACION
@@ -625,13 +626,13 @@ export class EncuestasComponent {
           (error) => {
             if (error.status == 400) {
               // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
-              this.preguntas_respuestas = null;
+              this.preguntas_respuestas = [];
               this.malRequestTTF = true;
               this.malRequestTTFPag = true;
 
               // COMPROBACION DE QUE SI VARIABLE ESTA VACIA PUES SE SETEA LA PAGINACION CON 0 ITEMS
               // CASO CONTRARIO SE SETEA LA CANTIDAD DE ELEMENTOS
-              if (this.preguntas_respuestas == null) {
+              if (this.preguntas_respuestas.length === 0) {
                 this.configTTF.totalItems = 0;
               } else {
                 this.configTTF.totalItems =
