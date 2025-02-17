@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { AuthenticationService } from '../../services/authentication.service';
 
 @Component({
+  standalone: false,
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']

@@ -15,6 +15,7 @@ import moment from "moment";
 import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 
 @Component({
+  standalone: false,
   selector: 'app-preguntas',
   templateUrl: './preguntas.component.html',
   styleUrls: ['./preguntas.component.scss']

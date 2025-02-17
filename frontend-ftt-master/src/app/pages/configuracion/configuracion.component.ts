@@ -5,6 +5,7 @@ import { ServiceService } from "../../services/service.service";
 import { AuthenticationService } from '../../services/authentication.service';
 
 @Component({
+  standalone: false,
   selector: "app-configuracion",
   templateUrl: "./configuracion.component.html",
   styleUrls: ["./configuracion.component.scss"],

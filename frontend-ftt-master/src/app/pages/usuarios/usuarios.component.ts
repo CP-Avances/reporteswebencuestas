@@ -14,6 +14,7 @@ import { ValidacionesService } from "src/app/services/validaciones/validaciones.
 
 
 @Component({
+  standalone: false,
   selector: "app-usuarios",
   templateUrl: "./usuarios.component.html",
   styleUrls: ["./usuarios.component.scss"],

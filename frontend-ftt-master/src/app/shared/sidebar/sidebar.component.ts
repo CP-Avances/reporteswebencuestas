@@ -3,6 +3,7 @@ import { usuario } from '../../models/usuario';
 import { Router } from '@angular/router';
 
 @Component({
+  standalone: false,
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']

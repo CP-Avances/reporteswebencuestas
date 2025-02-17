@@ -17,6 +17,7 @@ import * as FileSaver from 'file-saver';
 const EXCEL_EXTENSION = ".xlsx";
 
 @Component({
+  standalone: false,
   selector: 'app-encuestas',
   templateUrl: './encuestas.component.html',
   styleUrls: ['./encuestas.component.scss']

@@ -3,6 +3,7 @@ import { Component, OnInit} from '@angular/core';
 declare function customInitFunctions();
 
 @Component({
+  standalone: false,
   selector: 'app-pages',
   templateUrl: './pages.component.html',
   styles: [
