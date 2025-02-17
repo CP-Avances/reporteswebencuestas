@@ -989,7 +989,7 @@ export class EncuestasComponent {
           },
           (error) => {
             if (error.status == 400) {
-              /*
+              
               // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
               this.servicioResumen = null;
               this.malRequestR = true;
@@ -1008,7 +1008,7 @@ export class EncuestasComponent {
                 itemsPerPage: this.MAX_PAGS,
                 currentPage: 1,
               };
-              */
+              
 
               // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
               this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
@@ -1219,25 +1219,6 @@ export class EncuestasComponent {
     }
   }
 
-
-  validarHoras(hInicio: any, hFin: any) {
-    let diaCompleto: boolean = false;
-
-    if (hInicio == "-1" || hFin == "-1" || parseInt(hInicio) > parseInt(hFin)) {
-      diaCompleto = true;
-    }
-
-    if (diaCompleto) {
-      return {};
-    } else {
-      return {
-        style: "subtitulos",
-        text: "Hora desde " + hInicio + " hasta " + hFin,
-      };
-    }
-  }
-
-
   async generarPdfPreguntasResumen(action = "open", pdf: number, opcion: any) {
     if (this.servicioResumen.length != 0) {
       //Seteo de rango de fechas de la consulta para impresión en PDF
@@ -1275,73 +1256,39 @@ export class EncuestasComponent {
     let f = new Date();
     f.setUTCHours(f.getHours());
     this.date = f.toJSON();
-
+    let nombreSucursal = this.ObtenerNombreSucursal(this.sucursalesSeleccionadas);
     return {
       // SETEO DE MARCA DE AGUA Y ENCABEZADO CON NOMBRE DE USUARIO LOGUEADO
       pageSize: 'A4',
-      watermark: {
-        text: this.marca,
-        color: "blue",
-        opacity: 0.1,
-        bold: true,
-        italics: false,
-        fontSize: 52,
-      },
-      header: {
-        text: "Impreso por:  " + this.userDisplayName,
-        margin: 10,
-        fontSize: 9,
-        opacity: 0.3,
-      },
-      //Seteo de pie de pagina, fecha de generacion de PDF con numero de paginas
-      footer: function (currentPage: any, pageCount: any, fecha: any) {
+      pageMargins: [40, 60, 40, 40],
+      watermark: { text: this.marca, color: 'blue', opacity: 0.1, bold: true, italics: false },
+      header: { text: 'Impreso por:  ' + this.userDisplayName, margin: 10, fontSize: 9, opacity: 0.3, alignment: 'right' },
+      // SETEO DE PIE DE PAGINA, FECHA DE GENERACION DE PDF CON NUMERO DE PAGINAS
+      footer: function (currentPage: any, pageCount: any, fecha: any, timer: any) {
         fecha = f.toJSON().split("T")[0];
-        var timer = f.toJSON().split("T")[1].slice(0, 5);
-        return [
-          {
-            margin: [10, 20, 10, 0],
-            columns: [
-              "Fecha: " + fecha + " Hora: " + timer,
-              {
-                text: [
-                  {
-                    text:
-                      "© Pag " + currentPage.toString() + " of " + pageCount,
-                    alignment: "right",
-                    color: "blue",
-                    opacity: 0.5,
-                  },
-                ],
-              },
-            ],
-            fontSize: 9,
-            color: "#A4B8FF",
-          },
-        ];
-      },
-      //Contenido del PDF, logo, nombre del reporte, con el renago de fechas de los datos
-      content: [
-        {
+        timer = f.toJSON().split("T")[1].slice(0, 5);
+        return {
+          margin: 10,
           columns: [
+            { text: 'Fecha: ' + fecha + ' Hora: ' + timer, opacity: 0.3 },
             {
-              image: this.urlImagen,
-              width: 90,
-              height: 45,
-            },
-            {
-              width: "*",
-              alignment: "center",
-              text: "REPORTE ENCUENTAS REALIZADAS",
-              bold: true,
-              fontSize: 15,
-              margin: [-90, 20, 0, 0],
-            },
+              text: [
+                {
+                  text: '© Pag ' + currentPage.toString() + ' de ' + pageCount,
+                  alignment: 'right', opacity: 0.3
+                }
+              ],
+            }
           ],
-        },
-        {
-          style: "subtitulos",
-          text: "Periodo de " + fechaDesde + " hasta " + fechaHasta,
-        },
+          fontSize: 10
+        }
+      },
+      // CONTENIDO DEL PDF, LOGO, NOMBRE DEL REPORTE, CON EL RENAGO DE FECHAS DE LOS DATOS
+      content: [
+        { image: this.urlImagen, width: 100, margin: [10, -25, 0, 5] },
+        { text: `LISTA DE ENCUESTAS APLICADAS`, bold: true, fontSize: 14, alignment: 'center', margin: [0, -30, 0, 5] },
+        { text: nombreSucursal?.toUpperCase(), bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
+        { text: `PERIODO DEL ${fechaDesde} HASTA ${fechaHasta}`, bold: true, fontSize: 12, alignment: 'center', margin: [0, 0, 0, 5], },
         this.CampoDetalleResumen(opcion),
         {
           style: "subtitulos",
@@ -1349,34 +1296,11 @@ export class EncuestasComponent {
         }, //Definicion de funcion delegada para setear informacion de tabla del PDF
       ],
       styles: {
-        tableTotal: {
-          fontSize: 30,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        tableHeader: {
-          fontSize: 9,
-          bold: true,
-          alignment: "center",
-          fillColor: this.p_color,
-        },
-        itemsTable: { fontSize: 8, margin: [0, 3, 0, 3] },
-        itemsTableInfo: { fontSize: 10, margin: [0, 5, 0, 5] },
-        subtitulos: {
-          fontSize: 14,
-          alignment: "center",
-          margin: [0, 5, 0, 10],
-        },
-        tableMargin: { margin: [0, 10, 0, 20], alignment: "center" },
-        CabeceraTabla: {
-          fontSize: 12,
-          alignment: "center",
-          margin: [0, 8, 0, 8],
-          fillColor: this.p_color,
-        },
-        quote: { margin: [5, -2, 0, -2], italics: true },
-        small: { fontSize: 8, color: "blue", opacity: 0.5 },
+        tableHeader: { fontSize: 8, bold: true, alignment: 'center', fillColor: this.p_color },
+        principal: { fontSize: 8, bold: true, alignment: 'center', fillColor: "#aafdc3" },
+        itemsTable: { fontSize: 8 },
+        tableMargin: { margin: [0, 0, 0, 0] },
+        subtitulos: { fontSize: 10, bold: true, alignment: "center", margin: [0, 5, 0, 10], },
       },
     };
   }
