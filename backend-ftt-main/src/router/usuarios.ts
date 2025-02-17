@@ -703,13 +703,15 @@ router.get(
 
 // LISTA DE CODIGOS DE RESPUESTA SEGUN SUCURSALES
 router.get(
-  "/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales/:usuarios", TokenValidation,
+  "/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales/:usuarios/:estado", TokenValidation,
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
     const hFin = req.params.horaFin;
+    const estado = req.params.estado;
+
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -741,6 +743,13 @@ router.get(
       hFinAux = parseInt(hFin) - 1;
     }
 
+    let comprobarestado = ''
+    if (estado == '3') {
+      comprobarestado = `usuario.ESTADO_US != 0`
+    } else {
+      comprobarestado = `usuario.ESTADO_US = ${estado}`
+    }
+
     const query =
       `
       SELECT
@@ -760,7 +769,7 @@ router.get(
         STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
         ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-        ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios})` : ''}
+        ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado} ` : `AND ${comprobarestado}`}
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
 	    ORDER BY CODIGO_RESPUESTA;
     `;
@@ -924,7 +933,7 @@ router.get(
         STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
         ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` :` AND ${comprobarestado}`}   
+        ${listaUsuarios != '0N' ? ` ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado}` : ` AND ${comprobarestado}`}` : ` AND ${comprobarestado}`}   
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
       GROUP BY 
         ${verFecha ? `` : ``}

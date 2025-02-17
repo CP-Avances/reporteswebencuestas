@@ -44,6 +44,7 @@ export class EncuestasComponent {
   @ViewChild("horaInicioR") horaInicioR: ElementRef;
   @ViewChild("horaFinR") horaFinR: ElementRef;
 
+
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
   sucursales: any[];
   cajerosUsuarios: any = [];
@@ -379,6 +380,7 @@ export class EncuestasComponent {
   }
 
   LimpiarFormularios() {
+    this.mostrar_resultado = false;
     this.limpiar();
     this.estadoCajero = 2;
     const activo = document.getElementById('activo') as HTMLInputElement;
@@ -491,9 +493,11 @@ export class EncuestasComponent {
           this.encuestaSeleccionada,
           this.sucursalesSeleccionadas.length === 0 ? '-1' : this.sucursalesSeleccionadas,
           this.usuariosSeleccionados.length === 0 ? '-2' : this.usuariosSeleccionados,
+          this.estadoCajero
         )
         .subscribe(
           (servicio: any) => {
+            this.mostrar_resultado = true;
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             let listaSucursales: any = [];
             let respuesta: any = [];
@@ -649,6 +653,7 @@ export class EncuestasComponent {
                 timeOut: 6000,
               });
             }
+        
           }
         );
     }
@@ -1052,6 +1057,10 @@ export class EncuestasComponent {
             }
           }
         );
+    }else{
+      this.toastr.info("Debe seleccionar Encuestas.", "Upss !!!.", {
+        timeOut: 6000,
+      });
     }
   }
 

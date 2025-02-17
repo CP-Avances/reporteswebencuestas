@@ -23,21 +23,21 @@
                                     <div>
                                         <label for="fechaDesde">Fecha desde: &nbsp;</label>
                                         <input type="date" id="fechaDesde" value="{{fromDate}}" [max]="toDate"
-                                            name="fechaDesde" #fechaDesde><br><br>
+                                            name="fechaDesde" #fechaDesde (change)="mostrar_resultado = false"><br><br>
                                     </div>
                                     <div>
                                         <label for="fechaHasta">Fecha hasta: &nbsp;</label>
                                         <input type="date" id="fechaHasta" value="{{toDate}}" [max]="toDate"
-                                            name="fechaHasta" #fechaHasta>
+                                            name="fechaHasta" #fechaHasta (change)="mostrar_resultado = false">
                                     </div>
                                 </div>
                                 <div class="contenedor-horas">
-                                    <select class="form-control" name="selectmake" #horaInicioE>
+                                    <select class="form-control" name="selectmake" #horaInicioE (change)="mostrar_resultado = false">
                                         <option value="-1" selected>Hora Inicio</option>
                                         <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
                                         </option>
                                     </select>
-                                    <select class="form-control ml-2" name="selectmake" #horaFinE>
+                                    <select class="form-control ml-2" name="selectmake" #horaFinE (change)="mostrar_resultado = false">
                                         <option value="-1" selected>Hora Fin</option>
                                         <option *ngFor="let hora of horas" value="{{hora}}" [value]="hora">{{hora}}
                                         </option>
@@ -63,7 +63,7 @@
                             </div>
                             <div class="col-6">
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
+                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales" (selectionChange)="mostrar_resultado = false">
                                     <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
                                         Todas las sucursales
                                     </mat-option>
@@ -74,7 +74,7 @@
                                 </mat-select>
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="usuariosSeleccionados" placeholder="Cajeros">
+                                    [(value)]="usuariosSeleccionados" placeholder="Cajeros" (selectionChange)="mostrar_resultado = false">
                                     <mat-option *ngIf="mostrarCajeros" [value]="-2" (click)="selectAll('todosCajeros')">
                                         Todos los cajeros
                                     </mat-option>
@@ -85,7 +85,7 @@
                                 </mat-select>
                                 <br><br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(value)]="encuestaSeleccionada" placeholder="Encuestas">
+                                    [(value)]="encuestaSeleccionada" placeholder="Encuestas" (selectionChange)="mostrar_resultado = false">
                                     <mat-option *ngIf="mostrarEncuestas" [value]="-2"
                                         (click)="selectAll('todasEncuestas')">
                                         Todas las encuestas
@@ -104,7 +104,7 @@
                         </div>
                     </div>
                     <br>
-                    <div class="table-responsive" *ngIf="listaPreguntas.length != 0">
+                    <div class="table-responsive" *ngIf=" mostrar_resultado">
                         <mat-accordion>
                             <mat-expansion-panel (opened)="expansion = true" (closed)="expansion = false">
                                 <mat-expansion-panel-header style="background: rgb(8, 170, 121); font-size: 14px;">
@@ -144,11 +144,11 @@
                         </mat-accordion>
                     </div>
                     <br>
-                    <h3>RESPUESTAS</h3>
+                    <h3  *ngIf="mostrar_resultado">RESPUESTAS</h3>
                     <hr>
 
                     <div class="table-container" id="tableTurnosTotalFechaContainer"
-                        *ngIf="preguntas_respuestas.length != 0">
+                        *ngIf=" mostrar_resultado">
                         <table class="table table-striped" id="tableTurnosTotalFecha">
                             <ng-container *ngFor="let encuesta of preguntas_respuestas">
                                 <!-- FILA CON EL TITULO DE LA ENCUESTA -->
@@ -184,9 +184,9 @@
                         </table>
                     </div>
                     <br>
-                    <button type="button" class="btn btn-info mx-2" (click)="ExportExcelEncuestas()">EXCEL</button>
+                    <button type="button" class="btn btn-info mx-2" (click)="ExportExcelEncuestas()" *ngIf=" mostrar_resultado">EXCEL</button>
                     <button type="button" class="btn btn-info"
-                        (click)="generarPdfPreguntasRespuestas('hola', 1)">PDF</button>
+                        (click)="generarPdfPreguntasRespuestas('hola', 1)" *ngIf="mostrar_resultado">PDF</button>
                 </div>
 
 
@@ -253,7 +253,7 @@
                                 </fieldset>
                                 <br>
                                 <mat-select multiple class="form-control" name="selectmake"
-                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales">
+                                    [(ngModel)]="sucursalesSeleccionadas" placeholder="Sucursales" (selectionChange)="mostrar_resultado = false">
                                     <mat-option [value]="-1" (click)="selectAll('todasSucursales')">
                                         Todas las sucursales
                                     </mat-option>

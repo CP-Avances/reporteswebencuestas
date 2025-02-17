@@ -633,11 +633,12 @@ router.get("/listapreguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaF
     });
 });
 // LISTA DE CODIGOS DE RESPUESTA SEGUN SUCURSALES
-router.get("/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales/:usuarios", verifivarToken_1.TokenValidation, (req, res) => {
+router.get("/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales/:usuarios/:estado", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
     const hFin = req.params.horaFin;
+    const estado = req.params.estado;
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -664,6 +665,13 @@ router.get("/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encu
     else {
         hFinAux = parseInt(hFin) - 1;
     }
+    let comprobarestado = '';
+    if (estado == '3') {
+        comprobarestado = `usuario.ESTADO_US != 0`;
+    }
+    else {
+        comprobarestado = `usuario.ESTADO_US = ${estado}`;
+    }
     const query = `
       SELECT
         DISTINCT evaluacion.CODIGO_RESPUESTA,
@@ -682,7 +690,7 @@ router.get("/codigosRespuesta/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encu
         STR_TO_DATE(evaluacion.FECH_EV,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         ${!todasSucursales ? `AND sucursal.COD_SUC IN (${listaSucursales})` : ''}
         ${!todasEncuestas ? `AND encuesta.COD_EN IN (${listaEncuestas})` : ''}
-        ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios})` : ''}
+        ${!todasUsuarios ? `AND usuario.COD_US IN (${listaUsuarios}) AND ${comprobarestado} ` : `AND ${comprobarestado}`}
         ${!diaCompleto ? `AND HOUR(evaluacion.FECH_EV) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''}
 	    ORDER BY CODIGO_RESPUESTA;
     `;

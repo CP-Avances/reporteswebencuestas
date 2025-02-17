@@ -59,8 +59,8 @@ export class ServiceService {
     return this.http.get<servicio[]>(this.URL + "/listapreguntasrespuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales + "/" + usuarios);
   }
 
-  getCodigosRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any, usuarios: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/codigosRespuesta/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales + "/" + usuarios);
+  getCodigosRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any, usuarios: any, estado: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/codigosRespuesta/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales + "/" + usuarios + "/" + estado);
   }
 
   getRespuestasEncuesta(sucursales: any): Observable<servicio[]> {
@@ -68,7 +68,7 @@ export class ServiceService {
   }
 
   getEncuestasCajero(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, encuestas: any, usuarios: any, fecha: string, estado: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/encuestascajeros/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + usuarios+ "/" + fecha + "/" + estado);
+    return this.http.get<servicio[]>(this.URL + "/encuestascajeros/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + usuarios + "/" + fecha + "/" + estado);
   }
 
   /** ****************************************************************************************************************** **
@@ -84,8 +84,8 @@ export class ServiceService {
   }
 
 
-   // METODO PARA BUSCAR CAJEROS SEGUN SUCURSALES Y ESTADO
-   actualizarEstadoCajerosSucursalEstado(sucursales: any): Observable<cajero[]> {
+  // METODO PARA BUSCAR CAJEROS SEGUN SUCURSALES Y ESTADO
+  actualizarEstadoCajerosSucursalEstado(sucursales: any): Observable<cajero[]> {
     return this.http.get<cajero[]>(this.URL + "/cambiarestadocajeros/" + sucursales);
   }
 
