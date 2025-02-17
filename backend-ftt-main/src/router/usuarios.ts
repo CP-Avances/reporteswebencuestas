@@ -1059,7 +1059,7 @@ router.get(
  ** ************************************************************************************************************ **/
 
 router.get(
-  "/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajeros", TokenValidation,
+  "/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajeros/:estado", TokenValidation,
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
@@ -1067,6 +1067,9 @@ router.get(
     const hInicio = req.params.horaInicio;
     const hFin = req.params.horaFin;
     const listaCajeros = req.params.cajeros;
+    const estado = req.params.estado;
+
+
     const cajerosArray = listaCajeros.split(",");
     let todasCajeros = false;
     let diaCompleto = false;
@@ -1075,6 +1078,16 @@ router.get(
     if (cajerosArray.includes("-2")) {
       todasCajeros = true
     }
+
+    
+    let comprobarestado = ''
+    if (estado == '3') {
+      comprobarestado = `usuario.ESTADO_US != 0`
+    } else {
+      comprobarestado = `usuario.ESTADO_US = ${estado}`
+    }
+
+    
 
     if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
       diaCompleto = true;
@@ -1100,7 +1113,7 @@ router.get(
       INNER JOIN sucursal sc ON sc.COD_SUC = s.COD_SUC
       WHERE STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         AND usuario.TIPO_US = 'Trabajador'
-        ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros})` : ''} 
+        ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros}) AND ${comprobarestado}  ` : `AND ${comprobarestado}`} 
         ${!diaCompleto ? `AND HOUR(actividad.FECH_ULT) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''};
       `;
     console.log('query ', query)

@@ -944,18 +944,26 @@ router.get("/encuesta-sucursal/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
 /** ************************************************************************************************************ **
  ** **                               ENTRADAS Y SALIDAD DEL SISTEMA                                           ** **
  ** ************************************************************************************************************ **/
-router.get("/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajeros", verifivarToken_1.TokenValidation, (req, res) => {
+router.get("/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajeros/:estado", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
     const fHasta = req.params.fechaHasta;
     const hInicio = req.params.horaInicio;
     const hFin = req.params.horaFin;
     const listaCajeros = req.params.cajeros;
+    const estado = req.params.estado;
     const cajerosArray = listaCajeros.split(",");
     let todasCajeros = false;
     let diaCompleto = false;
     let hFinAux = 0;
     if (cajerosArray.includes("-2")) {
         todasCajeros = true;
+    }
+    let comprobarestado = '';
+    if (estado == '3') {
+        comprobarestado = `usuario.ESTADO_US != 0`;
+    }
+    else {
+        comprobarestado = `usuario.ESTADO_US = ${estado}`;
     }
     if ((hInicio == "-1") || (hFin == "-1") || (parseInt(hInicio) > parseInt(hFin))) {
         diaCompleto = true;
@@ -980,7 +988,7 @@ router.get("/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajero
       INNER JOIN sucursal sc ON sc.COD_SUC = s.COD_SUC
       WHERE STR_TO_DATE(actividad.FECH_ULT,'%Y-%m-%d') BETWEEN '${fDesde}' AND '${fHasta}'
         AND usuario.TIPO_US = 'Trabajador'
-        ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros})` : ''} 
+        ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros}) AND ${comprobarestado}  ` : `AND ${comprobarestado}`} 
         ${!diaCompleto ? `AND HOUR(actividad.FECH_ULT) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''};
       `;
     console.log('query ', query);

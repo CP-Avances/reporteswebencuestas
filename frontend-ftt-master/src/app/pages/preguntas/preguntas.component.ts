@@ -274,7 +274,8 @@ export class PreguntasComponent {
           fechaHasta,
           horaInicio,
           horaFin,
-          this.selectedItems
+          this.selectedItems,
+          this.estadoCajero
         )
         .subscribe(
           (servicio: any) => {
