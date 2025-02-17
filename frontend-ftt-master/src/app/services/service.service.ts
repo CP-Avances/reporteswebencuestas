@@ -22,8 +22,8 @@ export class ServiceService {
    ** **                                        ENTRADAS AL SISTEMA                                                   ** **
    ** ****************************************************************************************************************** **/
 
-  getEntradasSalidas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, cajeros: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/entradasistema/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + cajeros);
+  getEntradasSalidas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, cajeros: any, estado: any): Observable<servicio[]> {
+    return this.http.get<servicio[]>(this.URL + "/entradasistema/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + cajeros  + "/" + estado);
   }
 
 
