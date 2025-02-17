@@ -80,6 +80,10 @@ table {
   background-color: #398bf7 !important;
 }
 
+input[type="radio"], label {
+    margin: 10px; /* Espacio entre los elementos */
+  }
+  
 /* Contenedor de la tabla */
 #tableTurnosTotalFechaContainer {
   max-height: 500px; /* Ajusta la altura máxima */

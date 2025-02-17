@@ -792,7 +792,7 @@ router.get(
 
 // RESPUESTAS DE ENCUESTAS
 router.get(
-  "/respuestasEncuestas/:sucursales",
+  "/respuestasEncuestas/:sucursales", TokenValidation,
   (req: Request, res: Response) => {
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");

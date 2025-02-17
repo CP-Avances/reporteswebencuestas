@@ -44,7 +44,9 @@
               "core-js/modules/es.string.starts-with.js",
               "core-js/modules/es.string.trim.js",
               "core-js/modules/web.dom-collections.iterator.js",
-              "exceljs"
+              "exceljs",
+              "src/assets/build/pdfmake.js",
+              "src/assets/build/vfs_fonts.js"
             ],
             "outputPath": "dist/frontend-ftt-master",
             "index": "src/index.html",
