@@ -1,17 +1,12 @@
-import { Component, OnInit, ViewChild, ElementRef, EventEmitter, Output } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
+import { SelectionModel } from '@angular/cdk/collections';
 import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
-import { SelectionModel } from '@angular/cdk/collections';
 
 import { AuthenticationService } from "../../services/authentication.service";
-import { ImagenesService } from "../../shared/imagenes.service";
-import { ServiceService } from "../../services/service.service";
-
-// COMPLEMENTOS PARA PDF Y EXCEL
-import moment from "moment";
 import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
-
+import { ServiceService } from "../../services/service.service";
 
 @Component({
   standalone: false,
@@ -21,13 +16,9 @@ import { ValidacionesService } from "src/app/services/validaciones/validaciones.
 })
 
 export class UsuariosComponent implements OnInit {
-  // SETEO DE FECHAS PRIMER DIA DEL MES ACTUAL Y DIA ACTUAL
-  
 
   mostrar_resultado = false;
-
-
-
+  
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
   sucursales: any[];
   cajerosSucursales: any = [];
@@ -65,10 +56,9 @@ export class UsuariosComponent implements OnInit {
     private router: Router,
     private auth: AuthenticationService,
     public datePipe: DatePipe,
-    private imagenesService: ImagenesService,
     public validar: ValidacionesService
   ) {
-    
+
     // RESUMEN CAJEROS
     this.configC = {
       id: "usuariosR",
@@ -86,7 +76,7 @@ export class UsuariosComponent implements OnInit {
 
 
   ngOnInit(): void {
-   this.getSucursales();
+    this.getSucursales();
     this.userDisplayName = sessionStorage.getItem("loggedUser");
     this.malRequestC = true;
   }
@@ -103,7 +93,7 @@ export class UsuariosComponent implements OnInit {
   // OPCIONES DE SELECCION DE DATOS
   selectAll(opcion: string) {
     switch (opcion) {
-   
+
       case "todasSucursales":
         this.todasSucursalesC = !this.todasSucursalesC;
         break;
@@ -115,29 +105,29 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
-/*
-  // CONSULTA DE LISTA DE CAJEROS
-  getCajeros() {
-    this.serviceService.getAllCajerosS().subscribe(
-      (cajeros: any) => {
-        this.cajerosUsuarios = cajeros.cajeros;
-        this.mostrarCajeros = true;
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.cajerosUsuarios = [];
-          this.mostrarCajeros = false;
+  /*
+    // CONSULTA DE LISTA DE CAJEROS
+    getCajeros() {
+      this.serviceService.getAllCajerosS().subscribe(
+        (cajeros: any) => {
+          this.cajerosUsuarios = cajeros.cajeros;
+          this.mostrarCajeros = true;
+        },
+        (error) => {
+          if (error.status == 400) {
+            this.cajerosUsuarios = [];
+            this.mostrarCajeros = false;
+          }
         }
-      }
-    );
-  }
-   */ 
+      );
+    }
+     */
 
   // CONSULATA PARA LLENAR LA LISTA DE SURCURSALES.
   getSucursales() {
     this.serviceService.getAllSucursales().subscribe((empresas: any) => {
       this.sucursales = empresas.empresas;
-      console.log("ver sucursales: ", this.sucursales  )
+      console.log("ver sucursales: ", this.sucursales)
     });
   }
 
@@ -165,7 +155,7 @@ export class UsuariosComponent implements OnInit {
         this.cajerosSucursales = cajeros.cajeros;
 
         this.malRequestC = false;
-       // this.malRequestDistPag = false;
+        // this.malRequestDistPag = false;
         // SETEO DE PAGINACION CUANDO SE HACE UNA NUEVA BUSQUEDA
         if (this.configC.currentPage > 1) {
           this.configC.currentPage = 1;
@@ -202,7 +192,7 @@ export class UsuariosComponent implements OnInit {
     this.isAllSelectedPag() ?
       this.selectionCajero.clear() :
       this.cajerosSucursales.forEach((row: any) => this.selectionCajero.select(row));
-      console.log("ver selectionCajero", this.selectionCajero)
+    console.log("ver selectionCajero", this.selectionCajero)
   }
 
   // LA ETIQUETA DE LA CASILLA DE VERIFICACION EN LA FILA PASADA
@@ -225,18 +215,18 @@ export class UsuariosComponent implements OnInit {
     this.plan_multiple_ = true;
     this.auto_individual = false;
     this.activar_seleccion = false;
-  } 
-  
+  }
+
   auto_individual: boolean = true;
   activar_seleccion: boolean = true;
   seleccion_vacia: boolean = true;
 
 
-  DesactivarCajeros(){
+  DesactivarCajeros() {
 
     const cajeCodigos = this.cajerosEditar.map(item => item.COD_US).join(',');
     console.log("ver cajeCodigos", cajeCodigos)
-    
+
     this.serviceService.actualizarEstadoCajerosSucursalEstado(cajeCodigos).subscribe(
       (cajeros: any) => {
         console.log("ver resultados: ", cajeros)
@@ -256,6 +246,6 @@ export class UsuariosComponent implements OnInit {
         }
       }
     );
-    
+
   }
 }

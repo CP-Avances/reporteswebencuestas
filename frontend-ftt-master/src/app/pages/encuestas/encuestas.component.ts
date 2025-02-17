@@ -1,18 +1,17 @@
 import { Component, ViewChild, ElementRef, EventEmitter, Output } from "@angular/core";
+import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import { Utils } from "../../utils/util";
 import ExcelJS from 'exceljs';
+import * as FileSaver from 'file-saver';
 
 import { AuthenticationService } from "../../services/authentication.service";
+import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
-
-// COMPLEMENTOS PARA PDF Y EXCEL
-import moment from "moment";
-import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
-import * as FileSaver from 'file-saver';
+import { InformacionComponent } from "../informacion/informacion.component";
 
 const EXCEL_EXTENSION = ".xlsx";
 
@@ -24,7 +23,6 @@ const EXCEL_EXTENSION = ".xlsx";
 })
 
 export class EncuestasComponent {
-
 
   private bordeCompleto!: Partial<ExcelJS.Borders>;
   private fontTitulo!: Partial<ExcelJS.Font>;
@@ -45,29 +43,19 @@ export class EncuestasComponent {
   @ViewChild("horaInicioR") horaInicioR: ElementRef;
   @ViewChild("horaFinR") horaFinR: ElementRef;
 
-
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
-  sucursales: any[];
+  preguntas_respuestas: any = [];
+  servicioEncuesta: any = [];
+  servicioResumen: any = [];
   cajerosUsuarios: any = [];
+  sucursales: any[];
   encuestas: any = [];
   preguntas: any = [];
-  preguntas_respuestas: any = [];
-  servicioResumen: any = [];
-  servicioEncuesta: any = [];
 
   // BANDERAS PARA MOSTRAR LA TABLA CORRESPONDIENTE A LAS CONSULTAS
   todasSucursales: boolean = false;
-
-  todasSucursalesTPA: boolean = false;
-  todasSucursalesTA: boolean = false;
-  todasSucursalesTF: boolean = false;
-  todasSucursalesTM: boolean = false;
-  todasSucursalesES: boolean = false;
-  todasSucursalesAU: boolean = false;
   todasEncuestas: boolean = false;
-  todasEncuestasI: boolean = false;
   todosLosCajeros: boolean = false;
-  soloEncuestas: boolean = false;
 
   // BANDERAS PARA QUE NO SE QUEDE EN PANTALLA CONSULTAS ANTERIORES
   malRequestTTF: boolean = false;
@@ -103,18 +91,10 @@ export class EncuestasComponent {
   private imagen: any;
 
   //OPCIONES MULTIPLES
-  allSelected: boolean = false;
-  selectedItems: string[] = [];
   selectedEncuestas: string[] = [];
-  selectedPreguntas: string[] = [];
-  selectedFechas: string[] = [];
   sucursalesSeleccionadas: string[] = [];
   usuariosSeleccionados: string[] = [];
-  seleccionMultiple: boolean = false;
-  seleccionMultipleE: boolean = false;
-  seleccionMultipleI: boolean = false;
   encuestaSeleccionada: string[] = [];
-  cajeroSeleccionado: any;
 
   //MOSTRAR CAJEROS
   mostrarCajeros: boolean = false;
@@ -126,7 +106,7 @@ export class EncuestasComponent {
   marca: string = "";
   horas: number[] = [];
 
-  //Totales
+  // TOTALES
   respuestasTotal: number;
 
   @Output() menuMostrarOcultar: EventEmitter<any> = new EventEmitter();
@@ -138,7 +118,8 @@ export class EncuestasComponent {
     private router: Router,
     private auth: AuthenticationService,
     public datePipe: DatePipe,
-    public validar: ValidacionesService
+    public validar: ValidacionesService,
+    public ventana: MatDialog,
   ) {
     // SETEO DE ITEM DE PAGINACION CUANTOS ITEMS POR PAGINA, DESDE QUE PAGINA EMPIEZA, EL TOTAL DE ITEMS RESPECTIVAMENTE
     // RESUMEN CAJEROS
@@ -166,14 +147,13 @@ export class EncuestasComponent {
     console.log('evento ', event)
     this.configTTF.currentPage = event;
   }
+
   // RESUMEN PREGUNTAS
   pageChangedR(event: any) {
     this.configR.currentPage = event;
   }
 
   ngOnInit(): void {
-    var f = moment();
-    this.date = f.format("YYYY-MM-DD");
     // CARGAMOS COMPONENTES SELECTS HTML
     this.getMarca();
     this.getlastday();
@@ -194,8 +174,6 @@ export class EncuestasComponent {
           (result) => (this.urlImagen = result)
         );
       });
-    console.log('preguntas ', this.listaPreguntas)
-
     this.bordeCompleto = {
       top: { style: "thin" as ExcelJS.BorderStyle },
       left: { style: "thin" as ExcelJS.BorderStyle },
@@ -203,7 +181,6 @@ export class EncuestasComponent {
       right: { style: "thin" as ExcelJS.BorderStyle },
     };
     this.fontTitulo = { bold: true, size: 12, color: { argb: "FFFFFF" } };
-
   }
 
   // CONSULTA DE MARCA DE AGUA PARA REPORTES
@@ -329,16 +306,14 @@ export class EncuestasComponent {
 
       case 'todosCajeros':
         this.todosLosCajeros = !this.todosLosCajeros;
-        //this.verCajero = this.todosCajeros || this.cajerosSeleccionados.length > 0;
         if (!this.todosLosCajeros) {
           this.usuariosSeleccionados = [];
         }
-        //this.resumenEvaluacion = [];
+        this.encuestas = [];
         break;
 
       case 'cajerosSeleccionados':
-        //this.verCajero = this.cajerosSeleccionados.length > 0;
-        //this.resumenEvaluacion = [];
+        this.encuestas = [];
         break;
 
       case "todasEncuestas":
@@ -391,35 +366,18 @@ export class EncuestasComponent {
 
   // METODO PARA LLAMAR CONSULTA DE DATOS
   limpiar() {
-    this.selectedItems = [];
-    this.allSelected = false;
-    this.todasSucursalesTPA = false;
-    this.todasSucursalesTA = false;
-    this.todasSucursalesTF = false;
     this.todasSucursales = false;
     this.todosLosCajeros = false;
     this.todasEncuestas = false;
-    this.todasEncuestasI = false;
-    this.todasSucursalesTM = false;
-    this.todasSucursalesES = false;
-    this.todasSucursalesAU = false;
-    this.seleccionMultiple = false;
-    this.seleccionMultipleE = false;
-    this.seleccionMultipleI = false;
     this.sucursalesSeleccionadas = [];
     this.usuariosSeleccionados = [];
     this.selectedEncuestas = [];
-    this.selectedPreguntas = [];
-    this.selectedFechas = [];
     this.mostrarEncuestas = false;
     this.encuestas = [];
     this.encuestaSeleccionada = [];
-    this.cajeroSeleccionado = null;
     this.servicioResumen = [];
     this.servicioEncuesta = [];
     this.respuestasTotal = 0;
-    this.soloEncuestas = false;
-
     this.cajerosUsuarios = [];
     this.mostrarCajeros = false;
     this.preguntas = [];
@@ -655,7 +613,7 @@ export class EncuestasComponent {
                 timeOut: 6000,
               });
             }
-        
+
           }
         );
     }
@@ -1059,7 +1017,7 @@ export class EncuestasComponent {
             }
           }
         );
-    }else{
+    } else {
       this.toastr.info("Debe seleccionar Encuestas.", "Upss !!!.", {
         timeOut: 6000,
       });
@@ -1242,9 +1200,9 @@ export class EncuestasComponent {
 
       try {
         const buffer = await workbook.xlsx.writeBuffer();
-  
+
         const blob = new Blob([buffer], { type: "application/octet-stream" });
-        FileSaver.saveAs(blob,  "Resumen Encuestas Usuarios" + new Date().toLocaleString() + EXCEL_EXTENSION);
+        FileSaver.saveAs(blob, "Resumen Encuestas Usuarios" + new Date().toLocaleString() + EXCEL_EXTENSION);
       } catch (error) {
         console.error("Error al generar el archivo Excel:", error);
       }
@@ -1311,15 +1269,15 @@ export class EncuestasComponent {
     }
   }
 
-  //Funcion delegada para seteo de información
+  // FUNCION DELEGADA PARA SETEO DE INFORMACION
   getDocumentResumen(fechaDesde: any, fechaHasta: any, opcion: any) {
-    //Se obtiene la fecha actual
+    // SE OBTIENE LA FECHA ACTUAL
     let f = new Date();
     f.setUTCHours(f.getHours());
     this.date = f.toJSON();
 
     return {
-      //Seteo de marca de agua y encabezado con nombre de usuario logueado
+      // SETEO DE MARCA DE AGUA Y ENCABEZADO CON NOMBRE DE USUARIO LOGUEADO
       pageSize: 'A4',
       watermark: {
         text: this.marca,
@@ -1475,7 +1433,7 @@ export class EncuestasComponent {
             ]
           };
 
-        }else{
+        } else {
           return {
             columns: [
               { width: '*', text: '' },
@@ -1484,7 +1442,7 @@ export class EncuestasComponent {
                 style: "tableMargin",
                 table: {
                   headerRows: 1,
-                  widths: ["auto", "*",  "auto", "auto"],
+                  widths: ["auto", "*", "auto", "auto"],
                   body: [
                     [
                       { text: "Sucursal", style: "tableHeader" },
@@ -1513,7 +1471,7 @@ export class EncuestasComponent {
           };
 
         }
-      }else{
+      } else {
         if (incluirCajero) {
           return {
             columns: [
@@ -1551,7 +1509,7 @@ export class EncuestasComponent {
             ]
           };
 
-        }else{
+        } else {
           return {
             columns: [
               { width: '*', text: '' },
@@ -1585,21 +1543,24 @@ export class EncuestasComponent {
               { width: '*', text: '' },
             ]
           };
-
         }
-
       }
-      
     }
   }
 
-
   verFecha: string = '1';
   mostrar_resultado = false;
-
   CambiarFecha(opcion: string) {
     this.verFecha = opcion;
     this.mostrar_resultado = false
+  }
+
+  // ABRIR VENTANA PARA VER PREGUNTA
+  AbrirVentana(pregunta: any): void {
+    this.ventana.open(InformacionComponent, {
+      width: '400px',
+      data: { informacion: pregunta }
+    });
   }
 
 

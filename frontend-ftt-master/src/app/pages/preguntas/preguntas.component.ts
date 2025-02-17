@@ -2,17 +2,14 @@ import { Component, ViewChild, ElementRef, EventEmitter, Output } from "@angular
 import { ToastrService } from "ngx-toastr";
 import { DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
+import { saveAs } from 'file-saver';
 import { Utils } from "../../utils/util";
 import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
 
 import { AuthenticationService } from "../../services/authentication.service";
+import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 import { ImagenesService } from "../../shared/imagenes.service";
 import { ServiceService } from "../../services/service.service";
-
-// COMPLEMENTOS PARA PDF Y EXCEL
-import moment from "moment";
-import { ValidacionesService } from "src/app/services/validaciones/validaciones.service";
 
 @Component({
   standalone: false,
@@ -32,7 +29,6 @@ export class PreguntasComponent {
   @ViewChild("fechaHasta") fechaHasta: ElementRef;
   @ViewChild("horaInicio") horaInicio: ElementRef;
   @ViewChild("horaFin") horaFin: ElementRef;
-
 
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
   sucursales: any[];
@@ -108,8 +104,6 @@ export class PreguntasComponent {
   }
 
   ngOnInit(): void {
-    var f = moment();
-    this.date = f.format("YYYY-MM-DD");
 
     // CARGAMOS COMPONENTES SELECTS HTML
     this.getMarca();
@@ -222,7 +216,6 @@ export class PreguntasComponent {
     this.limpiar();
   }
 
-
   // CONSULATA PARA LLENAR LA LISTA DE SURCURSALES.
   getSucursales() {
     this.serviceService.getAllSucursales().subscribe((empresas: any) => {
@@ -232,17 +225,13 @@ export class PreguntasComponent {
 
   // METODO PARA LLAMAR CONSULTA DE DATOS
   limpiar() {
+    this.sucursalesSeleccionadas = [];
+    this.entradas_salidas = [];
+    this.cajerosUsuarios = [];
     this.selectedItems = [];
     this.todasSucursales = false;
     this.todosLosCajeros = false;
     this.mostrarCajeros = false;
-    this.sucursalesSeleccionadas = [];
-    this.cajerosUsuarios = [];
-  }
-
-  // COMPRUEBA SI SE REALIZO UNA BUSQUEDA POR SUCURSALES
-  comprobarBusquedaSucursales(cod: string) {
-    return cod == "-1" ? true : false;
   }
 
   // SE DESLOGUEA DE LA APLICACION

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   standalone: false,
@@ -7,6 +8,15 @@ import { Component } from '@angular/core';
   styleUrl: './informacion.component.scss'
 })
 
-export class InformacionComponent {
+export class InformacionComponent implements OnInit {
+
+  constructor(
+    public ventana: MatDialogRef<InformacionComponent>,
+    @Inject(MAT_DIALOG_DATA) public pregunta: any,
+  ) { }
+
+  ngOnInit(): void {
+    console.log('ver ', this.pregunta)
+  }
 
 }
