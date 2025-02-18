@@ -309,11 +309,9 @@ export class EncuestasComponent {
         if (!this.todosLosCajeros) {
           this.usuariosSeleccionados = [];
         }
-        this.encuestas = [];
         break;
 
       case 'cajerosSeleccionados':
-        this.encuestas = [];
         break;
 
       case "todasEncuestas":
@@ -401,6 +399,8 @@ export class EncuestasComponent {
     this.serviceService.getAllPreguntas(sucursal).subscribe(
       (res: any) => {
         this.preguntas = res.preguntas;
+
+        this.ObtenerRespuestas(sucursal);
       },
       (error) => {
         if (error.status == 400) {
@@ -415,6 +415,7 @@ export class EncuestasComponent {
     this.serviceService.getRespuestasEncuesta(sucursal).subscribe(
       (res: any) => {
         this.respuestas = res.respuestas;
+        this.BuscarPreguntasRespuestas();
       },
       (error) => {
         if (error.status == 400) {
