@@ -321,16 +321,10 @@ export class EncuestasComponent {
           this.preguntas = [];
           this.respuestas = [];
         }
-        else {
-          this.ObtenerPreguntas(this.encuestaSeleccionada);
-          this.ObtenerRespuestas(this.encuestaSeleccionada);
-        }
         break;
 
       case "encuestasSeleccionadas":
         if (this.encuestaSeleccionada.length != 0) {
-          this.ObtenerPreguntas(this.encuestaSeleccionada);
-          this.ObtenerRespuestas(this.encuestaSeleccionada);
         }
         else {
           this.preguntas = [];
@@ -395,24 +389,33 @@ export class EncuestasComponent {
    ** ********************************************************************************************************** **/
 
   // CONSULTA DE DATOS DE PREGUNTAS
-  ObtenerPreguntas(sucursal: any) {
-    this.serviceService.getAllPreguntas(sucursal).subscribe(
-      (res: any) => {
-        this.preguntas = res.preguntas;
-
-        this.ObtenerRespuestas(sucursal);
-      },
-      (error) => {
-        if (error.status == 400) {
-          this.preguntas = [];
+  ObtenerPreguntas() {
+    if (this.encuestaSeleccionada.length != 0) {
+      this.serviceService.getAllPreguntas(this.encuestaSeleccionada).subscribe(
+        (res: any) => {
+          this.preguntas = res.preguntas;
+          this.ObtenerRespuestas(this.encuestaSeleccionada);
+        },
+        (error) => {
+          if (error.status == 400) {
+            this.preguntas = [];
+            this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
+              timeOut: 6000,
+            });
+          }
         }
-      }
-    );
+      );
+    }
+    else {
+      this.toastr.info("No ha seleccionado datos.", "Upss !!!.", {
+        timeOut: 6000,
+      });
+    }
   }
 
   respuestas: any = [];
-  ObtenerRespuestas(sucursal: any) {
-    this.serviceService.getRespuestasEncuesta(sucursal).subscribe(
+  ObtenerRespuestas(encuesta: any) {
+    this.serviceService.getRespuestasEncuesta(encuesta).subscribe(
       (res: any) => {
         this.respuestas = res.respuestas;
         this.BuscarPreguntasRespuestas();
@@ -420,6 +423,9 @@ export class EncuestasComponent {
       (error) => {
         if (error.status == 400) {
           this.respuestas = [];
+          this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
+            timeOut: 6000,
+          });
         }
       }
     );
@@ -990,7 +996,7 @@ export class EncuestasComponent {
           },
           (error) => {
             if (error.status == 400) {
-              
+
               // SI HAY ERROR 400 SE VACIA VARIABLE Y BANDERAS CAMBIAN PARA QUITAR TABLA DE INTERFAZ
               this.servicioResumen = null;
               this.malRequestR = true;
@@ -1009,7 +1015,7 @@ export class EncuestasComponent {
                 itemsPerPage: this.MAX_PAGS,
                 currentPage: 1,
               };
-              
+
 
               // SE INFORMA QUE NO SE ENCONTRARON REGISTROS
               this.toastr.info("No se han encontrado registros.", "Upss !!!.", {
