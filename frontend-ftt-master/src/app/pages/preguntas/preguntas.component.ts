@@ -48,7 +48,8 @@ export class PreguntasComponent {
 
   // CONTROL PAGINACION
   configTF: any;
-  private MAX_PAGS = 10;
+  private MAX_PAGS = 5;
+  itemsPerPageOptions = [5, 10, 15, 20, 50];
 
   // PALABRAS DE COMPONENTE DE PAGINACION
   public labels: any = {
@@ -102,6 +103,11 @@ export class PreguntasComponent {
   pageChangedTF(event: any) {
     this.configTF.currentPage = event;
   }
+  // CAMBIA LA CANTIDAD DE ELEMENTOS POR PÁGINA Y REINICIA A LA PRIMERA PÁGINA
+  changeItemsPerPageDE(itemsPerPage: number) {
+    this.configTF.itemsPerPage = itemsPerPage; // ACTUALIZA EL NUMERO DE ELEMENTOS POR PAGINA
+    this.configTF.currentPage = 1; // REINICIAR A LA PRIMERA PAGINA
+  }
 
   ngOnInit(): void {
 
@@ -147,6 +153,7 @@ export class PreguntasComponent {
         this.selectedItems = [];
         this.mostrarCajeros = false;
         this.todosLosCajeros = false;
+        this.malRequestTFPag = true;
         break;
 
       case "sucursalesSeleccionadas":
@@ -159,6 +166,7 @@ export class PreguntasComponent {
           this.selectedItems = [];
           this.mostrarCajeros = false;
           this.todosLosCajeros = false;
+          this.malRequestTFPag = true;
         }
         break;
 
@@ -168,10 +176,12 @@ export class PreguntasComponent {
           this.entradas_salidas = [];
           this.selectedItems = [];
         }
+        this.malRequestTFPag = true;
         break;
 
       case "cajerosSeleccionados":
         this.entradas_salidas = [];
+        this.malRequestTFPag = true;
         break;
       default:
         break;
@@ -232,6 +242,7 @@ export class PreguntasComponent {
     this.todasSucursales = false;
     this.todosLosCajeros = false;
     this.mostrarCajeros = false;
+    this.malRequestTFPag = true;
   }
 
   // SE DESLOGUEA DE LA APLICACION
@@ -245,6 +256,8 @@ export class PreguntasComponent {
    ** ********************************************************************************************************** **/
 
   BuscarEntradas() {
+    this.MAX_PAGS = 5;
+    this.configTF.itemsPerPage = this.MAX_PAGS;
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fechaDesde.nativeElement.value
       .toString()

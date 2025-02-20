@@ -116,15 +116,23 @@
                             </tbody>
                         </table>
                         <pagination-controls *ngIf="!malRequestTFPag" id="usuariosTF"
-                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
-                            (pageChange)="pageChangedTF($event)">
+                            [previousLabel]="labels.previousLabel" [currentPage]="configTF.currentPage"
+                            [nextLabel]="labels.nextLabel" (pageChange)="pageChangedTF($event)">
                         </pagination-controls>
+
+                        <label *ngIf="!malRequestTFPag" for="PagusuariosTF">Elementos por página:</label>
+                        <select *ngIf="!malRequestTFPag" id="PagusuariosTF" [ngModel]="configTF.itemsPerPage"
+                            (ngModelChange)="changeItemsPerPageDE($event)" [ngModelOptions]="{standalone: true}">
+                            <option *ngFor="let option of itemsPerPageOptions" [value]="option">
+                                {{ option }}
+                            </option>
+                        </select>
                     </div>
                     <br>
-                    <button type="button" class="btn btn-info mx-2" (click)="GenerarExcelEntradas()">
+                    <button *ngIf="!malRequestTFPag" type="button" class="btn btn-info mx-2" (click)="GenerarExcelEntradas()">
                         EXCEL
                     </button>
-                    <button type="button" class="btn btn-info" (click)="generarPdfEntradasSistema('hola', 1)">
+                    <button *ngIf="!malRequestTFPag" type="button" class="btn btn-info" (click)="generarPdfEntradasSistema('hola', 1)">
                         PDF
                     </button>
                 </div>
