@@ -77,7 +77,8 @@ export class EncuestasComponent {
   p_color: any = '#0077b6';
 
   // MAXIMO DE ITEMS MOSTRADO DE TABLA EN PANTALLA
-  private MAX_PAGS = 10;
+  private MAX_PAGS = 5;
+  itemsPerPageOptions = [5, 10, 15, 20, 50];
 
   // PALABRAS DE COMPONENTE DE PAGINACION
   public labels: any = {
@@ -144,7 +145,7 @@ export class EncuestasComponent {
   // EVENTOS PARA AVANZAR O RETROCEDER EN LA PAGINACION
   // RESUMEN CAJEROS
   pageChangedTTF(event: any) {
-    console.log('evento ', event)
+    //console.log('evento ', event)
     this.configTTF.currentPage = event;
   }
 
@@ -152,6 +153,12 @@ export class EncuestasComponent {
   pageChangedR(event: any) {
     this.configR.currentPage = event;
   }
+  // CAMBIA LA CANTIDAD DE ELEMENTOS POR PÁGINA Y REINICIA A LA PRIMERA PÁGINA
+  changeItemsPerPageDE(itemsPerPage: number) {
+    this.configR.itemsPerPage = itemsPerPage; // ACTUALIZA EL NUMERO DE ELEMENTOS POR PAGINA
+    this.configR.currentPage = 1; // REINICIAR A LA PRIMERA PAGINA
+  }
+
 
   ngOnInit(): void {
     // CARGAMOS COMPONENTES SELECTS HTML
@@ -394,7 +401,8 @@ export class EncuestasComponent {
       this.serviceService.getAllPreguntas(this.encuestaSeleccionada).subscribe(
         (res: any) => {
           this.preguntas = res.preguntas;
-          this.ObtenerRespuestas(this.encuestaSeleccionada);
+          //console.log('preguntas ', this.preguntas)
+          this.ObtenerRespuestas();
         },
         (error) => {
           if (error.status == 400) {
@@ -414,8 +422,8 @@ export class EncuestasComponent {
   }
 
   respuestas: any = [];
-  ObtenerRespuestas(encuesta: any) {
-    this.serviceService.getRespuestasEncuesta(encuesta).subscribe(
+  ObtenerRespuestas() {
+    this.serviceService.getRespuestasEncuesta(this.sucursalesSeleccionadas).subscribe(
       (res: any) => {
         this.respuestas = res.respuestas;
         this.BuscarPreguntasRespuestas();
@@ -557,7 +565,7 @@ export class EncuestasComponent {
               return encuesta;
             });
 
-            console.log('datos ...', this.preguntas_respuestas);
+            //console.log('datos ...', this.preguntas_respuestas);
 
             // LISTA DE PREGUNTAS DE LAS ENCUESTAS
             let preguntasUnicas: any[] = [];
@@ -943,6 +951,8 @@ export class EncuestasComponent {
    ** ********************************************************************************************************** **/
 
   buscarRespuestas() {
+    this.MAX_PAGS = 5;
+    this.configR.itemsPerPage = this.MAX_PAGS; 
     // CAPTURA DE FECHAS PARA PROCEDER CON LA BUSQUEDA
     var fechaDesde = this.fromDateResumen.nativeElement.value.toString().trim();
     var fechaHasta = this.toDateResumen.nativeElement.value.toString().trim();
@@ -951,12 +961,12 @@ export class EncuestasComponent {
     let horaFin = this.horaFinR.nativeElement.value;
 
     var datoCajero: any = '0N';
-    console.log("ver cajeros seleccionados: ", this.usuariosSeleccionados)
+    //console.log("ver cajeros seleccionados: ", this.usuariosSeleccionados)
     if (this.usuariosSeleccionados.length != 0) {
       datoCajero = this.usuariosSeleccionados;
     }
 
-    console.log("ver datoCajero: ", datoCajero)
+    //console.log("ver datoCajero: ", datoCajero)
     if (this.selectedEncuestas.length !== 0) {
       this.serviceService
         .getEncuestasCajero(
@@ -976,7 +986,7 @@ export class EncuestasComponent {
 
             // SI SE CONSULTA CORRECTAMENTE SE GUARDA EN VARIABLE Y SETEA BANDERAS DE TABLAS
             this.servicioResumen = servicio.resumen;
-            console.log('resumen ', this.servicioResumen)
+            //console.log('resumen ', this.servicioResumen)
             this.malRequestR = false;
             this.malRequestRPag = false;
 
@@ -1069,7 +1079,7 @@ export class EncuestasComponent {
     });
 
     let incluirCajero = this.usuariosSeleccionados.length != 0
-    console.log("ver incluirCajero ", incluirCajero)
+    //console.log("ver incluirCajero ", incluirCajero)
     // MAPEO DE INFORMACIÓN DE CONSULTA A FORMATO JSON PARA EXPORTAR A EXCEL
     let jsonServicio: any = [];
 

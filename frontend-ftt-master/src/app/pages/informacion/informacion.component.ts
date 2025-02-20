@@ -16,7 +16,7 @@ export class InformacionComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    console.log('ver ', this.pregunta)
+    //console.log('ver ', this.pregunta)
   }
 
 }

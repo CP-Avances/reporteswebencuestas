@@ -59,24 +59,28 @@
                     <br>
                     <br>
                     <h3>CAJEROS</h3>
-                    <button *ngIf="estadoUsuario==1 && mostrar_resultado" type="button" class="btn btn-search" (click)="DesactivarCajeros()">
+                    <button *ngIf="estadoUsuario==1 && mostrar_resultado" type="button" class="btn btn-search"
+                        (click)="DesactivarCajeros()">
                         <span class="glyphicon glyphicon-filter"></span>
                         Activar
                     </button>
-                    <button *ngIf="estadoUsuario==2 && mostrar_resultado" type="button" class="btn btn-search" (click)="DesactivarCajeros()">
+                    <button *ngIf="estadoUsuario==2 && mostrar_resultado" type="button" class="btn btn-search"
+                        (click)="DesactivarCajeros()">
                         <span class="glyphicon glyphicon-filter"></span>
                         Desactivar
                     </button>
-                    <button *ngIf="estadoUsuario==3 && mostrar_resultado" type="button" class="btn btn-search" (click)="DesactivarCajeros()">
+                    <button *ngIf="estadoUsuario==3 && mostrar_resultado" type="button" class="btn btn-search"
+                        (click)="DesactivarCajeros()">
                         <span class="glyphicon glyphicon-filter"></span>
                         Cambiar estado
-                    </button>                    <hr>
+                    </button>
+                    <hr>
                     <div class="table-responsive" *ngIf="mostrar_resultado">
                         <table class="table table-striped" id="contentResumen" #contentResumen #tableResumen>
                             <thead>
-                                
+
                                 <tr>
-                                    <th class="text-center" >
+                                    <th class="text-center">
                                         <div>
                                             <mat-icon *ngIf="activar_seleccion" class="flex-shrink-1 bd-highlight"
                                                 title="Dar clic para activar selección múltiple." id="SelectCheck"
@@ -92,7 +96,7 @@
                                         </div>
 
                                     </th>
-                                    <th  class="text-center" *ngIf="todasSucursalesC || seleccionMultiple">
+                                    <th class="text-center" *ngIf="todasSucursalesC || seleccionMultiple">
                                         Sucursal
                                     </th>
                                     <th class="text-center">Cajero(a)</th>
@@ -100,7 +104,7 @@
                             </thead>
                             <tbody *ngIf="!malRequestC">
                                 <tr *ngFor="let cajero of cajerosSucursales | paginate:configC">
-                                    <td >
+                                    <td>
                                         <mat-checkbox *ngIf="plan_multiple_" (click)="$event.stopPropagation()"
                                             (change)="$event ? selectionCajero.toggle(cajero) : null"
                                             [checked]="selectionCajero.isSelected(cajero)"
@@ -113,11 +117,18 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <pagination-controls *ngIf="!malRequestC" id="usuariosR"
-                            [previousLabel]="labels.previousLabel" [nextLabel]="labels.nextLabel"
-                            [currentPage]="configC.currentPage" 
+                        <pagination-controls *ngIf="!malRequestC" id="usuariosR" [previousLabel]="labels.previousLabel"
+                            [currentPage]="configC.currentPage" [nextLabel]="labels.nextLabel"
                             (pageChange)="pageChangedC($event)">
                         </pagination-controls>
+
+                        <label *ngIf="!malRequestC" for="PagusuariosR">Elementos por página:</label>
+                        <select *ngIf="!malRequestC" id="PagusuariosR" [ngModel]="configC.itemsPerPage"
+                            (ngModelChange)="changeItemsPerPageDE($event)" [ngModelOptions]="{standalone: true}">
+                            <option *ngFor="let option of itemsPerPageOptions" [value]="option">
+                                {{ option }}
+                            </option>
+                        </select>
                     </div>
                 </div>
             </div>

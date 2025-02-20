@@ -20,7 +20,7 @@ router.get("/getallsucursales", verifivarToken_1.TokenValidation, (req, res) => 
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -43,7 +43,7 @@ router.get("/getallcajeros", verifivarToken_1.TokenValidation, (req, res) => {
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -59,8 +59,8 @@ router.get("/getallcajeros/:sucursales/:estado", verifivarToken_1.TokenValidatio
     // 2 --> ACTIVOS
     // 3 --> TODOS
     // FILTROS SUCURSALES
-    console.log(' sucursales ', req.params.sucursales);
-    console.log('estado ', req.params.estado);
+    //console.log(' sucursales ', req.params.sucursales);
+    //console.log('estado ', req.params.estado)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     let todasSucursales = false;
@@ -85,14 +85,14 @@ router.get("/getallcajeros/:sucursales/:estado", verifivarToken_1.TokenValidatio
       ${!todasSucursales ? `AND sc.COD_SUC IN (${listaSucursales})` : ''}
       ${estado}
     `;
-    console.log('query usuario ', query);
+    //console.log('query usuario ', query)
     mysql_1.default.ejecutarQuery(query, (err, cajeros) => {
         if (err) {
             res.status(400).json({
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -124,7 +124,7 @@ router.get("/cambiarestadocajeros/:sucursales", verifivarToken_1.TokenValidation
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -157,7 +157,7 @@ router.get("/getallencuestas/:sucursales", verifivarToken_1.TokenValidation, (re
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -177,7 +177,7 @@ router.get("/getencuestastotales", verifivarToken_1.TokenValidation, (req, res) 
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -201,13 +201,14 @@ router.get("/getallpreguntas/:encuestas", verifivarToken_1.TokenValidation, (req
     SELECT * FROM pregunta
       ${!todasEncuestas ? `WHERE COD_EN IN (${listaEncuestas})` : ''};
     `;
+    //console.log('ver query preguntas encuesta ', query)
     mysql_1.default.ejecutarQuery(query, (err, preguntas) => {
         if (err) {
             res.status(400).json({
                 ok: false,
                 error: err,
             });
-            console.log(err);
+            //console.log(err);
         }
         else {
             res.json({
@@ -302,20 +303,20 @@ router.get("/preguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:u
  ** ************************************************************************************************************ **/
 router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:preguntas", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde);
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta);
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio);
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin);
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
     const listaPreguntas = req.params.preguntas;
     const preguntasArray = listaPreguntas.split(",");
-    console.log('ver preguntas ', listaPreguntas);
+    //console.log('ver preguntas ', listaPreguntas)
     let todasSucursales = false;
     let todasEncuestas = false;
     let todasPreguntas = false;
@@ -388,20 +389,20 @@ router.get("/respuestasresumen/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:suc
 });
 router.get("/preguntas-encuesta-sucursal/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:preguntas", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde);
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta);
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio);
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin);
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
     const listaPreguntas = req.params.preguntas;
     const preguntasArray = listaPreguntas.split(",");
-    console.log('ver preguntas ', listaPreguntas);
+    //console.log('ver preguntas ', listaPreguntas)
     let todasSucursales = false;
     let todasEncuestas = false;
     let todasPreguntas = false;
@@ -478,13 +479,13 @@ router.get("/preguntas-encuesta-sucursal/:fechaDesde/:fechaHasta/:horaInicio/:ho
 });
 router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde);
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta);
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio);
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin);
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -542,13 +543,13 @@ router.get("/resumenencuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encu
 });
 router.get("/listapreguntasrespuestas/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:encuestas/:sucursales/:usuarios", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde);
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta);
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio);
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin);
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -714,7 +715,7 @@ router.get("/respuestasEncuestas/:sucursales", verifivarToken_1.TokenValidation,
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     let todasSucursales = false;
-    if (sucursalesArray.includes("-2")) {
+    if (sucursalesArray.includes("-1")) {
         todasSucursales = true;
     }
     const query = `
@@ -744,6 +745,7 @@ router.get("/respuestasEncuestas/:sucursales", verifivarToken_1.TokenValidation,
         JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
         ${!todasSucursales ? ` WHERE sucursal.COD_SUC IN (${listaSucursales})` : ''};
       `;
+    //console.log('ver respuestas ', query)
     mysql_1.default.ejecutarQuery(query, (err, respuestas) => {
         if (err) {
             res.status(400).json({
@@ -761,13 +763,13 @@ router.get("/respuestasEncuestas/:sucursales", verifivarToken_1.TokenValidation,
 });
 router.get("/encuestascajeros/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:usuarios/:fecha/:estado", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde);
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta);
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio);
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin);
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -847,7 +849,7 @@ router.get("/encuestascajeros/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucu
         , sucursal.NOM_SUC; `}   
         
       `;
-    console.log("ver el query", query);
+    //console.log("ver el query", query)
     mysql_1.default.ejecutarQuery(query, (err, resumen) => {
         if (err) {
             res.status(400).json({
@@ -865,13 +867,13 @@ router.get("/encuestascajeros/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucu
 });
 router.get("/encuesta-sucursal/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:sucursales/:encuestas/:usuarios", verifivarToken_1.TokenValidation, (req, res) => {
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde);
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta);
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio);
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin);
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -991,7 +993,7 @@ router.get("/entradasistema/:fechaDesde/:fechaHasta/:horaInicio/:horaFin/:cajero
         ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros}) AND ${comprobarestado}  ` : `AND ${comprobarestado}`} 
         ${!diaCompleto ? `AND HOUR(actividad.FECH_ULT) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''};
       `;
-    console.log('query ', query);
+    //console.log('query ', query)
     mysql_1.default.ejecutarQuery(query, (err, turnos) => {
         if (err) {
             res.status(400).json({

@@ -18,7 +18,7 @@ import { ServiceService } from "../../services/service.service";
 export class UsuariosComponent implements OnInit {
 
   mostrar_resultado = false;
-  
+
   // SERVICIOS-VARIABLES DONDE SE ALMACENARAN LAS CONSULTAS A LA BD
   sucursales: any[];
   cajerosSucursales: any = [];
@@ -36,7 +36,8 @@ export class UsuariosComponent implements OnInit {
   configC: any;
 
   // MAXIMO DE ITEMS MOSTRADO DE TABLA EN PANTALLA
-  private MAX_PAGS = 10;
+  private MAX_PAGS = 5;
+  itemsPerPageOptions = [5, 10, 15, 20, 50];
 
   // PALABRAS DE COMPONENTE DE PAGINACION
   public labels: any = {
@@ -70,8 +71,13 @@ export class UsuariosComponent implements OnInit {
 
   // RESUMEN CAJEROS
   pageChangedC(event: any) {
-    console.log('evento ', event)
+    //console.log('evento ', event)
     this.configC.currentPage = event;
+  }
+  // CAMBIA LA CANTIDAD DE ELEMENTOS POR PÁGINA Y REINICIA A LA PRIMERA PÁGINA
+  changeItemsPerPageDE(itemsPerPage: number) {
+    this.configC.itemsPerPage = itemsPerPage; // ACTUALIZA EL NUMERO DE ELEMENTOS POR PAGINA
+    this.configC.currentPage = 1; // REINICIAR A LA PRIMERA PAGINA
   }
 
 
@@ -127,7 +133,7 @@ export class UsuariosComponent implements OnInit {
   getSucursales() {
     this.serviceService.getAllSucursales().subscribe((empresas: any) => {
       this.sucursales = empresas.empresas;
-      console.log("ver sucursales: ", this.sucursales)
+      //console.log("ver sucursales: ", this.sucursales)
     });
   }
 
@@ -149,9 +155,11 @@ export class UsuariosComponent implements OnInit {
   }
 
   buscarCajeros() {
+    this.MAX_PAGS = 5;
+    this.configC.itemsPerPage = this.MAX_PAGS;
     this.serviceService.getCajerosEstado(this.sucursalesSeleccionadas, this.estadoUsuario).subscribe(
       (cajeros: any) => {
-        console.log("ver resultados: ", cajeros)
+        //console.log("ver resultados: ", cajeros)
         this.cajerosSucursales = cajeros.cajeros;
 
         this.malRequestC = false;
@@ -192,7 +200,7 @@ export class UsuariosComponent implements OnInit {
     this.isAllSelectedPag() ?
       this.selectionCajero.clear() :
       this.cajerosSucursales.forEach((row: any) => this.selectionCajero.select(row));
-    console.log("ver selectionCajero", this.selectionCajero)
+    //console.log("ver selectionCajero", this.selectionCajero)
   }
 
   // LA ETIQUETA DE LA CASILLA DE VERIFICACION EN LA FILA PASADA
@@ -202,7 +210,7 @@ export class UsuariosComponent implements OnInit {
     }
     this.cajerosEditar = this.selectionCajero.selected;
 
-    //console.log("ver cajerosEditar ", this.cajerosEditar)
+    ////console.log("ver cajerosEditar ", this.cajerosEditar)
     return `${this.selectionCajero.isSelected(row) ? 'deselect' : 'select'} row ${row.caje_nombre + 1}`;
   }
 
@@ -225,11 +233,11 @@ export class UsuariosComponent implements OnInit {
   DesactivarCajeros() {
 
     const cajeCodigos = this.cajerosEditar.map(item => item.COD_US).join(',');
-    console.log("ver cajeCodigos", cajeCodigos)
+    //console.log("ver cajeCodigos", cajeCodigos)
 
     this.serviceService.actualizarEstadoCajerosSucursalEstado(cajeCodigos).subscribe(
       (cajeros: any) => {
-        console.log("ver resultados: ", cajeros)
+        //console.log("ver resultados: ", cajeros)
         this.cajerosSucursales = cajeros.cajeros;
         this.mostrar_resultado = false;
         this.activar_seleccion = true;

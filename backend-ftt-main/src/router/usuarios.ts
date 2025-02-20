@@ -19,7 +19,7 @@ router.get("/getallsucursales", TokenValidation, (req: Request, res: Response) =
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -46,7 +46,7 @@ router.get("/getallcajeros", TokenValidation, (req: Request, res: Response) => {
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -62,8 +62,8 @@ router.get("/getallcajeros/:sucursales/:estado", TokenValidation, (req: Request,
   // 2 --> ACTIVOS
   // 3 --> TODOS
   // FILTROS SUCURSALES
-  console.log(' sucursales ', req.params.sucursales);
-  console.log('estado ', req.params.estado)
+  //console.log(' sucursales ', req.params.sucursales);
+  //console.log('estado ', req.params.estado)
   const listaSucursales = req.params.sucursales;
   const sucursalesArray = listaSucursales.split(",");
   let todasSucursales = false;
@@ -91,14 +91,14 @@ router.get("/getallcajeros/:sucursales/:estado", TokenValidation, (req: Request,
       ${estado}
     `;
 
-  console.log('query usuario ', query)
+  //console.log('query usuario ', query)
   MySQL.ejecutarQuery(query, (err: any, cajeros: Object[]) => {
     if (err) {
       res.status(400).json({
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -133,7 +133,7 @@ router.get("/cambiarestadocajeros/:sucursales", TokenValidation, (req: Request, 
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -170,7 +170,7 @@ router.get("/getallencuestas/:sucursales", TokenValidation, (req: Request, res: 
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -192,7 +192,7 @@ router.get("/getencuestastotales", TokenValidation, (req: Request, res: Response
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -219,13 +219,15 @@ router.get("/getallpreguntas/:encuestas", TokenValidation, (req: Request, res: R
     SELECT * FROM pregunta
       ${!todasEncuestas ? `WHERE COD_EN IN (${listaEncuestas})` : ''};
     `;
+  
+  //console.log('ver query preguntas encuesta ', query)
   MySQL.ejecutarQuery(query, (err: any, preguntas: Object[]) => {
     if (err) {
       res.status(400).json({
         ok: false,
         error: err,
       });
-      console.log(err);
+      //console.log(err);
     } else {
       res.json({
         ok: true,
@@ -335,20 +337,20 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde)
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta)
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio)
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin)
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
     const listaPreguntas = req.params.preguntas;
     const preguntasArray = listaPreguntas.split(",");
-    console.log('ver preguntas ', listaPreguntas)
+    //console.log('ver preguntas ', listaPreguntas)
 
     let todasSucursales = false;
     let todasEncuestas = false;
@@ -431,20 +433,20 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde)
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta)
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio)
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin)
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
     const encuestasArray = listaEncuestas.split(",");
     const listaPreguntas = req.params.preguntas;
     const preguntasArray = listaPreguntas.split(",");
-    console.log('ver preguntas ', listaPreguntas)
+    //console.log('ver preguntas ', listaPreguntas)
 
     let todasSucursales = false;
     let todasEncuestas = false;
@@ -531,13 +533,13 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde)
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta)
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio)
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin)
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -603,13 +605,13 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde)
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta)
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio)
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin)
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -798,7 +800,7 @@ router.get(
     const sucursalesArray = listaSucursales.split(",");
     let todasSucursales = false;
 
-    if (sucursalesArray.includes("-2")) {
+    if (sucursalesArray.includes("-1")) {
       todasSucursales = true
     }
 
@@ -830,6 +832,8 @@ router.get(
         JOIN sucursal ON sucursal.COD_SUC = evaluacion.CODIGO_SUCURSAL
         ${!todasSucursales ? ` WHERE sucursal.COD_SUC IN (${listaSucursales})` : ''};
       `;
+    
+      //console.log('ver respuestas ', query)
     MySQL.ejecutarQuery(query, (err: any, respuestas: Object[]) => {
       if (err) {
         res.status(400).json({
@@ -852,13 +856,13 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde)
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta)
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio)
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin)
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -947,7 +951,7 @@ router.get(
         , sucursal.NOM_SUC; `}   
         
       `
-    console.log("ver el query", query)
+    //console.log("ver el query", query)
     MySQL.ejecutarQuery(query, (err: any, resumen: Object[]) => {
       if (err) {
         res.status(400).json({
@@ -969,13 +973,13 @@ router.get(
   (req: Request, res: Response) => {
 
     const fDesde = req.params.fechaDesde;
-    console.log('ver fecha desde ', fDesde)
+    //console.log('ver fecha desde ', fDesde)
     const fHasta = req.params.fechaHasta;
-    console.log('ver fecha hasta ', fHasta)
+    //console.log('ver fecha hasta ', fHasta)
     const hInicio = req.params.horaInicio;
-    console.log('ver hora desde ', hInicio)
+    //console.log('ver hora desde ', hInicio)
     const hFin = req.params.horaFin;
-    console.log('ver hora hasta ', hFin)
+    //console.log('ver hora hasta ', hFin)
     const listaSucursales = req.params.sucursales;
     const sucursalesArray = listaSucursales.split(",");
     const listaEncuestas = req.params.encuestas;
@@ -1116,7 +1120,7 @@ router.get(
         ${!todasCajeros ? `AND actividad.COD_US IN (${listaCajeros}) AND ${comprobarestado}  ` : `AND ${comprobarestado}`} 
         ${!diaCompleto ? `AND HOUR(actividad.FECH_ULT) BETWEEN '${hInicio}' AND '${hFinAux}' ` : ''};
       `;
-    console.log('query ', query)
+    //console.log('query ', query)
     MySQL.ejecutarQuery(query, (err: any, turnos: Object[]) => {
       if (err) {
         res.status(400).json({

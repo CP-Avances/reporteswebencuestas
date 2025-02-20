@@ -333,6 +333,14 @@
                             [previousLabel]="labels.previousLabel" [currentPage]="configR.currentPage"
                             [nextLabel]="labels.nextLabel" (pageChange)="pageChangedR($event)">
                         </pagination-controls>
+
+                        <label *ngIf="!malRequestRPag" for="PagusuariosR">Elementos por página:</label>
+                        <select *ngIf="!malRequestRPag" id="PagusuariosR" [ngModel]="configR.itemsPerPage"
+                            (ngModelChange)="changeItemsPerPageDE($event)" [ngModelOptions]="{standalone: true}">
+                            <option *ngFor="let option of itemsPerPageOptions" [value]="option">
+                                {{ option }}
+                            </option>
+                        </select>
                         <h4><b>TOTAL DE RESPUESTAS: </b>{{respuestasTotal}}</h4>
                     </div>
                     <br>
