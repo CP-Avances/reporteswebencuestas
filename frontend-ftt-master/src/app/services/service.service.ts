@@ -28,36 +28,8 @@ export class ServiceService {
 
 
   /** ****************************************************************************************************************** **
-   ** **                             TRATAMIENTOS OPCION PREGUNTAS Y RESPUESTAS                                       ** **
-   ** ****************************************************************************************************************** **/
-
-  getPreguntasRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, usuarios: any, encuesta: any, preguntas): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/preguntasrespuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + usuarios + "/" + encuesta + "/" + preguntas);
-  }
-
-  /** ****************************************************************************************************************** **
    ** **                                    TRATAMIENTOS OPCION RESUMEN DE PREGUNTAS                                  ** **
    ** ****************************************************************************************************************** **/
-
-  getPreguntasResumen(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, cajeros: any, preguntas): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/respuestasresumen/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + cajeros + "/" + preguntas);
-  }
-
-  getResumenPreguntasSucursal(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, encuestas: any, preguntas: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/preguntas-encuesta-sucursal/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + preguntas);
-  }
-
-  getResumenPreguntasRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, sucursales: any, encuestas: any, usuarios: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/encuesta-sucursal/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + sucursales + "/" + encuestas + "/" + usuarios);
-  }
-
-  getResumenEncuesta(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/resumenencuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales);
-  }
-
-  getListaPreguntasRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any, usuarios: any): Observable<servicio[]> {
-    return this.http.get<servicio[]>(this.URL + "/listapreguntasrespuestas/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales + "/" + usuarios);
-  }
 
   getCodigosRespuestas(fechaDesde: any, fechaHasta: any, horaInicio: any, horaFin: any, encuestas: any, sucursales: any, usuarios: any, estado: any): Observable<servicio[]> {
     return this.http.get<servicio[]>(this.URL + "/codigosRespuesta/" + fechaDesde + "/" + fechaHasta + "/" + horaInicio + "/" + horaFin + "/" + encuestas + "/" + sucursales + "/" + usuarios + "/" + estado);
@@ -105,10 +77,6 @@ export class ServiceService {
 
   getAllEncuestas(sucursales: any): Observable<cajero[]> {
     return this.http.get<cajero[]>(this.URL + "/getallencuestas/" + sucursales);
-  }
-
-  getEncuestasTotales(): Observable<cajero[]> {
-    return this.http.get<cajero[]>(this.URL + "/getencuestastotales");
   }
 
 
