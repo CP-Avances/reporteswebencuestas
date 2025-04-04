@@ -276,7 +276,7 @@
                                 <mat-select multiple class="form-control" name="selectmake"
                                     [(value)]="usuariosSeleccionados" placeholder="Cajeros"
                                     (selectionChange)="mostrar_resultado = false">
-                                    <mat-option [value]="-2" (click)="selectAll('todosLosCajeros')">
+                                    <mat-option [value]="-2" (click)="selectAll('todosCajeros')">
                                         Todos los cajeros
                                     </mat-option>
                                     <mat-option *ngFor="let option of cajerosUsuarios" [value]="option.COD_US"
